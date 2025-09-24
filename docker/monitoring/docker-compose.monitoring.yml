@@ -12,25 +12,33 @@ services:
     environment:
       TZ: ${TZ:-Australia/Sydney}
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}'
-      - '--web.enable-lifecycle'
-      - '--web.enable-admin-api'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
     ports:
       - "127.0.0.1:9090:9090"
     restart: unless-stopped
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
         reservations:
           memory: 256M
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:9090/-/healthy",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -64,12 +72,16 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
         reservations:
           memory: 256M
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -88,17 +100,17 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
     command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
     ports:
       - "127.0.0.1:9100:9100"
     restart: unless-stopped
     deploy:
       resources:
         limits:
-          cpus: '0.1'
+          cpus: "0.1"
           memory: 128M
         reservations:
           memory: 64M
@@ -119,7 +131,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.1'
+          cpus: "0.1"
           memory: 64M
 
   uptime-kuma:
@@ -138,12 +150,20 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.3'
+          cpus: "0.3"
           memory: 256M
         reservations:
           memory: 128M
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3001",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -164,4 +184,3 @@ networks:
       config:
         - subnet: 172.21.0.0/24
           gateway: 172.21.0.1
-

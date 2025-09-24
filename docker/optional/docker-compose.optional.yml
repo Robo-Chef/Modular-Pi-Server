@@ -4,8 +4,6 @@ services:
     container_name: homeassistant
     hostname: homeassistant-server
     network_mode: host # Crucial for local device discovery
-    networks:
-      - smart_home_net
     volumes:
       - homeassistant_data:/config
       - /etc/localtime:/etc/localtime:ro
@@ -19,7 +17,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1.0'
+          cpus: "1.0"
           memory: 1G
         reservations:
           memory: 512M
@@ -30,8 +28,8 @@ services:
       retries: 3
       start_period: 60s
     devices:
-      - /dev/ttyUSB0:/dev/ttyUSB0  # Z-Wave/Zigbee dongle
-      - /dev/ttyACM0:/dev/ttyACM0  # Alternative USB device
+      - /dev/ttyUSB0:/dev/ttyUSB0 # Z-Wave/Zigbee dongle
+      - /dev/ttyACM0:/dev/ttyACM0 # Alternative USB device
 
   gitea:
     image: gitea/gitea:latest
@@ -67,12 +65,20 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 512M
         reservations:
           memory: 256M
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3000",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -95,12 +101,20 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.2'
+          cpus: "0.2"
           memory: 256M
         reservations:
           memory: 128M
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9000"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:9000",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -122,12 +136,20 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.1'
+          cpus: "0.1"
           memory: 128M
         reservations:
           memory: 64M
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -152,12 +174,13 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: "0.5"
           memory: 256M
         reservations:
           memory: 128M
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost"]
+      test:
+        ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -188,7 +211,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.1'
+          cpus: "0.1"
           memory: 128M
         reservations:
           memory: 64M
@@ -222,5 +245,3 @@ networks:
       config:
         - subnet: 172.24.0.0/24
           gateway: 172.24.0.1
-
-
