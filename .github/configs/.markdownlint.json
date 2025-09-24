@@ -1,0 +1,50 @@
+{
+  "default": true,
+  "MD013": {
+    "line_length": 100,
+    "code_blocks": false,
+    "tables": false,
+    "headers": false
+  },
+  "MD024": {
+    "siblings_only": true
+  },
+  "MD025": {
+    "level": 1,
+    "front_matter_title": "^---\\n.*title:.*\\n---\\n"
+  },
+  "MD030": {
+    "ul_single": 1,
+    "ul_multi": 1,
+    "ol_single": 1,
+    "ol_multi": 1
+  },
+  "MD033": {
+    "allowed_elements": ["img", "br", "hr", "a", "button", "input", "label", "select", "option", "textarea", "details", "summary", "div", "span", "svg", "path", "figure", "figcaption"]
+  },
+  "MD034": {
+    "allowed_elements": ["a"]
+  },
+  "MD036": {
+    "punctuation": ",.;:!?"
+  },
+  "MD040": {
+    "allowed_languages": ["bash", "yaml", "json", "dockerfile", "ini", "toml", "sql", "python", "javascript", "typescript", "html", "css", "scss", "xml", "markdown"]
+  },
+  "MD041": {
+    "level": 1,
+    "front_matter_title": "^---\\n.*title:.*\\n---\\n"
+  },
+  "MD007": {
+    "indent": 2
+  },
+  "MD004": {
+    "style": "dash"
+  },
+  "MD026": {
+    "punctuation": ".,;"
+  },
+  "MD029": {
+    "style": "ordered"
+  }
+}
