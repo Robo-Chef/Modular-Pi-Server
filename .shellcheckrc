@@ -1,0 +1,14 @@
+# Enable shellcheck to follow source directives
+# This helps ShellCheck find and check sourced files
+external-sources=true
+
+# Add the scripts directory to the shellcheck path
+# This helps ShellCheck find the utils.sh file
+source-path=scripts/
+
+# Ignore specific warnings that are not applicable to this project
+# SC1091: Not following: source was not specified as input
+exclude=SC1091
+
+# Set the shell to bash
+shell=bash
