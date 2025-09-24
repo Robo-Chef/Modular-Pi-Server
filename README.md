@@ -4,6 +4,7 @@ A comprehensive, modular **LAN-only** home server setup using Raspberry Pi 3 B+ 
 
 ## Architecture
 
+- **Decision Records**: Explore key architectural decisions in [docs/adr/](docs/adr/)
 - **Base OS**: Raspberry Pi OS (64-bit)
 - **Static IP**: Configured via `.env` (e.g., `192.168.1.XXX`)
 - **Core Services**: Pi-hole + Unbound for DNS and ad blocking ![Screenshot: Pi-hole Admin Dashboard example]

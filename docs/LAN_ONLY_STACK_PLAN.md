@@ -5,7 +5,9 @@ It serves as the foundational design document, providing context for the technic
 
 # Raspberry Pi LAN-Only Stack Plan
 
-This project is designed to transform your Raspberry Pi into a **self-contained, private home server (LAN-only)**. It aims to achieve the following:
+This project is designed to transform your Raspberry Pi into a **self-contained, private home server (LAN-only)**. For a detailed rationale behind this architectural choice, refer to the [LAN-Only Design ADR](adr/0001-lan-only-design.md).
+
+It aims to achieve the following:
 
 1. **Protect and clean your internet connection inside the house**
    - Pi-hole blocks ads and trackers for every device on your Wi-Fi or Ethernet.
