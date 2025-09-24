@@ -10,6 +10,15 @@
       "pattern": "^http://localhost"
     }, 
     {
+      "pattern": "^http://192\\.168\\.1\\.XXX/admin"
+    }, 
+    {
+      "pattern": "^http://192\\.168\\.1\\.XXX:3000"
+    }, 
+    {
+      "pattern": "^http://192\\.168\\.1\\.XXX:3001"
+    }, 
+    {
       "pattern": "^https://canyoublockit.com"
     }
   ],

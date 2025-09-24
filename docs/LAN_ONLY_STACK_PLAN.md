@@ -6,24 +6,25 @@ It serves as the foundational design document, providing context for the technic
 # Raspberry Pi LAN-Only Stack Plan
 
 This project is designed to transform your Raspberry Pi into a **self-contained, private home server (LAN-only)**. It aims to achieve the following:
-  1. **Protect and clean your internet connection inside the house**
-     - Pi-hole blocks ads and trackers for every device on your Wi-Fi or Ethernet.
-     - Unbound resolves domains directly, cutting out Google, Cloudflare, or your ISP. You get faster, more private lookups without depending on third-party DNS.
-  2. **Provide easy ways to manage and monitor it**
-     - **Portainer** → a web dashboard to control all your Docker apps in one place. ![Screenshot: Portainer dashboard view]
-     - **Dozzle** → a live log viewer, so you can spot issues without touching the terminal. ![Screenshot: Dozzle live logs interface]
-     - **Uptime Kuma** → a “status page” that alerts you if Pi-hole or other services stop responding. ![Screenshot: Uptime Kuma status page]
-     - **Speedtest Tracker** → scheduled internet speed tests, building evidence if your ISP underperforms. ![Screenshot: Speedtest Tracker results dashboard]
-  3. **Allow for optional growth into local services**
-     - **Home Assistant** → smart home automation without cloud reliance. ![Screenshot: Home Assistant dashboard example]
-     - **Gitea** → your own lightweight GitHub-style repo for projects. ![Screenshot: Gitea repository view]
-     - **Netdata/Glances** → advanced monitoring of CPU, memory, and system health.
-     - **code-server** → VS Code in your browser (when you’re at home on LAN).
-  4. **Maintain a clean, safe, and lightweight setup**
-     - Everything is Dockerized → portable, restartable, easy to back up.
-     - Runs only on your LAN → no exposure to the wider internet, no port forwarding, no CGNAT headaches.
-     - Minimal load → a Pi 3 B+ with 1 GB RAM can run Pi-hole, Unbound, and lightweight QoL tools smoothly.
-     - Static LAN IP → always reachable at `192.168.1.XXX` from any device in the house.
+
+1. **Protect and clean your internet connection inside the house**
+   - Pi-hole blocks ads and trackers for every device on your Wi-Fi or Ethernet.
+   - Unbound resolves domains directly, cutting out Google, Cloudflare, or your ISP. You get faster, more private lookups without depending on third-party DNS.
+2. **Provide easy ways to manage and monitor it**
+   - **Portainer** → a web dashboard to control all your Docker apps in one place. ![Screenshot: Portainer dashboard view]
+   - **Dozzle** → a live log viewer, so you can spot issues without touching the terminal. ![Screenshot: Dozzle live logs interface]
+   - **Uptime Kuma** → a “status page” that alerts you if Pi-hole or other services stop responding. ![Screenshot: Uptime Kuma status page]
+   - **Speedtest Tracker** → scheduled internet speed tests, building evidence if your ISP underperforms. ![Screenshot: Speedtest Tracker results dashboard]
+3. **Allow for optional growth into local services**
+   - **Home Assistant** → smart home automation without cloud reliance. ![Screenshot: Home Assistant dashboard example]
+   - **Gitea** → your own lightweight GitHub-style repo for projects. ![Screenshot: Gitea repository view]
+   - **Netdata/Glances** → advanced monitoring of CPU, memory, and system health.
+   - **code-server** → VS Code in your browser (when you’re at home on LAN).
+4. **Maintain a clean, safe, and lightweight setup**
+   - Everything is Dockerized → portable, restartable, easy to back up.
+   - Runs only on your LAN → no exposure to the wider internet, no port forwarding, no CGNAT headaches.
+   - Minimal load → a Pi 3 B+ with 1 GB RAM can run Pi-hole, Unbound, and lightweight QoL tools smoothly.
+   - Static LAN IP → always reachable at `192.168.1.XXX` from any device in the house.
 
 ## ❌ Why External/Remote Access Isn’t Feasible: Design Constraints
 
@@ -101,6 +102,7 @@ Focus on **LAN-only reliability**, where you actually get consistent results wit
 - **Weekly**: update blocklists and check containers.
 - **Monthly**: pull new images, `apt upgrade`, back up configs.
 - **Backups**:
+
   ```bash
   tar czf ~/docker-backup-$(date +%Y%m%d).tar.gz ~/docker-stack
 

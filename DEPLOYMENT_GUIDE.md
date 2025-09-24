@@ -15,7 +15,7 @@ This guide will help you deploy a complete home server on your Raspberry Pi 3 B+
 
 1. **Flash Raspberry Pi OS**
 
-   - Download [Raspberry Pi Imager](https://www.raspberrypi.org/downloads/)
+   - Download [Raspberry Pi Imager](https://www.raspberrypi.com/software/)
    - Select "Raspberry Pi OS (64-bit)" - Full version
    - Configure advanced options:
      - Enable SSH with key authentication
