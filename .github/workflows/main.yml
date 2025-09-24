@@ -24,6 +24,18 @@ jobs:
       - name: Run ShellCheck on scripts
         run: shellcheck scripts/*.sh
 
+      - name: Install Hadolint
+        run: sudo wget -O /usr/local/bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-arm64 && sudo chmod +x /usr/local/bin/hadolint # For ARM64 on Raspberry Pi, adjust if GitHub Actions runner is different
+
+      - name: Run Hadolint on Dockerfiles
+        run: find . -name "Dockerfile" -exec hadolint {} + # Scans all Dockerfiles
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: Run yamllint on YAML files
+        run: yamllint . -f .github/configs/.yamllint.yml # Assuming a config file exists or will be created
+
       - name: Validate Docker Compose files
         run: |
           docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml config
