@@ -179,7 +179,7 @@ main() {
     run_test_custom "Pi-hole query performance is good (below 100ms)" "docker exec pihole pihole -t | head -n 1 | awk '{print \$1}' | sed 's/ms//'" "[[ \"$result\" -lt 100 ]]"
 
     # Test 19: Check system load average.
-    run_test_custom "System load average is reasonable (below 2.0)" "uptime | awk -F'load average:' '{ print \$2 }' | cut -d, -f1 | sed 's/ //g'" "[[ \"$(echo \"$result > 2.0\" | bc -l)\" -eq 0 ]]"
+    run_test_custom "System load average is reasonable (below 2.0)" "uptime | awk -F'load average:' '{ print \$2 }' | cut -d, -f1 | sed 's/ //g'" "[[ \"\$(echo \"\$result > 2.0\" | bc -l)\" -eq 0 ]]"
 
     # Test 20: Check available disk space on backup drive.
     run_test_custom "Backup disk has sufficient space (above 10GB)" "df /backups | awk 'NR==2 {print \$4}'" "[[ \"$result\" -gt 10485760 ]]"

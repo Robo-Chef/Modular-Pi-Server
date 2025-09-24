@@ -108,20 +108,12 @@ jobs:
         with:
           scan-type: 'image'
           image-ref: |
-            pihole/pihole:2024.06.0
-            klutchell/unbound:latest
-            prom/prometheus:2.51.0
-            prom/node-exporter:1.7.0
-            prom/alertmanager:0.27.0
-            grafana/grafana:11.1.0
-            portainer/portainer-ce:latest
-            containrrr/watchtower:latest
-            dozzle/dozzle:latest
+            pihole/pihole:2024.06.0,klutchell/unbound:latest,prom/prometheus:2.51.0,prom/node-exporter:1.7.0,prom/alertmanager:0.27.0,grafana/grafana:11.1.0,portainer/portainer-ce:latest,containrrr/watchtower:latest,dozzle/dozzle:latest
           format: 'sarif'
           output: 'trivy-scan-results.sarif'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
-          exit-code: '0'  # Don't fail the build on vulnerabilities
+          exit-code: '0'
           skip-files: "/etc/ssl/certs/ca-certificates.crt"
           timeout: '5m'
 
