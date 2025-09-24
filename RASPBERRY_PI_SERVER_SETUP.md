@@ -229,5 +229,7 @@ Log into the Pi-hole Admin Panel (`http://${PI_STATIC_IP}/admin`, password `CHAN
 
 ## 🔄 **Router Reboot Resilience Test**
 
+This test is crucial to ensure that your Pi-hole server and all its services recover gracefully and maintain consistent network performance after routine network interruptions, such as daily router reboots or ISP-initiated network refreshes.
+
 1.  Re-enable your router's daily 4 AM reboot schedule.
 2.  After 4 AM, verify that Pi-hole and all services are still running and accessible.
