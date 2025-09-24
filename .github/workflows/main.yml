@@ -1,0 +1,40 @@
+name: CI Checks
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint-scripts-and-docker-compose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Run ShellCheck on scripts
+        run: shellcheck scripts/*.sh
+
+      - name: Validate Docker Compose files
+        run: |
+          docker compose -f docker/docker-compose.core.yml config
+          docker compose -f docker/monitoring/docker-compose.monitoring.yml config
+          docker compose -f docker/optional/docker-compose.optional.yml config
+
+  check-markdown-links:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check Markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          config-file: '.github/configs/markdown-link-check.jsonc'

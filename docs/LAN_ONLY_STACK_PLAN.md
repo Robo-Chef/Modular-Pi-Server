@@ -10,13 +10,13 @@ It serves as the foundational design document, providing context for the technic
         - Pi-hole blocks ads and trackers for every device on your Wi-Fi or Ethernet.
         - Unbound resolves domains directly, cutting out Google, Cloudflare, or your ISP. You get faster, more private lookups without depending on third-party DNS.
     2. **Gives you easy ways to manage and monitor it**
-        - **Portainer** → a web dashboard to control all your Docker apps in one place.
-        - **Dozzle** → a live log viewer, so you can spot issues without touching the terminal.
-        - **Uptime Kuma** → a “status page” that alerts you if Pi-hole or other services stop responding.
-        - **Speedtest Tracker** → scheduled internet speed tests, building evidence if your ISP underperforms.
+        - **Portainer** → a web dashboard to control all your Docker apps in one place. ![Screenshot: Portainer dashboard view]
+        - **Dozzle** → a live log viewer, so you can spot issues without touching the terminal. ![Screenshot: Dozzle live logs interface]
+        - **Uptime Kuma** → a “status page” that alerts you if Pi-hole or other services stop responding. ![Screenshot: Uptime Kuma status page]
+        - **Speedtest Tracker** → scheduled internet speed tests, building evidence if your ISP underperforms. ![Screenshot: Speedtest Tracker results dashboard]
     3. **Optionally grows into your own local services**
-        - **Home Assistant** → smart home automation without cloud reliance.
-        - **Gitea** → your own lightweight GitHub-style repo for projects.
+        - **Home Assistant** → smart home automation without cloud reliance. ![Screenshot: Home Assistant dashboard example]
+        - **Gitea** → your own lightweight GitHub-style repo for projects. ![Screenshot: Gitea repository view]
         - **Netdata/Glances** → advanced monitoring of CPU, memory, and system health.
         - **code-server** → VS Code in your browser (when you’re at home on LAN).
     4. **Keeps everything clean, safe, and lightweight**
@@ -504,7 +504,7 @@ for i in {1..1000}; do dig @192.168.0.185 example.com & done
 
 **6.1 Monitoring Dashboard**
 
-- **Grafana**: **`http://192.168.0.185:3000`**
+- **Grafana**: **`http://192.168.0.185:3000`** ![Screenshot: Grafana dashboard with system and Pi-hole metrics]
     - Pi-hole stats
     - System metrics (CPU/RAM/Disk)
     - Network throughput

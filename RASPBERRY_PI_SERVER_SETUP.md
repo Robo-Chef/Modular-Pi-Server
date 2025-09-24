@@ -215,6 +215,7 @@ Log into the Pi-hole Admin Panel (`http://${PI_STATIC_IP}/admin`, password `CHAN
 - **Test Pi-hole functionality:**
   - `dig @${PI_STATIC_IP} doubleclick.net` (Should return `0.0.0.0`)
   - `dig @${PI_STATIC_IP} google.com` (Should return real IP)
+  - ![Screenshot: Pi-hole Admin Panel showing blocked queries and network activity]
 - **Test ad blocking from Windows PC:**
   - `nslookup doubleclick.net ${PI_STATIC_IP}` (Should return `0.0.0.0`)
   - `nslookup google.com ${PI_STATIC_IP}` (Should return real IP)

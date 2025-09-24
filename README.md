@@ -6,7 +6,7 @@ A comprehensive, modular **LAN-only** home server setup using Raspberry Pi 3 B+ 
 
 - **Base OS**: Raspberry Pi OS (64-bit)
 - **Static IP**: Configured via `.env` (e.g., `192.168.1.XXX`)
-- **Core Services**: Pi-hole + Unbound for DNS and ad blocking
+- **Core Services**: Pi-hole + Unbound for DNS and ad blocking ![Screenshot: Pi-hole Admin Dashboard example]
 - **Monitoring**: Prometheus, Grafana, Uptime Kuma
 - **Optional**: Home Assistant, Gitea
 - **Security**: `nftables` firewall, SSH hardening, container isolation
