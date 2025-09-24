@@ -6,16 +6,20 @@
 
 set -euo pipefail # Exit immediately if a command exits with a non-zero status, exit if an undeclared variable is used, and propagate pipefail status.
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Source utility functions for consistent logging and error handling.
-source "$(dirname "$0")"/utils.sh
+# shellcheck source=./utils.sh
+source "${SCRIPT_DIR}/utils.sh"
 
 # Verify the .env file exists, which contains essential environment variables.
 if [[ ! -f ".env" ]]; then
     error ".env file not found. Please copy env.example to .env and configure it."
 fi
 
-# Source the .env file to load environment variables. SC1091 is disabled as .env is not a fixed path script.
-# shellcheck disable=SC1091
+# Source the .env file to load environment variables.
+# shellcheck source=/dev/null
 source .env
 
 # Function to display the current system and service status.
@@ -23,7 +27,10 @@ source .env
 status_check() {
     log "Checking system and service status..."
     # Check the status of the main Docker Compose systemd service.
-    sudo systemctl status pihole-server.service || warn "pihole-server.service is not running or failed. Check `sudo systemctl status pihole-server.service` for details."
+    if ! sudo systemctl status pihole-server.service; then
+        warn "pihole-server.service is not running or failed. Check 'sudo systemctl status pihole-server.service' for details."
+    fi
+    
     # List all running Docker containers with their status and exposed ports.
     docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
     echo ""
@@ -43,12 +50,21 @@ status_check() {
 full_maintenance() {
     log "Performing full system update and Docker container updates..."
     # Update and upgrade all system packages.
-    sudo apt update && sudo apt upgrade -y || error "System package update/upgrade failed."
+    if ! (sudo apt update && sudo apt upgrade -y); then
+        error "System package update/upgrade failed."
+    fi
+    
     # Pull the latest Docker images for all services defined in the compose files.
-    docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml pull || warn "Failed to pull latest Docker images."
+    if ! docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml pull; then
+        warn "Failed to pull latest Docker images."
+    fi
+    
     # Recreate containers with new images (if pulled) and ensure they are running.
-    docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml up -d || error "Failed to update/recreate Docker containers."
-    log "Full maintenance completed."
+    if ! docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml up -d; then
+        error "Failed to update/recreate Docker containers."
+    fi
+    
+    log "Full maintenance completed successfully."
     status_check # Display status after maintenance.
 }
 
@@ -57,9 +73,15 @@ full_maintenance() {
 update_containers() {
     log "Updating Docker containers..."
     # Pull the latest Docker images.
-    docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml pull || warn "Failed to pull latest Docker images."
+    if ! docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml pull; then
+        warn "Failed to pull latest Docker images."
+    fi
+    
     # Recreate containers with new images (if pulled) and ensure they are running.
-    docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml up -d || error "Failed to update/recreate Docker containers."
+    if ! docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml up -d; then
+        error "Failed to update/recreate Docker containers."
+    fi
+    
     log "Container update completed."
     status_check # Display status after container update.
 }
@@ -68,7 +90,9 @@ update_containers() {
 run_backup() {
     log "Running local backup script (scripts/backup.sh)..."
     # Execute the dedicated backup script.
-    ./scripts/backup.sh || error "Backup script failed."
+    if ! ./scripts/backup.sh; then
+        error "Backup script failed."
+    fi
     log "Local backup completed."
 }
 

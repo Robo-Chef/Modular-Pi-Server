@@ -5,8 +5,12 @@
 
 set -euo pipefail # Exit immediately if a command exits with a non-zero status, exit if an undeclared variable is used, and propagate pipefail status.
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Source utility functions for logging, error handling, and container health checks.
-source "$(dirname "$0")"/utils.sh
+# shellcheck source=./utils.sh
+source "${SCRIPT_DIR}/utils.sh"
 
 # --- Initial Checks ---
 
@@ -33,15 +37,17 @@ if [[ ! -f ".env" ]]; then
     error ".env file not found. Please copy env.example to .env and configure it."
 fi
 
-# Source the .env file to load environment variables. SC1091 is disabled as .env is not a fixed path script.
-# shellcheck disable=SC1091
+# Source the .env file to load environment variables.
+# shellcheck source=/dev/null
 source .env
 
 log "Starting Raspberry Pi Home Server Quick Deploy..."
 
 # Change to the project root directory. The directory structure and initial setup
 # (including file copying/permissions) are handled by `scripts/setup.sh`.
-cd ~/pihole-server || error "Failed to change directory to ~/pihole-server. Ensure setup.sh has been run."
+if ! cd ~/pihole-server; then
+    error "Failed to change directory to ~/pihole-server. Ensure setup.sh has been run."
+fi
 
 # Set necessary permissions for Docker volumes and configurations.
 chmod 755 docker/pihole docker/unbound monitoring || warn "Failed to set permissions on Docker configuration directories."
@@ -164,5 +170,3 @@ echo ""
 log "For detailed troubleshooting steps, refer to: ~/pihole-server/docs/troubleshooting.md"
 log "For enhancing server security, refer to: ~/pihole-server/docs/security-hardening.md"
 log "For the architectural design and rationale, refer to: ~/pihole-server/docs/LAN_ONLY_STACK_PLAN.md and ~/pihole-server/docs/adr/0001-lan-only-design.md"
-
-

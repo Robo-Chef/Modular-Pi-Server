@@ -10,19 +10,21 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color escape code.
 
+# shellcheck disable=SC2317  # Intentional use of return/exit in helper functions
+
 # Logs a message to stdout in green. Used for general information.
 log() {
     echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
 }
 
 # Logs a warning message to stdout in yellow. Used for non-critical issues.
-warn() { # shellcheck disable=SC2317: Intentional use of return/exit in helper functions.
+warn() {
     echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARNING: $1${NC}"
 }
 
 # Logs an error message to stderr in red and exits the script with status 1. Used for critical failures.
-error() { # shellcheck disable=SC2317: Intentional use of return/exit in helper functions.
-    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}"
+error() {
+    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}" >&2
     exit 1
 }
 
@@ -34,10 +36,12 @@ wait_for_container_health() {
     local container_name="$1"
     local retries=20 # Number of times to check for health
     local delay=5    # Delay in seconds between checks
-    local start_time; start_time=$(date +%s)
+    local start_time
+    start_time=$(date +%s)
+    local i
 
     log "Waiting for container '$container_name' to become healthy..."
-    for i in $(seq 1 $retries); do
+    for ((i=1; i<=retries; i++)); do
         # Check Docker inspect for health status. Redirect stderr to /dev/null to suppress errors if container not found.
         if docker inspect --format='{{.State.Health.Status}}' "$container_name" 2>/dev/null | grep -q "healthy"; then
             log "Container '$container_name' is healthy."
@@ -48,7 +52,7 @@ wait_for_container_health() {
     done
 
     # If loop completes without container becoming healthy, raise an error.
-    error "Container '$container_name' did not become healthy within the allotted time."
+    error "Timed out waiting for container '$container_name' to become healthy after $((retries * delay)) seconds."
 }
 
 # Verifies the integrity of a backup by attempting a partial restore to a temporary location.

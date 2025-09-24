@@ -5,8 +5,12 @@
 
 set -euo pipefail
 
-# Source utility functions from utils.sh. This ensures common logging and helper functions are available.
-source "$(dirname "$0")"/utils.sh
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source utility functions from utils.sh.
+# shellcheck source=./utils.sh
+source "${SCRIPT_DIR}/utils.sh"
 
 # Ensure the script is not run as root to prevent permission issues with user's home directory and Docker.
 if [[ $EUID -eq 0 ]]; then
@@ -18,33 +22,43 @@ if [[ ! -f ".env" ]]; then
     error ".env file not found. Please copy env.example to .env and configure it."
 fi
 
-# Source the .env file to load environment variables. SC1091 is disabled as .env is not a fixed path script.
-# shellcheck disable=SC1091
+# Source the .env file to load environment variables.
+# shellcheck source=/dev/null
 source .env
 
 log "Starting Raspberry Pi Home Server setup..."
 
 # Update and upgrade all installed packages to ensure the system is up-to-date and secure.
 log "Updating system packages..."
-sudo apt update && sudo apt upgrade -y || error "Failed to update or upgrade system packages."
+if ! (sudo apt update && sudo apt upgrade -y); then
+    error "Failed to update or upgrade system packages."
+fi
 
 # Install essential system utilities and network tools.
 log "Installing essential packages (curl, wget, git, vim, htop, nftables, jq, dnsutils)..."
-sudo apt install -y curl wget git vim htop nftables jq dnsutils || error "Failed to install essential packages."
+if ! sudo apt install -y curl wget git vim htop nftables jq dnsutils; then
+    error "Failed to install essential packages."
+fi
 
 # Install Docker if it's not already present.
 log "Installing Docker (if not already installed)..."
 if ! command -v docker &> /dev/null; then
-    curl -fsSL https://get.docker.com | sh || error "Failed to install Docker."
+    if ! curl -fsSL https://get.docker.com | sh; then
+        error "Failed to install Docker."
+    fi
     # Add the current user to the 'docker' group to allow running docker commands without sudo.
-    sudo usermod -aG docker "$USER" || error "Failed to add user to docker group."
+    if ! sudo usermod -aG docker "$USER"; then
+        error "Failed to add user to docker group."
+    fi
     log "Docker installed. Please log out and back in for group changes to take effect. Then re-run quick-deploy.sh."
 fi
 
 # Install Docker Compose plugin if it's not already present.
 log "Installing Docker Compose plugin (if not already installed)..."
 if ! command -v docker-compose &> /dev/null; then
-    sudo apt install -y docker-compose-plugin || error "Failed to install Docker Compose plugin."
+    if ! sudo apt install -y docker-compose-plugin; then
+        error "Failed to install Docker Compose plugin."
+    fi
 fi
 
 # Configure the SSH daemon for enhanced security and custom port.

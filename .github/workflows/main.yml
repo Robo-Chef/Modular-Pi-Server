@@ -68,7 +68,6 @@ jobs:
         run: |
           npm install -g markdownlint-cli@0.35.0
           npm install -g prettier@3.0.0
-          npm install -g prettier-plugin-markdown@2.0.0
 
       - name: Run markdownlint
         run: |
@@ -108,28 +107,60 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run Trivy vulnerability scanner for all images
-        id: trivy-scan
+      - name: Set up Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: |
-            pihole/pihole:2024.06.0
-            klutchell/unbound:latest
-            prom/prometheus:2.51.0
-            prom/node-exporter:1.7.0
-            prom/alertmanager:0.27.0
-            grafana/grafana:11.1.0
-            portainer/portainer-ce:latest
-            containrrr/watchtower:latest
-            dozzle/dozzle:latest
-          format: "sarif"
-          output: "trivy-scan-results.sarif"
-          severity: "CRITICAL,HIGH"
-          exit-code: '0'  # Don't fail the build on vulnerabilities
-          ignore-unfixed: true
-          ignorefile: ".github/trivy-ignore.yaml"  # Use the ignore file
-          skip-files: "/etc/ssl/certs/ca-certificates.crt"  # Keep existing skip files
-          timeout: '5m'  # 5 minute timeout per image
+          version: '0.65.0'
+          skip-install: false
+
+      - name: Run Trivy vulnerability scanner for all images
+        id: trivy-scan
+        run: |
+          # Create a list of images to scan
+          IMAGES=(
+            "pihole/pihole:2024.06.0"
+            "klutchell/unbound:latest"
+            "prom/prometheus:2.51.0"
+            "prom/node-exporter:1.7.0"
+            "prom/alertmanager:0.27.0"
+            "grafana/grafana:11.1.0"
+            "portainer/portainer-ce:latest"
+            "containrrr/watchtower:latest"
+            "dozzle/dozzle:latest"
+          )
+          
+          # Create an empty array to store SARIF files
+          SARIF_FILES=()
+          
+          # Scan each image individually
+          for IMAGE in "${IMAGES[@]}"; do
+            echo "Scanning $IMAGE..."
+            FILENAME="trivy-scan-$(echo $IMAGE | tr '/:' '-').sarif"
+            trivy image \
+              --format sarif \
+              --output $FILENAME \
+              --severity CRITICAL,HIGH \
+              --ignore-unfixed \
+              --ignorefile .github/trivy-ignore.yaml \
+              --skip-files "/etc/ssl/certs/ca-certificates.crt" \
+              --timeout 5m \
+              "$IMAGE" || echo "Warning: Scan for $IMAGE failed, but continuing..."
+            
+            # Add the SARIF file to the list if it was created
+            if [ -f "$FILENAME" ]; then
+              SARIF_FILES+=("$FILENAME")
+            fi
+          done
+          
+          # Combine all SARIF files into one
+          if [ ${#SARIF_FILES[@]} -gt 0 ]; then
+            echo "Combining SARIF files..."
+            jq -s 'reduce .[] as $item ({"version": "2.1.0", "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json", "runs": []}; .runs += $item.runs)' "${SARIF_FILES[@]}" > trivy-scan-results.sarif
+            echo "Combined SARIF file created: trivy-scan-results.sarif"
+          else
+            echo "No SARIF files were generated. Creating an empty report."
+            echo '{"version": "2.1.0", "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json", "runs": []}' > trivy-scan-results.sarif
+          fi
 
       - name: Upload Trivy scan results
         uses: actions/upload-artifact@v4
@@ -138,6 +169,7 @@ jobs:
           name: trivy-scan-results
           path: |
             trivy-scan-results.sarif
+            trivy-scan-*.sarif
 
       - name: Generate vulnerability report
         if: always()  # Always generate a report
@@ -145,33 +177,27 @@ jobs:
           echo "# 📊 Trivy Vulnerability Scan Results" >> $GITHUB_STEP_SUMMARY
           echo "## Scan completed at $(date)" >> $GITHUB_STEP_SUMMARY
           
-          # Check if there are any critical or high severity vulnerabilities
+          # Check if there are any scan results
           if [ -f "trivy-scan-results.sarif" ]; then
             echo "### 🔍 Scan Results" >> $GITHUB_STEP_SUMMARY
             echo "Detailed SARIF report is available in the workflow artifacts." >> $GITHUB_STEP_SUMMARY
             
-            # Extract and summarize critical/high vulnerabilities
-            echo "### ⚠️ High/Critical Vulnerabilities" >> $GITHUB_STEP_SUMMARY
-            echo "| Severity | Package | Version | Vulnerability ID | Description |" >> $GITHUB_STEP_SUMMARY
-            echo "|----------|---------|---------|------------------|-------------|" >> $GITHUB_STEP_SUMMARY
+            # Count vulnerabilities by severity
+            echo "### ⚠️ Vulnerability Summary" >> $GITHUB_STEP_SUMMARY
             
-            # Use jq to parse the SARIF file and extract relevant information
-            jq -r '
-              .runs[].results[] | 
-              select(.level == "error" or .level == "warning") | 
-              "|\(.level)|\(.locations[].physicalLocation.artifactLocation.uri)|\
-              \(.locations[].physicalLocation.region.startLine)|\
-              \(.ruleId)|\
-              \(.message.text | gsub("\n"; " ") | .[0:50] + (if length > 50 then "..." else "" end))|"
-            ' trivy-scan-results.sarif 2>/dev/null || echo "No vulnerabilities found or error parsing results" >> $GITHUB_STEP_SUMMARY
+            # Count critical vulnerabilities
+            CRITICAL_COUNT=$(jq -r '.runs[].results[] | select(.level == "error") | .ruleId' trivy-scan-results.sarif 2>/dev/null | wc -l || echo 0)
+            # Count high vulnerabilities
+            HIGH_COUNT=$(jq -r '.runs[].results[] | select(.level == "warning") | .ruleId' trivy-scan-results.sarif 2>/dev/null | wc -l || echo 0)
             
-            echo "\n### 🔍 View Full Report" >> $GITHUB_STEP_SUMMARY
-            echo "Download the full SARIF report from the workflow artifacts for detailed information." >> $GITHUB_STEP_SUMMARY
+            echo "- 🔴 **Critical:** $CRITICAL_COUNT" >> $GITHUB_STEP_SUMMARY
+            echo "- 🟠 **High:** $HIGH_COUNT" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            echo "### 📊 Next Steps" >> $GITHUB_STEP_SUMMARY
+            echo "1. Review the detailed SARIF report in the workflow artifacts" >> $GITHUB_STEP_SUMMARY
+            echo "2. Update to newer versions of the images if available" >> $GITHUB_STEP_SUMMARY
+            echo "3. If a vulnerability is a false positive, consider adding it to the ignore list" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ Error: Trivy scan failed to generate results." >> $GITHUB_STEP_SUMMARY
+            echo "❌ Error: No scan results were generated." >> $GITHUB_STEP_SUMMARY
           fi
-          
-          echo "\n### 📊 Next Steps" >> $GITHUB_STEP_SUMMARY
-          echo "1. Review the vulnerabilities in the report above" >> $GITHUB_STEP_SUMMARY
-          echo "2. Update to newer versions of the images if available" >> $GITHUB_STEP_SUMMARY
-          echo "3. If a vulnerability is a false positive, consider adding it to the ignore list" >> $GITHUB_STEP_SUMMARY

@@ -5,8 +5,12 @@
 
 set -euo pipefail # Exit immediately if a command exits with a non-zero status, exit if an undeclared variable is used, and propagate pipefail status.
 
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Source utility functions for consistent logging and error handling.
-source "$(dirname "$0")"/utils.sh
+# shellcheck source=./utils.sh
+source "${SCRIPT_DIR}/utils.sh"
 
 # Initialize counters for tracking test results.
 TESTS_PASSED=0
@@ -18,65 +22,74 @@ TOTAL_TESTS=0
 #   $1: Name/description of the test.
 #   $2: The command string to execute.
 #   $3: The expected exit status (0 for success).
-run_test() { # shellcheck disable=SC2317: This helper intentionally contains code paths ShellCheck deems unreachable in some error/early-return flows. We disable it at function scope by design.
+run_test() {
    local test_name="$1"
    local test_command="$2"
    local expected_result="$3"
-    
+   local status
+   
    TOTAL_TESTS=$((TOTAL_TESTS + 1))
-    
+   
    log "Running test: $test_name"
-    
-   local status # Variable to capture exit status.
+   
    # Execute the command and suppress its output, capturing only the exit status.
    if eval "$test_command" >/dev/null 2>&1; then
        status=$?
        if [[ "$status" -eq "$expected_result" ]]; then
-           log "✓ PASS: $test_name"
+           log " PASS: $test_name"
            TESTS_PASSED=$((TESTS_PASSED + 1))
            return 0
        else
-           error "✗ FAIL: $test_name (unexpected exit code: got $status; expected $expected_result)"
+           error " FAIL: $test_name (unexpected exit code: got $status; expected $expected_result)"
            TESTS_FAILED=$((TESTS_FAILED + 1))
            return 1
        fi
    else
        status=$? # Capture exit status from eval in case the command itself failed.
-       error "✗ FAIL: $test_name (command failed with status $status)"
+       error " FAIL: $test_name (command failed with status $status)"
        TESTS_FAILED=$((TESTS_FAILED + 1))
        return 1
    fi
 }
 
-# Function to run a test command and evaluate a custom success condition based on its output/status.
+# Function to run a test with custom comparison logic.
 # Arguments:
 #   $1: Name/description of the test.
-#   $2: The command string to execute.
-#   $3: A bash conditional string to evaluate for success (e.g., '[[ -n "$result" ]]').
-run_test_custom() { # shellcheck disable=SC2317: same rationale as run_test()
-   local test_name="$1"
-   local test_command="$2"
-   local success_condition="$3"
+#   $2: Command to execute (output will be captured).
+#   $3: Comparison command to evaluate the output.
+#   $4: Expected exit status (0 for success).
+run_test_custom() {
+    local test_name="$1"
+    local test_command="$2"
+    local comparison_command="$3"
+    local expected_result="$4"
+    local output
+    local status
     
-   TOTAL_TESTS=$((TOTAL_TESTS + 1))
+    TOTAL_TESTS=$((TOTAL_TESTS + 1))
     
-   log "Running test: $test_name"
+    log "Running test: $test_name"
     
-   local result # Variable to capture command output.
-   # Execute the command and capture its output and exit status.
-   result=$(eval "$test_command" 2>/dev/null)
-   local status=$? # Capture exit status.
+    # Execute the command and capture its output and status
+    output=$(eval "$test_command" 2>&1)
+    status=$?
     
-   # Evaluate the custom success condition.
-   if eval "$success_condition"; then
-       log "✓ PASS: $test_name"
-       TESTS_PASSED=$((TESTS_PASSED + 1))
-       return 0
-   else
-       error "✗ FAIL: $test_name (condition failed with status $status, result: $result)"
-       TESTS_FAILED=$((TESTS_FAILED + 1))
-       return 1
-   fi
+    # Evaluate the comparison command
+    if eval "$comparison_command" <<<"$output" 2>/dev/null; then
+        if [[ "$status" -eq "$expected_result" ]]; then
+            log " PASS: $test_name"
+            TESTS_PASSED=$((TESTS_PASSED + 1))
+            return 0
+        else
+            error " FAIL: $test_name (unexpected exit code: got $status; expected $expected_result)"
+            TESTS_FAILED=$((TESTS_FAILED + 1))
+            return 1
+        fi
+    else
+        error " FAIL: $test_name (output comparison failed)"
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        return 1
+    fi
 }
 
 log "Starting Raspberry Pi Home Server deployment tests..."
@@ -213,10 +226,8 @@ log "Failed: $TESTS_FAILED"
 
 # Final status based on test outcomes.
 if [[ $TESTS_FAILED -eq 0 ]]; then
-    log "🎉 All tests passed! Deployment is successful and stable."
+    log " All tests passed! Deployment is successful and stable."
     exit 0
 else
-    error "❌ $TESTS_FAILED tests failed. Please review the failures above and troubleshoot the issues."
+    error " $TESTS_FAILED tests failed. Please review the failures above and troubleshoot the issues."
 fi
-
-
