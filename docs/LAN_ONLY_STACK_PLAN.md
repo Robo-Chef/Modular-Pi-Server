@@ -5,29 +5,29 @@ It serves as the foundational design document, providing context for the technic
 
 # Raspberry Pi LAN-Only Stack Plan
 
-- Turning your Pi into a **self-contained, private home server (LAN-only):**
-  1. **Protects and cleans your internet connection inside the house**
+This project is designed to transform your Raspberry Pi into a **self-contained, private home server (LAN-only)**. It aims to achieve the following:
+  1. **Protect and clean your internet connection inside the house**
      - Pi-hole blocks ads and trackers for every device on your Wi-Fi or Ethernet.
      - Unbound resolves domains directly, cutting out Google, Cloudflare, or your ISP. You get faster, more private lookups without depending on third-party DNS.
-  2. **Gives you easy ways to manage and monitor it**
+  2. **Provide easy ways to manage and monitor it**
      - **Portainer** → a web dashboard to control all your Docker apps in one place. ![Screenshot: Portainer dashboard view]
      - **Dozzle** → a live log viewer, so you can spot issues without touching the terminal. ![Screenshot: Dozzle live logs interface]
      - **Uptime Kuma** → a “status page” that alerts you if Pi-hole or other services stop responding. ![Screenshot: Uptime Kuma status page]
      - **Speedtest Tracker** → scheduled internet speed tests, building evidence if your ISP underperforms. ![Screenshot: Speedtest Tracker results dashboard]
-  3. **Optionally grows into your own local services**
+  3. **Allow for optional growth into local services**
      - **Home Assistant** → smart home automation without cloud reliance. ![Screenshot: Home Assistant dashboard example]
      - **Gitea** → your own lightweight GitHub-style repo for projects. ![Screenshot: Gitea repository view]
      - **Netdata/Glances** → advanced monitoring of CPU, memory, and system health.
      - **code-server** → VS Code in your browser (when you’re at home on LAN).
-  4. **Keeps everything clean, safe, and lightweight**
+  4. **Maintain a clean, safe, and lightweight setup**
      - Everything is Dockerized → portable, restartable, easy to back up.
      - Runs only on your LAN → no exposure to the wider internet, no port forwarding, no CGNAT headaches.
      - Minimal load → a Pi 3 B+ with 1 GB RAM can run Pi-hole, Unbound, and lightweight QoL tools smoothly.
      - Static LAN IP → always reachable at `192.168.1.XXX` from any device in the house.
 
-## ❌ Why External/Remote Access Isn’t Feasible
+## ❌ Why External/Remote Access Isn’t Feasible: Design Constraints
 
-Before deciding on a LAN-only approach, it’s important to note the blockers:
+This project was specifically designed with the following constraints in mind, which act as barriers to implementing more remote use cases:
 
 - **ISP & Router Limitations**
   - Your public IP is shared (Carrier-Grade NAT).
@@ -40,9 +40,9 @@ Before deciding on a LAN-only approach, it’s important to note the blockers:
   - 1 GB RAM → can’t comfortably run heavy VPN + extras at the same time.
   - WireGuard container (`wg-easy`) auto-overwrites configs → mismatched subnets and breakages.
 
-👉 Together, these make **external VPN/tunnel solutions** (WireGuard, Cloudflare Tunnel, etc.) _more pain than they’re worth_.
+👉 Collectively, these factors make **external VPN/tunnel solutions** (WireGuard, Cloudflare Tunnel, etc.) _more pain than they’re worth_.
 
-So the **rational design choice** is:
+The **rational design choice** for this project is to:
 
 Focus on **LAN-only reliability**, where you actually get consistent results without battling ISP/router limitations.
 
@@ -107,24 +107,6 @@ Focus on **LAN-only reliability**, where you actually get consistent results wit
   ```
 
 ---
-
-### 7. **Limitations (By Design)**
-
-- Router leaks some DNS to ISP → not perfect, but acceptable.
-- No VPN or remote use → only LAN devices benefit.
-- Pi 3 B+ = resource-limited → keep stack lean.
-
----
-
-## 🏁 Final Justification
-
-- CGNAT + router limitations = remote access not viable.
-- Pi 3 B+ is fine for **LAN-only Pi-hole + Unbound + light QoL tools**.
-- This design avoids endless config headaches while still delivering:
-  - LAN-wide ad/tracker blocking.
-  - DNSSEC + recursive resolution.
-  - Easy monitoring dashboards.
-  - No installs needed on end-user devices.
 
 # **Raspberry Pi Home Server: Technical Implementation Guide**
 
