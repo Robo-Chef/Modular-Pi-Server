@@ -1,6 +1,6 @@
 # Raspberry Pi Home Server
 
-A comprehensive, modular home server setup using Raspberry Pi 3 B+ with Pi-hole, Unbound, monitoring, and optional services. Designed for easy deployment and personalization.
+A comprehensive, modular **LAN-only** home server setup using Raspberry Pi 3 B+ with Pi-hole, Unbound, monitoring, and optional services. Designed for easy deployment and personalization.
 
 ## Architecture
 
