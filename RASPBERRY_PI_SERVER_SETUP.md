@@ -151,6 +151,32 @@ This is crucial for handling daily router reboots. We will configure the `system
 
 ---
 
+## 🌐 **Router Configuration for Pi-hole DNS**
+
+For network-wide ad blocking and DNS resolution, your router needs to be configured to use your Raspberry Pi (running Pi-hole) as its primary DNS server. The exact steps vary by router model and internet service provider (ISP).
+
+1.  **Access Your Router's Administration Interface:**
+    -   Typically, you can access your router by entering its gateway IP address (e.g., `192.168.1.1` from your `.env` file) into a web browser.
+    -   Log in with your router's administrative credentials.
+
+2.  **Locate DNS Settings:**
+    -   Navigate to the network, WAN, or DHCP settings section of your router's interface.
+    -   Find the fields for Primary DNS Server and (optionally) Secondary DNS Server.
+
+3.  **Set Primary DNS to Raspberry Pi's Static IP:**
+    -   Enter your Raspberry Pi's static IP address (configured as `PI_STATIC_IP` in your `.env` file, e.g., `192.168.1.XXX`) as the **Primary DNS Server**.
+    -   For the Secondary DNS, you can either leave it blank (if your router allows) or set it to a public DNS server like `8.8.8.8` (Google DNS) as a fallback.
+
+4.  **Consider DHCP Configuration (Optional but Recommended):**
+    -   For optimal Pi-hole functionality (e.g., seeing individual client names instead of just the router's IP), it is often recommended to **disable your router's DHCP server** and enable Pi-hole's built-in DHCP server.
+    -   If you choose to do this, ensure Pi-hole's DHCP server is configured **before** disabling it on your router to avoid network interruption.
+    -   Refer to the Pi-hole documentation for detailed instructions on configuring its DHCP server.
+
+5.  **Save and Apply Settings:**
+    -   Save the changes on your router. Your router may reboot to apply the new settings.
+
+---
+
 ## 🛡️ **Pi-hole Adlist & Regex Configuration**
 
 Log into the Pi-hole Admin Panel (`http://${PI_STATIC_IP}/admin`, password `CHANGE_ME_PIHOLE` from `.env`)
