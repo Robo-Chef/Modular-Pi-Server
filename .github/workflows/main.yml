@@ -25,7 +25,7 @@ jobs:
         run: shellcheck scripts/*.sh
 
       - name: Install Hadolint
-        run: sudo wget -O /bin/hadolint "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-arm64" && sudo chmod +x /bin/hadolint # Adjust URL for arm64 if needed
+        run: sudo wget -O /bin/hadolint "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-x86_64" && sudo chmod +x /bin/hadolint # Adjust URL for arm64 if needed
 
       - name: Run Hadolint on Dockerfiles
         run: find . -name "Dockerfile*" -print0 | xargs -0 hadolint
