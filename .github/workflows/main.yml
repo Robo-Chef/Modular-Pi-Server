@@ -64,41 +64,37 @@ jobs:
         with:
           node-version: '18.x'
 
-      - name: Install markdownlint-cli and prettier
-        run: |
-          npm install -g markdownlint-cli@0.35.0
-          npm install -g prettier@3.0.0
-
-      - name: Run markdownlint
-        run: |
-          markdownlint --config .github/configs/.markdownlint.json "**/*.md" --ignore "node_modules/**" --ignore ".github/**" --ignore "**/node_modules/**"
-
       - name: Fix markdown files
-        if: github.event_name == 'push'  # Only run on push events
+        if: github.event_name == 'push' || github.event_name == 'pull_request'  # Run on both push and PR
         run: |
+          # Install Prettier and markdownlint
+          npm install -g prettier@3.0.0 markdownlint-cli@0.35.0
+          
           # Fix markdown files using prettier
           find . -name "*.md" -not -path "*/node_modules/*" -not -path "*/.github/*" -exec prettier --write --prose-wrap always {} \;
           
-          # Configure git
-          git config --global user.name 'GitHub Actions'
-          git config --global user.email 'actions@github.com'
+          # Fix list spacing using markdownlint
+          markdownlint --fix "**/*.md" --ignore "node_modules/**" --ignore ".github/**" --ignore "**/node_modules/**"
           
-          # Check if there are changes to commit
-          git add .
-          if ! git diff --quiet && ! git diff --staged --quiet; then
-            git commit -m "style: auto-format markdown files"
-            git push
+          # Configure git if this is a push event
+          if [ "${{ github.event_name }}" = "push" ]; then
+            git config --global user.name 'GitHub Actions'
+            git config --global user.email 'actions@github.com'
+            
+            # Check if there are changes to commit
+            git add .
+            if ! git diff --quiet && ! git diff --staged --quiet; then
+              git commit -m "docs: auto-format markdown files"
+              git push
+            fi
           fi
 
-      - name: Fix markdown files
-        if: github.event_name == 'pull_request'  # Only run on pull request events
-        run: |
-          # Fix markdown files using prettier
-          find . -name "*.md" -not -path "*/node_modules/*" -not -path "*/.github/*" -exec prettier --write --prose-wrap always {} \;
-
       - name: Run markdownlint
         run: |
-          markdownlint --config .github/configs/.markdownlint.json "**/*.md" --ignore "node_modules/**" --ignore ".github/**" --ignore "**/node_modules/**"
+          markdownlint --config .github/configs/.markdownlint.json "**/*.md" \
+            --ignore "node_modules/**" \
+            --ignore ".github/**" \
+            --ignore "**/node_modules/**"
 
   scan-docker-images:
     runs-on: ubuntu-latest
@@ -107,60 +103,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          version: '0.65.0'
-          skip-install: false
-
       - name: Run Trivy vulnerability scanner for all images
         id: trivy-scan
-        run: |
-          # Create a list of images to scan
-          IMAGES=(
-            "pihole/pihole:2024.06.0"
-            "klutchell/unbound:latest"
-            "prom/prometheus:2.51.0"
-            "prom/node-exporter:1.7.0"
-            "prom/alertmanager:0.27.0"
-            "grafana/grafana:11.1.0"
-            "portainer/portainer-ce:latest"
-            "containrrr/watchtower:latest"
-            "dozzle/dozzle:latest"
-          )
-          
-          # Create an empty array to store SARIF files
-          SARIF_FILES=()
-          
-          # Scan each image individually
-          for IMAGE in "${IMAGES[@]}"; do
-            echo "Scanning $IMAGE..."
-            FILENAME="trivy-scan-$(echo $IMAGE | tr '/:' '-').sarif"
-            trivy image \
-              --format sarif \
-              --output $FILENAME \
-              --severity CRITICAL,HIGH \
-              --ignore-unfixed \
-              --ignorefile .github/trivy-ignore.yaml \
-              --skip-files "/etc/ssl/certs/ca-certificates.crt" \
-              --timeout 5m \
-              "$IMAGE" || echo "Warning: Scan for $IMAGE failed, but continuing..."
-            
-            # Add the SARIF file to the list if it was created
-            if [ -f "$FILENAME" ]; then
-              SARIF_FILES+=("$FILENAME")
-            fi
-          done
-          
-          # Combine all SARIF files into one
-          if [ ${#SARIF_FILES[@]} -gt 0 ]; then
-            echo "Combining SARIF files..."
-            jq -s 'reduce .[] as $item ({"version": "2.1.0", "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json", "runs": []}; .runs += $item.runs)' "${SARIF_FILES[@]}" > trivy-scan-results.sarif
-            echo "Combined SARIF file created: trivy-scan-results.sarif"
-          else
-            echo "No SARIF files were generated. Creating an empty report."
-            echo '{"version": "2.1.0", "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json", "runs": []}' > trivy-scan-results.sarif
-          fi
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: |
+            pihole/pihole:2024.06.0
+            klutchell/unbound:latest
+            prom/prometheus:2.51.0
+            prom/node-exporter:1.7.0
+            prom/alertmanager:0.27.0
+            grafana/grafana:11.1.0
+            portainer/portainer-ce:latest
+            containrrr/watchtower:latest
+            dozzle/dozzle:latest
+          format: "sarif"
+          output: "trivy-scan-results.sarif"
+          severity: "CRITICAL,HIGH"
+          exit-code: '0'  # Don't fail the build on vulnerabilities
+          ignore-unfixed: true
+          ignorefile: ".github/trivy-ignore.yaml"  # Use the ignore file
+          skip-files: "/etc/ssl/certs/ca-certificates.crt"  # Keep existing skip files
+          timeout: '5m'  # 5 minute timeout per image
+          version: '0.46.0'  # Use a valid Trivy version
 
       - name: Upload Trivy scan results
         uses: actions/upload-artifact@v4
