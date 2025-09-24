@@ -9,7 +9,6 @@ set -euo pipefail
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Logging function
@@ -53,7 +52,7 @@ sudo apt install -y curl wget git vim htop nftables jq
 log "Installing Docker..."
 if ! command -v docker &> /dev/null; then
     curl -fsSL https://get.docker.com | sh
-    sudo usermod -aG docker $USER
+    sudo usermod -aG docker "$USER"
     log "Docker installed. Please log out and back in for group changes to take effect."
 fi
 
