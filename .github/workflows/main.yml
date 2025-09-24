@@ -8,8 +8,8 @@ on:
     branches:
       - main
   schedule:
-    # Run every Monday at 3 AM AEST (5 PM UTC Sunday)
-    - cron: "0 17 * * 0"
+    # Run every day at 3 AM AEST (5 PM UTC)
+    - cron: "0 17 * * *"
 
 jobs:
   lint-scripts-and-docker-compose:
