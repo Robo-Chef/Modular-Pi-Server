@@ -76,7 +76,18 @@ case "$1" in
     backup)
         run_backup
         ;;
+    verify)
+        LATEST_BACKUP_DIR=$(find "${HOME}/pihole-server/backups/daily" -maxdepth 1 -type d -printf '%T@ %p\n' | sort -n | tail -1 | cut -d' ' -f2-)
+        if [[ -n "$LATEST_BACKUP_DIR" ]]; then
+            verify_backup "$LATEST_BACKUP_DIR"
+        else
+            warn "No daily backups found to verify. Please run './scripts/maintenance.sh backup' first."
+        fi
+        ;;
+    offsite)
+        offsite_backup
+        ;;
     *)
-        error "Invalid argument: $1. Usage: $0 {status|full|update|backup}"
+        error "Invalid argument: $1. Usage: $0 {status|full|update|backup|verify|offsite}"
         ;;
 esac
