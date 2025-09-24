@@ -26,9 +26,7 @@ jobs:
 
       - name: Validate Docker Compose files
         run: |
-          docker compose -f docker/docker-compose.core.yml config
-          docker compose -f docker/monitoring/docker-compose.monitoring.yml config
-          docker compose -f docker/optional/docker-compose.optional.yml config
+          docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml config
 
   check-markdown-links:
     runs-on: ubuntu-latest

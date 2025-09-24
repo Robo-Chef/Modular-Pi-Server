@@ -62,6 +62,14 @@ if ! command -v docker-compose &> /dev/null; then
     sudo apt install -y docker-compose-plugin
 fi
 
+# Configure SSH daemon to listen on custom port and allow password auth
+log "Configuring SSH daemon..."
+sudo sed -i 's/^#Port 22/Port 2222/' /etc/ssh/sshd_config
+sudo sed -i 's/^Port 22/Port 2222/' /etc/ssh/sshd_config
+sudo sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
+sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+sudo systemctl restart sshd
+
 # Create project directories
 log "Creating project directories..."
 mkdir -p ~/pihole-server/{configs,docker,scripts,monitoring,backups,docs}
@@ -149,10 +157,10 @@ docker network create --internal isolated_net 2>/dev/null || true
 
 # Copy configuration files
 log "Copying configuration files..."
-cp -r docker/* ~/pihole-server/docker/
-cp -r monitoring/* ~/pihole-server/monitoring/
-cp -r configs/* ~/pihole-server/configs/
-cp scripts/* ~/pihole-server/scripts/
+# cp -r docker/* ~/pihole-server/docker/
+# cp -r monitoring/* ~/pihole-server/monitoring/
+# cp -r configs/* ~/pihole-server/configs/
+# cp scripts/* ~/pihole-server/scripts/
 
 # Set up log rotation
 log "Configuring log rotation..."
@@ -221,8 +229,8 @@ Wants=network-online.target
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=/home/${USER}/pihole-server/docker # Use dynamic user home directory
-ExecStart=/usr/bin/docker compose -f docker-compose.core.yml up -d
-ExecStop=/usr/bin/docker compose -f docker-compose.core.yml down
+ExecStart=/usr/bin/docker compose -f docker-compose.core.yml -f docker-compose.monitoring.yml -f docker-compose.optional.yml up -d
+ExecStop=/usr/bin/docker compose -f docker-compose.core.yml -f docker-compose.monitoring.yml -f docker-compose.optional.yml down
 TimeoutStartSec=0
 
 [Install]

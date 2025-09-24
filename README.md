@@ -93,9 +93,10 @@ These steps assume you have completed the initial OS setup via Raspberry Pi Imag
 
 - All core services are easily configurable via the central `.env` file.
 - SSH key-based authentication is highly recommended (after initial password setup).
-- Firewall (`nftables`) is configured to block unnecessary incoming ports.
-- Containers run in isolated Docker networks.
-- Automated backups for critical configurations are set up.
+- _For detailed instructions on setting up SSH key-based authentication for enhanced security, refer to the [Security Hardening Guide](docs/security-hardening.md)._
+- Firewall (`nftables`) is configured to block unnecessary incoming ports. ![Screenshot: Uptime Kuma status page]
+- Containers run in isolated Docker networks. ![Screenshot: Portainer dashboard view]
+- Automated backups for critical configurations are set up. ![Screenshot: Dozzle live logs interface]
 
 ## 🌐 Why a LAN-Only Server?
 
@@ -109,3 +110,13 @@ By focusing on a LAN-only approach, this project offers a **reliable, consistent
 ---
 
 ## Next Steps
+
+After successfully deploying your Raspberry Pi Home Server, consider these next steps to fully customize and maintain your setup:
+
+1.  **Review the full documentation:** Explore `RASPBERRY_PI_SERVER_SETUP.md`, `docs/security-hardening.md`, and `docs/troubleshooting.md` for in-depth guides.
+2.  **Configure Pi-hole:** Log into the Pi-hole Admin Panel (`http://${PI_STATIC_IP}/admin`) to add custom blocklists, whitelist specific domains, and fine-tune your ad-blocking experience.
+3.  **Set up monitoring dashboards:** Access Grafana (`http://${PI_STATIC_IP}:3000`) and Uptime Kuma (`http://${PI_STATIC_IP}:3001`) to explore metrics, create custom dashboards, and set up alerts.
+4.  **Enable optional services:** If you enabled Home Assistant, Gitea, Portainer, Dozzle, or Speedtest Tracker in your `.env` file, access their web interfaces and configure them as needed.
+5.  **Implement SSH key-based authentication:** For enhanced security, consider replacing password authentication with SSH keys. Refer to the [Security Hardening Guide](docs/security-hardening.md) for instructions.
+6.  **Schedule regular maintenance:** Utilize the `scripts/maintenance.sh` script for automated updates and backups.
+7.  **Explore further optimizations:** Consult documentation for performance tuning and advanced configurations.

@@ -104,7 +104,7 @@ Focus on **LAN-only reliability**, where you actually get consistent results wit
 - **Backups**:
 
   ```bash
-  tar czf ~/docker-backup-$(date +%Y%m%d).tar.gz ~/docker-stack
+  ./scripts/backup.sh
 
   ```
 
@@ -164,7 +164,6 @@ All services will share a single password, with the system designed so password 
    - **Password Policy:** Requirement for one universal password across services → must be enforced via `.env` injection/automation.
    - **Static IP Reliance:** Setup depends on Pi remaining fixed at `192.168.1.XXX`.
 4. **Security & Maintenance**
-   - **Firewall Gap:** No nftables/UFW yet → containers on host mode are exposed to LAN.
    - **Update Risk:** No rollback plan for Docker updates → downtime possible.
    - **Backup Limitation:** Only SD card backups; no external target (NAS/cloud/SSD).
    - **Recovery Complexity:** Rebuilds are manual; no automated restore pipeline.
@@ -249,8 +248,6 @@ docker network create --internal isolated_net
 ```jsx
 yaml
 
-version: '3.8'
-
 services:
   pihole:
     image: pihole/pihole:latest
@@ -261,15 +258,39 @@ services:
     volumes:
       - ./pihole/etc-pihole:/etc/pihole
       - ./pihole/etc-dnsmasq.d:/etc/dnsmasq.d
+      - ./pihole/logs:/var/log/pihole
     environment:
-      TZ: ${TZ:-your_timezone}
+      TZ: ${TZ:-Australia/Sydney}
       WEBPASSWORD: ${PIHOLE_PASSWORD}
       DNS1: 172.20.0.2#5053  # Unbound
+      DNS2: 127.0.0.1#5053 # Fallback to Unbound (redundant if DNS1 is Unbound)
+      VIRTUAL_HOST: pihole.local # Consider removing if not using a reverse proxy
+      VIRTUAL_PORT: 80 # Consider removing if not using a reverse proxy
+      ServerIP: ${PI_STATIC_IP:-192.168.1.XXX} # Review for Docker bridge network usage
+      PIHOLE_DNS_: 172.20.0.2#5053 # Redundant with DNS1
+      PIHOLE_INTERFACE: eth0 # Review for Docker bridge network usage
+      FTLCONF_LOCAL_IPV4: 172.20.0.3
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "80:80/tcp"
+    restart: unless-stopped
     deploy:
       resources:
         limits:
-          cpus: '1'
+          cpus: "1.0"
           memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/admin/api.php?summary"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    dns:
+      - 172.20.0.2
+      - 127.0.0.1 # Redundant with 172.20.0.2
 
   unbound:
     image: klutchell/unbound:latest
@@ -278,15 +299,40 @@ services:
         ipv4_address: 172.20.0.2
     volumes:
       - ./unbound/config:/etc/unbound/custom
-    command: -d -v  # Debug mode
+      - ./unbound/logs:/var/log/unbound
+    environment:
+      TZ: ${TZ:-Australia/Sydney}
+    ports:
+      - "127.0.0.1:5053:5053/tcp" # Only accessible from host
+      - "127.0.0.1:5053:5053/udp" # Only accessible from host
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+        reservations:
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "unbound-control", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    command: -d -v
 
 networks:
   pihole_net:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+          gateway: 172.20.0.1
     internal: false
   isolated_net:
     driver: bridge
     internal: true
+
 ```
 
 **1.4 Firewall & Security**
@@ -322,17 +368,171 @@ yaml
 
 services:
   prometheus:
-    image: prom/prometheus
+    image: prom/prometheus:latest
+    container_name: prometheus
+    hostname: prometheus-server
+    networks:
+      - monitoring_net
     volumes:
-      - ./monitoring/prometheus:/etc/prometheus
-    command: --web.enable-lifecycle
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/rules:/etc/prometheus/rules
+      - prometheus_data:/prometheus
+    environment:
+      TZ: ${TZ:-Australia/Sydney}
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
+    ports:
+      - "127.0.0.1:9090:9090"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:9090/-/healthy",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   grafana:
-    image: grafana/grafana
+    image: grafana/grafana:latest
+    container_name: grafana
+    hostname: grafana-server
+    networks:
+      - monitoring_net
     volumes:
-      - ./monitoring/grafana:/var/lib/grafana
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    environment:
+      TZ: ${TZ:-Australia/Sydney}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: false
+      GF_USERS_ALLOW_ORG_CREATE: false
+      GF_SECURITY_DISABLE_GRAVATAR: true
+      GF_ANALYTICS_REPORTING_ENABLED: false
+      GF_ANALYTICS_CHECK_FOR_UPDATES: false
+      GF_LOG_LEVEL: warn
+      GF_DATABASE_TYPE: sqlite3
+      GF_SESSION_PROVIDER: file
+      GF_SESSION_PROVIDER_CONFIG: sessions
     ports:
       - "3000:3000"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    depends_on:
+      - prometheus
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    hostname: node-exporter
+    networks:
+      - monitoring_net
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+    ports:
+      - "127.0.0.1:9100:9100"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 128M
+        reservations:
+          memory: 64M
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:latest
+    container_name: uptime-kuma
+    hostname: uptime-kuma-server
+    networks:
+      - monitoring_net
+    volumes:
+      - uptime_kuma_data:/app/data
+    environment:
+      TZ: ${TZ:-Australia/Sydney}
+    ports:
+      - "3001:3001"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.3"
+          memory: 256M
+        reservations:
+          memory: 128M
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:3001",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+ volumes:
+   prometheus_data:
+     driver: local
+   grafana_data:
+     driver: local
+   uptime_kuma_data:
+     driver: local
+
+ networks:
+   monitoring_net:
+     driver: bridge
+     ipam:
+       config:
+         - subnet: 172.21.0.0/24
+           gateway: 172.21.0.1
 ```
 
 **2.2 Automated Backups**
@@ -348,31 +548,13 @@ rsync -avz --delete /home/${USER}/pihole-server/docker/pihole/ $BACKUP_DIR/$(dat
 find $BACKUP_DIR -type d -mtime +30 -exec rm -rf {} +
 ```
 
-**2.3 Logging with Loki**
-
-**`docker-compose.logging.yml`**:
-
-```jsx
-yaml
-
-services:
-  loki:
-    image: grafana/loki:latest
-    command: -config.file=/etc/loki/local-config.yaml
-
-  promtail:
-    image: grafana/promtail:latest
-    volumes:
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-```
-
 ---
 
 **Phase 3: Optional Services (Week 5-6)**
 
 **3.1 Home Assistant**
 
-**`docker-compose.smart_home.yml`**:
+**`docker-compose.optional.yml`** (service `homeassistant`):
 
 ```jsx
 yaml
@@ -382,14 +564,14 @@ services:
     image: ghcr.io/home-assistant/home-assistant:stable
     network_mode: host
     devices:
-      - /dev/ttyUSB0:/dev/ttyUSB0  # Z-Wave/Zigbee
+      - /dev/ttyUSB0:/dev/ttyUSB0  # Z-Wave/Zigbee (uncomment if you have dongle)
     volumes:
-      - ./homeassistant:/config
+      - homeassistant_data:/config
 ```
 
 **3.2 Gitea (Self-Hosted Git)**
 
-**`docker-compose.dev.yml`**:
+**`docker-compose.optional.yml`** (service `gitea`):
 
 ```jsx
 yaml
@@ -400,10 +582,14 @@ services:
     environment:
       - USER_UID=1000
       - USER_GID=1000
+      - GITEA__server__SSH_PORT: 2223 # Changed to avoid conflict with host SSH
+      - GITEA__server__DOMAIN: ${GITEA_DOMAIN:-gitea.local} # Make configurable
+      - GITEA__server__ROOT_URL: ${GITEA_ROOT_URL:-http://gitea.local:3002} # Make configurable
     volumes:
-      - ./gitea:/data
+      - gitea_data:/data
     ports:
-      - "3000:3000"
+      - "3002:3000" # Host:Container
+      - "2223:22" # Host:Container (SSH, changed from 2222 due to conflict)
 ```
 
 ---
@@ -420,7 +606,7 @@ ini
 Port 2222
 PermitRootLogin no
 PasswordAuthentication no
-AllowUsers borklord
+AllowUsers your_username
 AllowTcpForwarding no
 X11Forwarding no
 ```
@@ -513,7 +699,7 @@ sudo dd if=/dev/mmcblk0 | gzip > /mnt/backup/pi3b-full-$(date +%Y%m%d).img.gz
 
 **A1: Complete Docker Compose**
 
-[Link to full docker-compose.yml]
+To view the full combined Docker Compose configuration, run `docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml config` in the project root.
 
 **A2: Custom Blocklists**
 

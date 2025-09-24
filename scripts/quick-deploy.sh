@@ -106,12 +106,6 @@ log "Starting Raspberry Pi Home Server Quick Deploy..."
 # Project directory structure and initial file copying/permissions are handled by scripts/setup.sh
 cd ~/pihole-server
 
-# Create necessary directories for containers
-log "Creating container directories..."
-mkdir -p docker/pihole/{etc-pihole,etc-dnsmasq.d,logs}
-mkdir -p docker/unbound/{config,logs}
-mkdir -p monitoring/{prometheus,grafana,uptime-kuma}
-
 # Set permissions
 chmod 755 docker/pihole docker/unbound monitoring
 chmod 700 docker/pihole/logs docker/unbound/logs
@@ -132,13 +126,16 @@ wait_for_container_health pihole
 wait_for_container_health unbound
 
 # Start monitoring services if enabled
-if [[ "${ENABLE_UPTIME_KUMA:-true}" == "true" ]]; then
+if [[ "${ENABLE_MONITORING:-true}" == "true" ]]; then
     log "Starting monitoring services..."
     docker compose -f monitoring/docker-compose.monitoring.yml up -d
     
     log "Waiting for monitoring services to become healthy..."
+    wait_for_container_health prometheus
     wait_for_container_health grafana
+    wait_for_container_health node-exporter
     wait_for_container_health uptime-kuma
+    # Placeholder: if caddy-exporter is used, add its health check here
 fi
 
 # Display service status
@@ -151,21 +148,21 @@ log "🎉 Deployment completed successfully!"
 echo ""
 log "Access information:"
 log "=================="
-log "• Pi-hole Admin: http://192.168.1.XXX/admin"
+log "• Pi-hole Admin: http://${PI_STATIC_IP}/admin"
 log "• Pi-hole Password: ${PIHOLE_PASSWORD}"
-log "• DNS Server: 192.168.1.XXX"
+log "• DNS Server: ${PI_STATIC_IP}"
 echo ""
 
 if [[ "${ENABLE_UPTIME_KUMA:-true}" == "true" ]]; then
-    log "• Grafana: http://192.168.1.XXX:3000 (admin/${GRAFANA_ADMIN_PASSWORD})"
-    log "• Uptime Kuma: http://192.168.1.XXX:3001"
+    log "• Grafana: http://${PI_STATIC_IP}:3000 (admin/${GRAFANA_ADMIN_PASSWORD})"
+    log "• Uptime Kuma: http://${PI_STATIC_IP}:3001"
     echo ""
 fi
 
 log "Next steps:"
 log "==========="
-log "1. Configure your router to use 192.168.1.XXX as the DNS server"
-log "2. Test DNS resolution: dig @192.168.1.XXX google.com"
+log "1. Configure your router to use ${PI_STATIC_IP} as the DNS server"
+log "2. Test DNS resolution: dig @${PI_STATIC_IP} google.com"
 log "3. Check Pi-hole logs: docker logs pihole"
 log "4. Run maintenance: ~/pihole-server/scripts/maintenance.sh status"
 echo ""

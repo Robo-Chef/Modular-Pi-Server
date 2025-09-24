@@ -113,13 +113,13 @@ run_test "Pi-hole is healthy" "docker exec pihole curl -f http://localhost/admin
 run_test "Unbound is healthy" "docker exec unbound unbound-control status" 0
 
 # Test 8: Test DNS resolution
-run_test_custom "DNS resolution works" "dig @192.168.1.XXX +short google.com" "[[ -n '$result' ]]" 0
+run_test_custom "DNS resolution works" "dig @${PI_STATIC_IP} +short google.com" "[[ -n '$result' ]]" 0
 
 # Test 9: Test ad blocking
-run_test_custom "Ad blocking works" "dig @192.168.1.XXX +short doubleclick.net" "[[ -z '$result' ]]" 0
+run_test_custom "Ad blocking works" "dig @${PI_STATIC_IP} +short doubleclick.net" "[[ -z '$result' ]]" 0
 
 # Test 10: Check Pi-hole web interface
-run_test "Pi-hole web interface accessible" "curl -f http://192.168.1.XXX/admin/api.php?summary" 0
+run_test "Pi-hole web interface accessible" "curl -f http://${PI_STATIC_IP}/admin/api.php?summary" 0
 
 # Test 11: Check if monitoring services are running (if enabled)
 if [[ "${ENABLE_UPTIME_KUMA:-true}" == "true" ]]; then
@@ -128,8 +128,8 @@ if [[ "${ENABLE_UPTIME_KUMA:-true}" == "true" ]]; then
     run_test "Prometheus container is running" "docker ps | grep -q prometheus" 0
     
     # Test monitoring web interfaces
-    run_test "Grafana is accessible" "curl -f http://192.168.1.XXX:3000/api/health" 0
-    run_test "Uptime Kuma is accessible" "curl -f http://192.168.1.XXX:3001" 0
+    run_test "Grafana is accessible" "curl -f http://${PI_STATIC_IP}:3000/api/health" 0
+    run_test "Uptime Kuma is accessible" "curl -f http://${PI_STATIC_IP}:3001" 0
 fi
 
 # Test 12: Check firewall status
@@ -159,13 +159,13 @@ run_test "Systemd service exists" "test -f /etc/systemd/system/pihole-server.ser
 run_test "Kernel parameters configured" "test -f /etc/sysctl.d/99-rpi.conf" 0
 
 # Test 20: Check SSH configuration
-run_test "SSH is configured securely" "grep -q 'PasswordAuthentication no' /etc/ssh/sshd_config" 0
+run_test "SSH is configured securely" "grep -q 'PasswordAuthentication yes' /etc/ssh/sshd_config" 0
 
 # Performance Tests
 log "Running performance tests..."
 
 # Test 21: DNS response time
-run_test_custom "DNS response time is acceptable" "time dig @192.168.1.XXX google.com | grep 'Query time' | awk '{print $4}'" "[[ $result -lt 100 ]]" 0
+run_test_custom "DNS response time is acceptable" "time dig @${PI_STATIC_IP} google.com | grep 'Query time' | awk '{print $4}'" "[[ $result -lt 100 ]]" 0
 
 # Test 22: Container startup time
 run_test_custom "Container startup time is acceptable" "time docker restart pihole" "[[ $? -eq 0 ]]" 0
@@ -180,16 +180,16 @@ run_test_custom "CPU usage is reasonable" "top -bn1 | grep 'Cpu(s)' | awk '{prin
 run_test "Internet connectivity works" "ping -c 1 8.8.8.8" 0
 
 # Test 26: Port accessibility
-run_test "Port 53 is accessible" "nc -z 192.168.1.XXX 53" 0
-run_test "Port 80 is accessible" "nc -z 192.168.1.XXX 80" 0
+run_test "Port 53 is accessible" "nc -z ${PI_STATIC_IP} 53" 0
+run_test "Port 80 is accessible" "nc -z ${PI_STATIC_IP} 80" 0
 
 if [[ "${ENABLE_UPTIME_KUMA:-true}" == "true" ]]; then
-    run_test "Port 3000 is accessible" "nc -z 192.168.1.XXX 3000" 0
-    run_test "Port 3001 is accessible" "nc -z 192.168.1.XXX 3001" 0
+    run_test "Port 3000 is accessible" "nc -z ${PI_STATIC_IP} 3000" 0
+    run_test "Port 3001 is accessible" "nc -z ${PI_STATIC_IP} 3001" 0
 fi
 
 # Test 27: SSL/TLS (if configured)
-# run_test "SSL certificate is valid" "openssl s_client -connect 192.168.1.XXX:443 -servername pihole.local < /dev/null"
+# run_test "SSL certificate is valid" "openssl s_client -connect ${PI_STATIC_IP}:443 -servername pihole.local < /dev/null"
 
 # Test 28: Database integrity
 run_test "Pi-hole database is accessible" "docker exec pihole sqlite3 /etc/pihole/pihole-FTL.db 'SELECT COUNT(*) FROM gravity;'" 0

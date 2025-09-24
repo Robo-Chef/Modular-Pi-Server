@@ -115,25 +115,6 @@ services:
         reservations:
           memory: 64M
 
-  caddy-exporter:
-    image: caddy-prometheus:latest
-    container_name: caddy-exporter
-    hostname: caddy-exporter
-    networks:
-      - monitoring_net
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    environment:
-      CADDY_EXPORTER_PORT: 9094
-    ports:
-      - "127.0.0.1:9094:9094"
-    restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: "0.1"
-          memory: 64M
-
   uptime-kuma:
     image: louislam/uptime-kuma:latest
     container_name: uptime-kuma

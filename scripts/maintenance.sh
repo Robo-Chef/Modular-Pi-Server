@@ -1,0 +1,96 @@
+#!/bin/bash
+
+# Raspberry Pi Home Server Maintenance Script
+# This script provides various maintenance operations for the home server
+
+set -euo pipefail
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Logging function
+log() {
+    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
+}
+
+warn() { # shellcheck disable=SC2317
+    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARNING: $1${NC}"
+}
+
+error() { # shellcheck disable=SC2317
+    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}"
+    exit 1
+}
+
+# Check if .env file exists
+if [[ ! -f ".env" ]]; then
+    error ".env file not found. Please copy env.example to .env and configure it."
+fi
+
+# shellcheck disable=SC1091
+source .env
+
+# Function to display service status
+status_check() {
+    log "Checking system and service status..."
+    sudo systemctl status pihole-server.service || warn "pihole-server.service is not running or failed."
+    docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+    echo ""
+    log "Disk usage:"
+    df -h /
+    echo ""
+    log "Memory usage:"
+    free -h
+    echo ""
+    log "CPU usage:"
+    top -bn1 | grep "Cpu(s)" | sed "s/.*, *\([0-9.]*\)%*id.*/\1/" | awk '{print 100 - $1"%"}'
+}
+
+# Function to perform full maintenance
+full_maintenance() {
+    log "Performing full system update and container updates..."
+    sudo apt update && sudo apt upgrade -y
+    docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml pull
+    docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml up -d
+    log "Full maintenance completed."
+    status_check
+}
+
+# Function to update containers
+update_containers() {
+    log "Updating Docker containers..."
+    docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml pull
+    docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml up -d
+    log "Container update completed."
+    status_check
+}
+
+# Function to run backup
+run_backup() {
+    log "Running backup script..."
+    ./scripts/backup.sh
+    log "Backup completed."
+}
+
+# Main script logic
+case "$1" in
+    status)
+        status_check
+        ;;
+    full)
+        full_maintenance
+        ;;
+    update)
+        update_containers
+        ;;
+    backup)
+        run_backup
+        ;;
+    *)
+        echo "Usage: $0 {status|full|update|backup}"
+        exit 1
+        ;;
+esac

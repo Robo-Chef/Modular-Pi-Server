@@ -4,19 +4,16 @@
       "pattern": "^#"
     }, 
     {
-      "pattern": "^/dev/tty"
-    }, 
-    {
       "pattern": "^http://localhost"
     }, 
     {
-      "pattern": "^http://192\\.168\\.1\\.XXX/admin"
+      "pattern": "^http://192\\.168\\.[0-9]{1,3}\\.([0-9]{1,3})/admin"
     }, 
     {
-      "pattern": "^http://192\\.168\\.1\\.XXX:3000"
+      "pattern": "^http://192\\.168\\.[0-9]{1,3}\\.([0-9]{1,3}):3000"
     }, 
     {
-      "pattern": "^http://192\\.168\\.1\\.XXX:3001"
+      "pattern": "^http://192\\.168\\.[0-9]{1,3}\\.([0-9]{1,3}):3001"
     }, 
     {
       "pattern": "^https://www\\.raspberrypi\\.com/software/"

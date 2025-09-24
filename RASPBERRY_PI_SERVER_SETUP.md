@@ -9,7 +9,7 @@ For the foundational design principles and rationale behind this LAN-only setup,
 
 - **Hardware:** Raspberry Pi 3 B+
 - **Hostname:** `my-pihole.local` (Configured via `PIHOLE_HOSTNAME` in `.env`)
-- **Static IP:** `192.168.1.XXX/24` (Configured via `PI_STATIC_IP` in `.env`)
+- **Static IP:** `192.168.1.XXX/24` (Configured during OS flashing, then matched with `PI_STATIC_IP` in `.env`)
 - **Gateway:** `192.168.1.1` (Configured via `PI_GATEWAY` in `.env`)
 - **Primary DNS (for Pi itself, before Pi-hole is up):** `8.8.8.8, 8.8.4.4` (Configured via `PI_DNS_SERVERS` in `.env`)
 - **Universal Password:** `CHANGE_ME` (Configured via `UNIVERSAL_PASSWORD` in `.env`)
@@ -30,10 +30,12 @@ When flashing Raspberry Pi OS (64-bit Full recommended) onto your SD card using 
 - **Configure wireless LAN:** Leave blank (as wired Ethernet is primary)
   _Explanation: For a server, a wired Ethernet connection is generally more stable and reliable than Wi-Fi. We prioritize a wired connection._
 - **Set locale settings:**
-  - Time Zone: `Australia/Sydney` (e.g., `America/New_York`, `Europe/London`)
+  - Time Zone: `your_timezone` (e.g., `Australia/Sydney`, `America/New_York`, `Europe/London`)
   - Keyboard Layout: (Default, confirm later if needed)
 - **Enable SSH:** `✓` **Use password authentication**
   _Explanation: SSH (Secure Shell) allows you to remotely access and control your Raspberry Pi from another computer. Enabling password authentication is for initial setup, which will later be hardened with key-based authentication for enhanced security._
+- **Set static IP:** `192.168.1.XXX/24`
+  _Explanation: It is crucial to set a static IP address for your Raspberry Pi during initial OS setup. This ensures your Pi is always reachable at the same local network address. You will later match this IP with the `PI_STATIC_IP` variable in your project's `.env` file._
 - **Options:**
   - Eject media when finished: `✓`
   - Enable telemetry: `✓` (Optional: provides anonymous usage data to Raspberry Pi Foundation)
@@ -177,7 +179,7 @@ For network-wide ad blocking and DNS resolution, your router needs to be configu
 
 ## 🛡️ **Pi-hole Adlist & Regex Configuration**
 
-Log into the Pi-hole Admin Panel (`http://${PI_STATIC_IP}/admin`, password `CHANGE_ME_PIHOLE` from `.env`)
+Log into the Pi-hole Admin Panel (`http://${PI_STATIC_IP}/admin`, password `${UNIVERSAL_PASSWORD}` from `.env`)
 
 1.  **Update Adlists (Adlists → Add lists):**
 
