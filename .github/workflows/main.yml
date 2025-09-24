@@ -24,12 +24,6 @@ jobs:
       - name: Run ShellCheck on scripts
         run: shellcheck scripts/*.sh
 
-      - name: Install Hadolint
-        run: sudo wget -O /bin/hadolint "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-x86_64" && sudo chmod +x /bin/hadolint # Adjust URL for arm64 if needed
-
-      - name: Run Hadolint on Dockerfiles
-        run: find . -name "Dockerfile*" -print0 | xargs -0 hadolint
-
       - name: Validate Docker Compose files
         run: |
           docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml config
@@ -45,3 +39,165 @@ jobs:
         with:
           use-quiet-mode: "yes"
           config-file: ".github/configs/markdown-link-check.jsonc"
+
+  scan-docker-images:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "pihole/pihole:latest"
+          format: "table"
+          output: "trivy-pihole-scan.txt"
+
+      - name: Upload Trivy Pi-hole scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-pihole-scan-results
+          path: trivy-pihole-scan.txt
+
+      - name: Run Trivy vulnerability scanner for Unbound
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "klutchell/unbound:latest"
+          format: "table"
+          output: "trivy-unbound-scan.txt"
+
+      - name: Upload Trivy Unbound scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-unbound-scan-results
+          path: trivy-unbound-scan.txt
+
+      - name: Run Trivy vulnerability scanner for Prometheus
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "prom/prometheus:latest"
+          format: "table"
+          output: "trivy-prometheus-scan.txt"
+
+      - name: Upload Trivy Prometheus scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-prometheus-scan-results
+          path: trivy-prometheus-scan.txt
+
+      - name: Run Trivy vulnerability scanner for Grafana
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "grafana/grafana:latest"
+          format: "table"
+          output: "trivy-grafana-scan.txt"
+
+      - name: Upload Trivy Grafana scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-grafana-scan-results
+          path: trivy-grafana-scan.txt
+
+      - name: Run Trivy vulnerability scanner for Node Exporter
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "prom/node-exporter:latest"
+          format: "table"
+          output: "trivy-node-exporter-scan.txt"
+
+      - name: Upload Trivy Node Exporter scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-node-exporter-scan-results
+          path: trivy-node-exporter-scan.txt
+
+      - name: Run Trivy vulnerability scanner for Uptime Kuma
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "louislam/uptime-kuma:latest"
+          format: "table"
+          output: "trivy-uptime-kuma-scan.txt"
+
+      - name: Upload Trivy Uptime Kuma scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-uptime-kuma-scan-results
+          path: trivy-uptime-kuma-scan.txt
+
+      - name: Run Trivy vulnerability scanner for Home Assistant
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "ghcr.io/home-assistant/home-assistant:stable"
+          format: "table"
+          output: "trivy-homeassistant-scan.txt"
+
+      - name: Upload Trivy Home Assistant scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-homeassistant-scan-results
+          path: trivy-homeassistant-scan.txt
+
+      - name: Run Trivy vulnerability scanner for Gitea
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "gitea/gitea:latest"
+          format: "table"
+          output: "trivy-gitea-scan.txt"
+
+      - name: Upload Trivy Gitea scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-gitea-scan-results
+          path: trivy-gitea-scan.txt
+
+      - name: Run Trivy vulnerability scanner for Portainer
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "portainer/portainer-ce:latest"
+          format: "table"
+          output: "trivy-portainer-scan.txt"
+
+      - name: Upload Trivy Portainer scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-portainer-scan-results
+          path: trivy-portainer-scan.txt
+
+      - name: Run Trivy vulnerability scanner for Dozzle
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "amir20/dozzle:latest"
+          format: "table"
+          output: "trivy-dozzle-scan.txt"
+
+      - name: Upload Trivy Dozzle scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-dozzle-scan-results
+          path: trivy-dozzle-scan.txt
+
+      - name: Run Trivy vulnerability scanner for Speedtest Tracker
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "henrywhitaker3/speedtest-tracker:latest"
+          format: "table"
+          output: "trivy-speedtest-tracker-scan.txt"
+
+      - name: Upload Trivy Speedtest Tracker scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-speedtest-tracker-scan-results
+          path: trivy-speedtest-tracker-scan.txt
+
+      - name: Run Trivy vulnerability scanner for Watchtower
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "containrrr/watchtower:latest"
+          format: "table"
+          output: "trivy-watchtower-scan.txt"
+
+      - name: Upload Trivy Watchtower scan results
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-watchtower-scan-results
+          path: trivy-watchtower-scan.txt
