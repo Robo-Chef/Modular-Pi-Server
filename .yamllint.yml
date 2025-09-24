@@ -2,15 +2,17 @@ extends: default
 
 rules:
   line-length:
-    max: 120
+    max: 150
     level: warning
   comments-indentation: disable
   comments: disable
   empty-lines:
-    max-start: 2
-    max-end: 1
-    max: 2
+    max-start: 3
+    max-end: 2
+    max: 3
   indentation:
     spaces: 2
     indent-sequences: true
     check-multi-line-strings: false
+  key-duplicates: enable
+  trailing-spaces: enable

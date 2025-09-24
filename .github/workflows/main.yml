@@ -46,7 +46,7 @@ jobs:
         run: pip install yamllint
 
       - name: Run yamllint on YAML files
-        run: yamllint .
+        run: yamllint -v .
 
   trivy:
     runs-on: ubuntu-latest
