@@ -45,12 +45,14 @@ run_test() {
             log "✓ PASS: $test_name"
             TESTS_PASSED=$((TESTS_PASSED + 1))
             return 0
-        else # shellcheck disable=SC2317
+        # shellcheck disable=SC2317
+        else
             error "✗ FAIL: $test_name (unexpected exit code)"
             TESTS_FAILED=$((TESTS_FAILED + 1))
             return 1
         fi
-    else # shellcheck disable=SC2317
+    # shellcheck disable=SC2317
+    else
         error "✗ FAIL: $test_name"
         TESTS_FAILED=$((TESTS_FAILED + 1))
         return 1
@@ -74,7 +76,8 @@ run_test_custom() {
         log "✓ PASS: $test_name"
         TESTS_PASSED=$((TESTS_PASSED + 1))
         return 0
-    else # shellcheck disable=SC2317
+    # shellcheck disable=SC2317
+    else
         error "✗ FAIL: $test_name"
         TESTS_FAILED=$((TESTS_FAILED + 1))
         return 1
@@ -204,7 +207,8 @@ log "Failed: $TESTS_FAILED"
 if [[ $TESTS_FAILED -eq 0 ]]; then
     log "🎉 All tests passed! Deployment is successful."
     exit 0
-else # shellcheck disable=SC2317
+# shellcheck disable=SC2317
+else
     error "❌ $TESTS_FAILED tests failed. Please check the issues above."
     exit 1
 fi
