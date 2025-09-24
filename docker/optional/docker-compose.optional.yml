@@ -32,7 +32,7 @@ services:
       - /dev/ttyACM0:/dev/ttyACM0 # Alternative USB device (uncomment if you have another USB device and ensure path is correct)
 
   gitea:
-    image: gitea/gitea:latest
+    image: gitea/gitea:1.22.1
     container_name: gitea
     hostname: gitea-server
     networks:
@@ -85,7 +85,7 @@ services:
       start_period: 30s
 
   portainer:
-    image: portainer/portainer-ce:latest
+    image: portainer/portainer-ce:2.21.5
     container_name: portainer
     hostname: portainer-server
     networks:

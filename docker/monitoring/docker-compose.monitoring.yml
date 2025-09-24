@@ -1,6 +1,6 @@
 services:
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:2.51.0
     container_name: prometheus
     hostname: prometheus-server
     networks:
@@ -90,7 +90,7 @@ services:
       - prometheus
 
   node-exporter:
-    image: prom/node-exporter:latest
+    image: prom/node-exporter:1.7.0
     container_name: node-exporter
     hostname: node-exporter
     networks:
@@ -116,7 +116,7 @@ services:
           memory: 64M
 
   uptime-kuma:
-    image: louislam/uptime-kuma:latest
+    image: louislam/uptime-kuma:1.23.0
     container_name: uptime-kuma
     hostname: uptime-kuma-server
     networks:
