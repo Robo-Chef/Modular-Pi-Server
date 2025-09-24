@@ -8,102 +8,67 @@ This guide will help you deploy a complete home server on your Raspberry Pi 3 B+
 
 - Raspberry Pi 3 B+ with 32GB+ SD card
 - Ethernet connection to your router
-- SSH access to the Pi
+- SSH access to the Pi (after initial OS setup)
 - Basic Linux command line knowledge
 
-### Step 1: Initial Setup
+### Step 1: Initial Raspberry Pi OS Setup (Refer to `RASPBERRY_PI_SERVER_SETUP.md` for details)
 
-1. **Flash Raspberry Pi OS**
+This project assumes you have already:
 
-   - Download [Raspberry Pi Imager](https://www.raspberrypi.com/software/)
-   - Select "Raspberry Pi OS (64-bit)" - Full version
-   - Configure advanced options:
-     - Enable SSH with key authentication
-     - Set hostname: `my-pihole.local` (_Choose a hostname, to be matched with `PIHOLE_HOSTNAME` in `.env` later_)
-     - Set username: `your_username` (_Choose a username, to be matched with your `UNIVERSAL_PASSWORD` in `.env` later_)
-     - Set static IP: `192.168.1.XXX/24` (_Choose a static IP, to be matched with `PI_STATIC_IP` in `.env` later_)
-     - Gateway: `192.168.1.1` (_Choose your network gateway, to be matched with `PI_GATEWAY` in `.env` later_)
-     - DNS: `8.8.8.8,8.8.4.4` (_Choose primary and secondary DNS servers, to be matched with `PI_DNS_SERVERS` in `.env` later_)
+1.  Flashed Raspberry Pi OS (64-bit Full recommended) onto your SD card using the [Raspberry Pi Imager](https://www.raspberrypi.com/software/).
+2.  Configured advanced options during flashing:
 
-2. **First Boot**
+    - Set hostname (e.g., `my-pihole.local`)
+    - Set username (e.g., `your_username`) and password
+    - Set static IP (e.g., `192.168.1.XXX/24`), Gateway, and DNS servers.
+    - Set Time Zone (e.g., `Australia/Sydney`)
+    - Enabled SSH with password authentication.
 
-   ```bash
-   # Connect via SSH
-   ssh your_username@192.168.1.XXX
+3.  Connected to your Pi via SSH from your computer:
+    ```bash
+    # If re-imaging your Pi and seeing a host key warning:
+    # ssh-keygen -R 192.168.1.XXX # Replace with your Pi's IP on your computer
+    ssh your_username@192.168.1.XXX # Connect to your Pi
+    ```
 
-   # Update system
-   sudo apt update && sudo apt upgrade -y
+### Step 2: Deploy the Home Server (on your Raspberry Pi)
 
-   # Install essential packages
-   sudo apt install -y curl wget git vim htop nftables jq
-   ```
+1.  **Clone the repository:**
 
-### Step 2: Deploy the Home Server
+    ```bash
+    git clone https://github.com/Robo-Chef/Modular-Pi-Server.git ~/pihole-server
+    cd ~/pihole-server
+    ```
 
-1. **Clone the repository**
+    _(Note: If you forked the repository, use your fork's URL instead of the original.)_
 
-   ```bash
-   git clone https://github.com/Robo-Chef/Modular-Pi-Server.git ~/pihole-server
-   cd ~/pihole-server
-   ```
+2.  **Configure your `.env` file:**
 
-   _**Note:** Replace `https://github.com/Robo-Chef/Modular-Pi-Server.git` with the URL of your forked repository, or if you haven't forked, you can use the original._
+    ```bash
+    cp env.example .env
+    nano .env
+    ```
 
-2. **Configure environment**
+    - **Crucial:** Open the newly created `.env` file and replace all placeholder values. The `UNIVERSAL_PASSWORD` should be your primary secure password, and it will be referenced by other services. Ensure `TZ`, `PI_STATIC_IP`, `PIHOLE_HOSTNAME` match your initial Raspberry Pi OS setup. _Refer to `env.example` for detailed inline comments and examples._
 
-   ```bash
-   # Copy and edit environment file
-   cp env.example .env
-   nano .env
-   ```
+    - Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X` in `nano`).
 
-   **Crucial:** Open the newly created `.env` file and replace all placeholder values. The `UNIVERSAL_PASSWORD` should be your primary secure password, and it will be referenced by other services:
+3.  **Prepare and run setup scripts:**
 
-   ```ini
-   # Universal password for all services
-   UNIVERSAL_PASSWORD=YourStrongAndSecurePassword
+    ```bash
+    sudo apt update && sudo apt install -y dos2unix dnsutils
+    dos2unix .env scripts/*.sh
+    chmod +x scripts/*.sh
+    ./scripts/setup.sh
+    ```
 
-   # Pi-hole specific (references UNIVERSAL_PASSWORD)
-   PIHOLE_PASSWORD=${UNIVERSAL_PASSWORD}
-   PIHOLE_ADMIN_EMAIL=admin@yourdomain.local
-   PIHOLE_HOSTNAME=my-pihole.local
+    - **Important:** If `setup.sh` installs Docker, it will prompt you to **log out and log back in** for group changes to take effect. If this happens, log out of SSH, then reconnect. After reconnecting, `cd ~/pihole-server` again before running the next script.
 
-   # Timezone (e.g., Australia/Sydney, America/New_York, Europe/London)
-   TZ=Australia/Sydney # Example: America/New_York
+4.  **Deploy services:**
 
-   # Network configuration (match your Pi's OS setup)
-   PI_STATIC_IP=192.168.1.185 # Example: Your Pi's LAN IP
-   PI_GATEWAY=192.168.1.1
-   PI_DNS_SERVERS=8.8.8.8,8.8.4.4
-
-   # Monitoring (references UNIVERSAL_PASSWORD)
-   GRAFANA_ADMIN_PASSWORD=${UNIVERSAL_PASSWORD}
-
-   # ... other variables ...
-   ```
-
-   - Ensure values like `TZ`, `PI_STATIC_IP`, `PIHOLE_HOSTNAME` match your initial Raspberry Pi OS setup.
-   - Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X` in `nano`).
-
-3. **Run the setup script**
-
-   ```bash
-   # Fix line endings for scripts (install `dos2unix` first)
-   sudo apt update && sudo apt install -y dos2unix
-   dos2unix .env scripts/*.sh
-
-   # Make scripts executable
-   chmod +x scripts/*.sh
-
-   # Now run the setup script
-   ./scripts/setup.sh
-   ```
-
-4. **Deploy services**
-   ```bash
-   chmod +x scripts/quick-deploy.sh
-   ./scripts/quick-deploy.sh
-   ```
+    ```bash
+    ./scripts/quick-deploy.sh
+    ```
 
 ### Step 3: Configure Your Router
 

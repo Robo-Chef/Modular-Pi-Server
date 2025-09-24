@@ -14,21 +14,26 @@ A comprehensive, modular **LAN-only** home server setup using Raspberry Pi 3 B+ 
 
 ## Getting Started
 
-For detailed setup instructions, including initial OS flashing, configuration, and deployment, please refer to: [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md)
+For **detailed setup instructions**, including initial OS flashing, configuration, and deployment, please refer to:
+➡️ [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md)
+
 Additionally, for a deeper understanding of the project's core philosophy, design choices, and constraints, consult the [LAN-Only Stack Plan](docs/LAN_ONLY_STACK_PLAN.md).
 
 ### 🚀 Quick Installation Steps
 
-These steps assume you have already flashed Raspberry Pi OS and connected to your Pi via SSH.
+Before proceeding, ensure your Raspberry Pi OS is **already installed and configured** according to the detailed instructions in:
+➡️ [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md)
+
+These steps assume you have completed the initial OS setup via Raspberry Pi Imager (hostname, username, password, timezone, static IP, SSH enabled) and are currently connected to your Pi via SSH.
 
 1.  **Handle SSH Host Key Changes (if re-imaging Pi):**
-    If you re-flashed your Raspberry Pi and receive a `REMOTE HOST IDENTIFICATION HAS CHANGED` warning when trying to SSH, remove the old host key from your computer's `known_hosts` file:
+    If you re-flashed your Raspberry Pi and receive a `REMOTE HOST IDENTIFICATION HAS CHANGED` warning, remove the old host key from your computer's `~/.ssh/known_hosts` file (on your computer):
 
     ```bash
     ssh-keygen -R 192.168.1.XXX # Replace with your Pi's IP
     ```
 
-2.  **Clone the repository:**
+2.  **Clone the repository (on your Pi):**
 
     ```bash
     git clone https://github.com/Robo-Chef/Modular-Pi-Server.git ~/pihole-server
@@ -37,70 +42,41 @@ These steps assume you have already flashed Raspberry Pi OS and connected to you
 
     _(Note: If you forked the repository, use your fork's URL instead of the original.)_
 
-3.  **Configure your `.env` file:**
+3.  **Configure your `.env` file (on your Pi):**
 
     ```bash
     cp env.example .env
     nano .env
     ```
 
-    - **Crucial:** Open `.env` and replace all placeholder values. The `UNIVERSAL_PASSWORD` should be your primary secure password, and it will be referenced by other services:
+    - **Crucial:** Open `.env` and replace all placeholder values. The `UNIVERSAL_PASSWORD` should be your primary secure password, and it will be referenced by other services. Ensure `TZ`, `PI_STATIC_IP`, `PIHOLE_HOSTNAME` match your initial Raspberry Pi OS setup. _Refer to `env.example` for detailed inline comments and examples._
 
-      ```ini
-      # Universal password for all services
-      UNIVERSAL_PASSWORD=YourStrongAndSecurePassword
-
-      # Pi-hole specific (references UNIVERSAL_PASSWORD)
-      PIHOLE_PASSWORD=${UNIVERSAL_PASSWORD}
-      PIHOLE_ADMIN_EMAIL=admin@yourdomain.local
-      PIHOLE_HOSTNAME=my-pihole.local
-
-      # Timezone (e.g., Australia/Sydney, America/New_York, Europe/London)
-      TZ=Australia/Sydney # Example: America/New_York
-
-      # Network configuration (match your Pi's OS setup)
-      PI_STATIC_IP=192.168.1.185 # Example: Your Pi's LAN IP
-      PI_GATEWAY=192.168.1.1
-      PI_DNS_SERVERS=8.8.8.8,8.8.4.4
-
-      # Monitoring (references UNIVERSAL_PASSWORD)
-      GRAFANA_ADMIN_PASSWORD=${UNIVERSAL_PASSWORD}
-
-      # ... other variables ...
-      ```
-
-    - Ensure values like `TZ`, `PI_STATIC_IP`, `PIHOLE_HOSTNAME` match your initial Raspberry Pi OS setup.
     - Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X` in `nano`).
 
-4.  **Prepare and run setup scripts:**
+4.  **Install dependencies and run setup script (on your Pi):**
+
     ```bash
-    sudo apt update && sudo apt install -y dos2unix
-    dos2unix .env scripts/*.sh
-    chmod +x scripts/*.sh
-    ./scripts/setup.sh
+    sudo apt update                 # Refresh package lists
+    sudo apt install -y dos2unix dnsutils # Install essential utilities
+    dos2unix .env scripts/*.sh      # Ensure correct line endings
+    chmod +x scripts/*.sh           # Make scripts executable
+    ./scripts/setup.sh              # Run the initial system setup
+    ```
+
+    - **⚠️ IMPORTANT: Docker Group Change Requires Re-login! ⚠️**
+      If `setup.sh` installs Docker, it adds your user to the `docker` group. **This change only takes effect after a new SSH login session.** If prompted by the script to log out and back in:
+      1.  Type `exit` to close your current SSH session.
+      2.  Reconnect: `ssh your_username@192.168.1.XXX`
+      3.  After logging back in, navigate back to your project: `cd ~/pihole-server`
+          Then proceed to the next step.
+
+5.  **Deploy services (on your Pi):**
+
+    ```bash
     ./scripts/quick-deploy.sh
     ```
 
-## ⚙️ Personalization
-
-**Before you begin**, it is crucial to personalize your server settings. All key configurations are managed through the `.env` file.
-
-1.  **Copy `env.example` to `.env`:**
-
-    ```bash
-    cp env.example .env
-    ```
-
-2.  **Edit `.env`:** Open the newly created `.env` file and replace placeholders (e.g., `CHANGE_ME`, `your_timezone`, `192.168.1.XXX`). At minimum set:
-
-    - `UNIVERSAL_PASSWORD` (your main secure password)
-    - `TZ` (e.g., `Australia/Sydney`)
-    - `PI_STATIC_IP` (your Pi's LAN IP)
-    - `PIHOLE_PASSWORD` (will reference `UNIVERSAL_PASSWORD`)
-    - `GRAFANA_ADMIN_PASSWORD` (will reference `UNIVERSAL_PASSWORD` if monitoring enabled)
-    - Optional: Watchtower email vars if you want update notifications
-
-    Save the file when done.
+6.  **Configure your Router:** Set your Raspberry Pi's static IP address (e.g., `192.168.1.XXX`) as the **Primary DNS Server** in your router's settings. (Refer to `RASPBERRY_PI_SERVER_SETUP.md` for more details).
 
 ## Directory Structure
 

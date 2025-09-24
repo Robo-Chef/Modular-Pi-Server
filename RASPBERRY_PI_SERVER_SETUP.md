@@ -21,8 +21,6 @@ For the foundational design principles and rationale behind this LAN-only setup,
 
 When flashing Raspberry Pi OS (64-bit Full recommended) onto your SD card using the Raspberry Pi Imager, use the **OS Customisation (Ctrl+Shift+X)** settings as follows:
 
-_**Note:** Values for hostname, username, password, and timezone should match those configured in your `.env` file (copied from `env.example`)._
-
 - **Set hostname:** `my-pihole.local`
   _Explanation: Choose a descriptive hostname like `my-pihole.local` to easily identify your Raspberry Pi on your local network. You will set this same value for `PIHOLE_HOSTNAME` in your `.env` file later._
 - **Set username and password:**
@@ -32,96 +30,78 @@ _**Note:** Values for hostname, username, password, and timezone should match th
 - **Configure wireless LAN:** Leave blank (as wired Ethernet is primary)
   _Explanation: For a server, a wired Ethernet connection is generally more stable and reliable than Wi-Fi. We prioritize a wired connection._
 - **Set locale settings:**
-  - Time Zone: `America/New_York`
-    _Explanation: Setting the correct timezone is crucial for accurate logging, scheduling, and overall system functionality. You will set this same value for `TZ` in your `.env` file later._
-  - Keyboard Layout: (Default, can confirm later)
+  - Time Zone: `Australia/Sydney` (e.g., `America/New_York`, `Europe/London`)
+  - Keyboard Layout: (Default, confirm later if needed)
 - **Enable SSH:** `✓` **Use password authentication**
   _Explanation: SSH (Secure Shell) allows you to remotely access and control your Raspberry Pi from another computer. Enabling password authentication is for initial setup, which will later be hardened with key-based authentication for enhanced security._
 - **Options:**
   - Eject media when finished: `✓`
-  - Enable telemetry: `✓`
-    _Explanation: Enabling telemetry provides anonymous usage data to the Raspberry Pi Foundation, helping them improve future versions of the Imager and OS. This is optional and can be disabled if preferred._
+  - Enable telemetry: `✓` (Optional: provides anonymous usage data to Raspberry Pi Foundation)
   - Play sound when finished: `✗`
 
 ---
 
 ## 💻 **Post-OS-Flash Setup (via SSH)**
 
-Once the Pi has booted with the new OS, you should be able to SSH into it:
+Once the Pi has booted with the new OS, you should be able to SSH into it. These steps are performed **on your Raspberry Pi** via your SSH connection.
 
-_**Important:** The `your_username` and `192.168.1.XXX` values here should match what you configured during the initial OS setup in the Raspberry Pi Imager._
+\*\*First, if you re-flashed your Raspberry Pi and receive a `REMOTE HOST IDENTIFICATION HAS CHANGED` warning when trying to SSH, remove the old host key from your computer's `~/.ssh/known_hosts` file (on your computer, NOT the Pi):
+
+```bash
+ssh-keygen -R 192.168.1.XXX # Replace with your Pi's IP
+```
+
+Afterwards, connect to your Pi:
+
+```bash
+ssh your_username@192.168.1.XXX # Replace with your username and Pi's static IP
+```
+
+(Password: `CHANGE_ME` - This should match the password you set in Raspberry Pi Imager and `UNIVERSAL_PASSWORD` in `.env`)
 
 1.  **Wait 3-5 minutes** for the Pi to fully boot.
-2.  **SSH into the Pi:**
+2.  **Clone the project:**
 
     ```bash
-    ssh your_username@192.168.1.XXX # Use the static IP from your .env
-    ```
-
-    (Password: `CHANGE_ME` - Match `UNIVERSAL_PASSWORD` from `.env`)
-
-3.  **Clone the project:**
-
-    ```bash
-    git clone https://github.com/Robo-Chef/BorkHole.git ~/pihole-server
+    git clone https://github.com/Robo-Chef/Modular-Pi-Server.git ~/pihole-server
     cd ~/pihole-server
     ```
 
-4.  **Copy `env.example` to `.env` and configure:**
+    _(Note: If you forked the repository, use your fork's URL instead of the original.)_
+
+3.  **Configure your `.env` file:**
 
     ```bash
     cp env.example .env
     nano .env
     ```
 
-    **Crucial:** Open the newly created `.env` file and replace all placeholder values. The `UNIVERSAL_PASSWORD` should be your primary secure password, and it will be referenced by other services:
+    - **Crucial:** Open `.env` and replace all placeholder values. The `UNIVERSAL_PASSWORD` should be your primary secure password, and it will be referenced by other services. Ensure `TZ`, `PI_STATIC_IP`, `PIHOLE_HOSTNAME` match your initial Raspberry Pi OS setup. _Refer to `env.example` for detailed inline comments and examples._
 
-    ```ini
-    # Universal password for all services
-    UNIVERSAL_PASSWORD=YourStrongAndSecurePassword
-
-    # Pi-hole specific (references UNIVERSAL_PASSWORD)
-    PIHOLE_PASSWORD=${UNIVERSAL_PASSWORD}
-    PIHOLE_ADMIN_EMAIL=admin@yourdomain.local
-    PIHOLE_HOSTNAME=my-pihole.local
-
-    # Timezone (e.g., Australia/Sydney, America/New_York, Europe/London)
-    TZ=Australia/Sydney # Example: America/New_York
-
-    # Network configuration (match your Pi's OS setup)
-    PI_STATIC_IP=192.168.1.185 # Example: Your Pi's LAN IP
-    PI_GATEWAY=192.168.1.1
-    PI_DNS_SERVERS=8.8.8.8,8.8.4.4
-
-    # Monitoring (references UNIVERSAL_PASSWORD)
-    GRAFANA_ADMIN_PASSWORD=${UNIVERSAL_PASSWORD}
-
-    # ... other variables ...
-    ```
-
-    - Ensure values like `TZ`, `PI_STATIC_IP`, `PIHOLE_HOSTNAME` match your initial Raspberry Pi OS setup.
     - Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X` in `nano`).
 
-5.  **Fix line endings for scripts (install `dos2unix` first):**
+4.  **Install dependencies and run setup script:**
 
     ```bash
-    sudo apt update && sudo apt install -y dos2unix
-    dos2unix .env scripts/*.sh
+    sudo apt update                 # Refresh package lists
+    sudo apt install -y dos2unix dnsutils # Install essential utilities including `dig`
+    dos2unix .env scripts/*.sh      # Ensure correct line endings
+    chmod +x scripts/*.sh           # Make scripts executable
+    ./scripts/setup.sh              # Run the initial system setup
     ```
 
-6.  **Make scripts executable:**
+    - **⚠️ IMPORTANT: Docker Group Change Requires Re-login! ⚠️**
+      If `setup.sh` installs Docker, it adds your user to the `docker` group. **This change only takes effect after a new SSH login session.** If prompted by the script to log out and back in:
+      1.  Type `exit` to close your current SSH session.
+      2.  Reconnect: `ssh your_username@192.168.1.XXX`
+      3.  After logging back in, navigate back to your project: `cd ~/pihole-server`
+          Then proceed to the next step.
+
+5.  **Deploy services:**
 
     ```bash
-    chmod +x scripts/*.sh
+    ./scripts/quick-deploy.sh
     ```
-
-7.  **Run the initial setup script:**
-
-    ```bash
-    ./scripts/setup.sh
-    ```
-
-    This installs Docker, creates project directories, configures kernel parameters, and sets up `nftables`.
 
 ---
 
@@ -139,7 +119,7 @@ This is crucial for handling daily router reboots. We will configure the `system
 
     ```ini
     [Unit]
-    Description=BorkHole Docker Compose Application
+    Description=Pi-hole Home Server
     Requires=docker.service
     After=docker.service network-online.target
     Wants=network-online.target

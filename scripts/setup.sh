@@ -46,7 +46,7 @@ sudo apt update && sudo apt upgrade -y
 
 # Install essential packages
 log "Installing essential packages..."
-sudo apt install -y curl wget git vim htop nftables jq
+sudo apt install -y curl wget git vim htop nftables jq dnsutils
 
 # Install Docker
 log "Installing Docker..."
