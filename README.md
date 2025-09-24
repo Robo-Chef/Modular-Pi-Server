@@ -27,14 +27,15 @@ Additionally, for a deeper understanding of the project's core philosophy, desig
     cp env.example .env
     ```
 
-2.  **Edit `.env`:** Open the newly created `.env` file and replace all placeholder values (e.g., `CHANGE_ME`, `192.168.1.XXX`, `your_username`, `yourdomain.local`) with your desired, secure, and unique settings. This includes:
+2.  **Edit `.env`:** Open the newly created `.env` file and replace placeholders (e.g., `CHANGE_ME`, `your_timezone`, `192.168.1.XXX`). At minimum set:
 
-    - Passwords for various services
-    - Your desired static IP address for the Raspberry Pi
-    - Hostnames and email addresses
-    - Timezone and other network settings
+    - `TZ` (e.g., `Australia/Sydney`)
+    - `PI_STATIC_IP` (your Pi's LAN IP)
+    - `PIHOLE_PASSWORD` (admin password)
+    - `GRAFANA_ADMIN_PASSWORD` (if monitoring enabled)
+    - Optional: Watchtower email vars if you want update notifications
 
-    _Ensure you save the changes to `.env` after editing._
+    Save the file when done.
 
 ## Directory Structure
 
