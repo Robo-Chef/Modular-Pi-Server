@@ -55,15 +55,17 @@ This guide will help you deploy a complete home server on your Raspberry Pi 3 B+
    # Copy and edit environment file
    cp env.example .env
    nano .env
-
-   # IMPORTANT: Replace ALL placeholder values with your personalized settings.
-   # Examples:
-   # UNIVERSAL_PASSWORD=your_secure_password_here
-   # PIHOLE_PASSWORD=your_secure_password_here
-   # GRAFANA_ADMIN_PASSWORD=your_secure_password_here
-   # PI_STATIC_IP=192.168.1.100
-   # PIHOLE_ADMIN_EMAIL=your_email@example.com
    ```
+
+   \_**Crucial:** Open the newly created `.env` file and replace all placeholder values (e.g., `CHANGE_ME`, `your_timezone`, `192.168.1.XXX`) with your desired, secure, and unique settings. At minimum set:
+
+   - `TZ` (e.g., `Australia/Sydney`)
+   - `PI_STATIC_IP` (your Pi's LAN IP)
+   - `PIHOLE_PASSWORD` (admin password)
+   - `GRAFANA_ADMIN_PASSWORD` (if monitoring enabled)
+   - Optional: Watchtower email vars if you want update notifications
+
+   _Ensure you save the changes to `.env` after editing._
 
 3. **Run the setup script**
 

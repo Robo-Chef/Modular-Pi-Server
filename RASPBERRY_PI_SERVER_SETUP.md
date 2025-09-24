@@ -74,22 +74,15 @@ _**Important:** The `your_username` and `192.168.1.XXX` values here should match
     nano .env
     ```
 
-    _**Crucial:** Ensure the values you set here for `PIHOLE_HOSTNAME`, `UNIVERSAL_PASSWORD`, `TZ`, `PI_STATIC_IP`, `PI_GATEWAY`, and `PI_DNS_SERVERS` precisely match the choices you made during the **Initial Pi OS Setup** (using Raspberry Pi Imager). Also, configure `PIHOLE_PASSWORD`, `PIHOLE_ADMIN_EMAIL`, and `GRAFANA_ADMIN_PASSWORD` with your desired secure values._
+    \_**Crucial:** Open the newly created `.env` file and replace all placeholder values (e.g., `CHANGE_ME`, `your_timezone`, `192.168.1.XXX`) with your desired, secure, and unique settings. At minimum set:
 
-    _Example placeholders from `env.example` (update these!):_
+    - `TZ` (e.g., `Australia/Sydney`)
+    - `PI_STATIC_IP` (your Pi's LAN IP)
+    - `PIHOLE_PASSWORD` (admin password)
+    - `GRAFANA_ADMIN_PASSWORD` (if monitoring enabled)
+    - Optional: Watchtower email vars if you want update notifications
 
-    ```ini
-    UNIVERSAL_PASSWORD=CHANGE_ME
-    PIHOLE_PASSWORD=CHANGE_ME_PIHOLE
-    PIHOLE_ADMIN_EMAIL=admin@yourdomain.local
-    TZ=America/New_York
-    PI_STATIC_IP=192.168.1.XXX
-    PI_GATEWAY=192.168.1.1
-    PI_DNS_SERVERS=8.8.8.8,8.8.4.4
-    GRAFANA_ADMIN_PASSWORD=CHANGE_ME_GRAFANA
-    ```
-
-    _Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X`)._
+    _Ensure you save the changes to `.env` after editing._
 
 5.  **Fix line endings for scripts (install `dos2unix` first):**
 
