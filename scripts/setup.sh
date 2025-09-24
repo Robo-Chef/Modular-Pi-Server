@@ -112,8 +112,8 @@ table inet filter {
         # Allow loopback
         iifname "lo" accept
         
-        # Allow SSH on standard port
-        tcp dport 22 accept
+        # Allow SSH on custom port
+        tcp dport 2222 accept
         
         # Allow DNS (Pi-hole)
         tcp dport 53 accept

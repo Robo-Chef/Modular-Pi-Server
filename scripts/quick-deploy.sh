@@ -5,6 +5,8 @@
 
 set -euo pipefail
 
+# --- Functions ---
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -26,9 +28,70 @@ error() {
     exit 1
 }
 
+# Function to wait for a Docker container to become healthy
+wait_for_container_health() {
+    local container_name=$1
+    local timeout=${2:-120} # Default timeout of 120 seconds
+    local start_time=$(date +%s)
+    log "Waiting for container '$container_name' to become healthy (timeout: ${timeout}s)"
+
+    while true; do
+        current_time=$(date +%s)
+        elapsed_time=$((current_time - start_time))
+
+        if [[ $elapsed_time -ge $timeout ]]; then
+            error "Container '$container_name' did not become healthy within ${timeout} seconds."
+        fi
+
+        # Check if container exists and is running
+        if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
+            warn "Container '$container_name' not found or not running. Retrying..."
+            sleep 5
+            continue
+        fi
+
+        # Check container health status
+        health_status=$(docker inspect --format='{{json .State.Health}}' "$container_name" 2>/dev/null || true)
+        if [[ -n "$health_status" ]]; then
+            status=$(echo "$health_status" | jq -r '.Status')
+            if [[ "$status" == "healthy" ]]; then
+                log "✓ Container '$container_name' is healthy."
+                return 0
+            elif [[ "$status" == "unhealthy" ]]; then
+                warn "Container '$container_name' is unhealthy. Checking logs..."
+                docker logs "$container_name" | tail -10
+                error "Container '$container_name' is unhealthy."
+            fi
+        else
+            # No healthcheck defined, assume healthy if running
+            if docker ps --filter "name=^${container_name}$" --format '{{.Status}}' | grep -q "Up"; then
+                log "✓ Container '$container_name' is running and has no healthcheck defined (assuming healthy)."
+                return 0
+            fi
+        fi
+        log "Container '$container_name' not yet healthy. Retrying in 5 seconds..."
+        sleep 5
+    done
+}
+
+# --- Initial Checks ---
+
 # Check if running as root
 if [[ $EUID -eq 0 ]]; then
    error "This script should not be run as root. Please run as a regular user with sudo privileges."
+fi
+
+# Check if Docker is installed and running
+if ! command -v docker &> /dev/null; then
+    error "Docker is not installed. Please install Docker first (e.g., run scripts/setup.sh)."
+fi
+if ! docker info >/dev/null 2>&1; then
+    error "Docker daemon is not running. Please start Docker first (e.g., sudo systemctl start docker)."
+fi
+
+# Check if Docker Compose is installed
+if ! command -v docker compose &> /dev/null; then
+    error "Docker Compose is not installed. Please install Docker Compose first (e.g., run scripts/setup.sh)."
 fi
 
 # Check if .env file exists
@@ -41,34 +104,8 @@ source .env
 
 log "Starting Raspberry Pi Home Server Quick Deploy..."
 
-# Create project directory structure
-log "Creating project directory structure..."
-mkdir -p ~/pihole-server/{configs,docker,scripts,monitoring,backups,docs}
-mkdir -p ~/pihole-server/docker/{pihole,unbound,monitoring,optional}
-mkdir -p ~/pihole-server/monitoring/{prometheus,grafana,uptime-kuma}
-mkdir -p ~/pihole-server/backups/{daily,weekly,monthly}
-
-# Copy all files to project directory
-log "Copying configuration files..."
-cp -r docker/* ~/pihole-server/docker/ 2>/dev/null || true
-cp -r monitoring/* ~/pihole-server/monitoring/ 2>/dev/null || true
-cp -r configs/* ~/pihole-server/configs/ 2>/dev/null || true
-cp scripts/* ~/pihole-server/scripts/ 2>/dev/null || true
-cp docs/* ~/pihole-server/docs/ 2>/dev/null || true
-cp .env ~/pihole-server/ 2>/dev/null || true
-
-# Set permissions
-chmod +x ~/pihole-server/scripts/*.sh
-chmod 755 ~/pihole-server
-chmod 700 ~/pihole-server/backups
-
-# Change to project directory
+# Project directory structure and initial file copying/permissions are handled by scripts/setup.sh
 cd ~/pihole-server
-
-# Check Docker is running
-if ! docker info >/dev/null 2>&1; then
-    error "Docker is not running. Please start Docker first."
-fi
 
 # Create necessary directories for containers
 log "Creating container directories..."
@@ -91,49 +128,18 @@ log "Starting core services (Pi-hole + Unbound)..."
 cd docker
 docker compose -f docker-compose.core.yml up -d
 
-# Wait for services to be healthy
-log "Waiting for services to be healthy..."
-sleep 30
-
-# Check service health
-log "Checking service health..."
-
-# Check Pi-hole
-if docker exec pihole curl -f http://localhost/admin/api.php?summary >/dev/null 2>&1; then
-    log "✓ Pi-hole is healthy"
-else
-    warn "✗ Pi-hole is not responding. Checking logs..."
-    docker logs pihole | tail -10
-fi
-
-# Check Unbound
-if docker exec unbound unbound-control status >/dev/null 2>&1; then
-    log "✓ Unbound is healthy"
-else
-    warn "✗ Unbound is not responding. Checking logs..."
-    docker logs unbound | tail -10
-fi
+log "Waiting for core services to become healthy..."
+wait_for_container_health pihole
+wait_for_container_health unbound
 
 # Start monitoring services if enabled
 if [[ "${ENABLE_UPTIME_KUMA:-true}" == "true" ]]; then
     log "Starting monitoring services..."
     docker compose -f monitoring/docker-compose.monitoring.yml up -d
     
-    # Wait for monitoring services
-    sleep 30
-    
-    # Check monitoring services
-    if docker exec grafana wget --quiet --tries=1 --spider http://localhost:3000 >/dev/null 2>&1; then
-        log "✓ Grafana is healthy"
-    else
-        warn "✗ Grafana is not responding"
-    fi
-    
-    if docker exec uptime-kuma wget --quiet --tries=1 --spider http://localhost:3001 >/dev/null 2>&1; then
-        log "✓ Uptime Kuma is healthy"
-    else
-        warn "✗ Uptime Kuma is not responding"
-    fi
+    log "Waiting for monitoring services to become healthy..."
+    wait_for_container_health grafana
+    wait_for_container_health uptime-kuma
 fi
 
 # Display service status

@@ -19,17 +19,17 @@ This guide will help you deploy a complete home server on your Raspberry Pi 3 B+
    - Select "Raspberry Pi OS (64-bit)" - Full version
    - Configure advanced options:
      - Enable SSH with key authentication
-     - Set hostname: `my-pihole.local` (Match `PIHOLE_HOSTNAME` in `.env`)
-     - Set username: `your_username` (Match your chosen username during OS setup and `UNIVERSAL_PASSWORD` in `.env`)
-     - Set static IP: `192.168.1.XXX/24` (Match `PI_STATIC_IP` in `.env`)
-     - Gateway: `192.168.0.1` (Match `PI_GATEWAY` in `.env`)
-     - DNS: `8.8.8.8,8.8.4.4` (Match `PI_DNS_SERVERS` in `.env`)
+     - Set hostname: `my-pihole.local` (_Choose a hostname, to be matched with `PIHOLE_HOSTNAME` in `.env` later_)
+     - Set username: `your_username` (_Choose a username, to be matched with your `UNIVERSAL_PASSWORD` in `.env` later_)
+     - Set static IP: `192.168.1.XXX/24` (_Choose a static IP, to be matched with `PI_STATIC_IP` in `.env` later_)
+     - Gateway: `192.168.1.1` (_Choose your network gateway, to be matched with `PI_GATEWAY` in `.env` later_)
+     - DNS: `8.8.8.8,8.8.4.4` (_Choose primary and secondary DNS servers, to be matched with `PI_DNS_SERVERS` in `.env` later_)
 
 2. **First Boot**
 
    ```bash
    # Connect via SSH
-   ssh pi@192.168.1.XXX
+   ssh your_username@192.168.1.XXX
 
    # Update system
    sudo apt update && sudo apt upgrade -y
@@ -43,9 +43,10 @@ This guide will help you deploy a complete home server on your Raspberry Pi 3 B+
 1. **Clone the repository**
 
    ```bash
-   git clone <your-repo-url> ~/pihole-server
+   git clone https://github.com/Robo-Chef/Modular-Pi-Server.git ~/pihole-server
    cd ~/pihole-server
    ```
+   _**Note:** Replace `https://github.com/Robo-Chef/Modular-Pi-Server.git` with the URL of your forked repository, or if you haven't forked, you can use the original._
 
 2. **Configure environment**
 
@@ -66,7 +67,14 @@ This guide will help you deploy a complete home server on your Raspberry Pi 3 B+
 3. **Run the setup script**
 
    ```bash
-   chmod +x scripts/setup.sh
+   # Fix line endings for scripts (install `dos2unix` first)
+   sudo apt update && sudo apt install -y dos2unix
+   dos2unix .env scripts/*.sh
+
+   # Make scripts executable
+   chmod +x scripts/*.sh
+
+   # Now run the setup script
    ./scripts/setup.sh
    ```
 
