@@ -70,9 +70,9 @@ All notable changes to the Raspberry Pi Home Server project will be documented i
 
 - **DNS Server**: 192.168.1.XXX
 - **Web Interfaces**:
-  - Pi-hole Admin: http://192.168.1.XXX/admin
-  - Grafana: http://192.168.1.XXX:3000
-  - Uptime Kuma: http://192.168.1.XXX:3001
+  - Pi-hole Admin: `http://192.168.1.XXX/admin`
+  - Grafana: `http://192.168.1.XXX:3000`
+  - Uptime Kuma: `http://192.168.1.XXX:3001`
 - **SSH Port**: 2222 (custom)
 - **Docker Networks**: 172.20.0.0/24 (pihole), 172.21.0.0/24 (monitoring)
 
