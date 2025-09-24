@@ -104,9 +104,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Trivy vulnerability scanner for all images
-        id: trivy-scan
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@0.28.0
         with:
+          scan-type: 'image'
           image-ref: |
             pihole/pihole:2024.06.0
             klutchell/unbound:latest
@@ -117,15 +117,13 @@ jobs:
             portainer/portainer-ce:latest
             containrrr/watchtower:latest
             dozzle/dozzle:latest
-          format: "sarif"
-          output: "trivy-scan-results.sarif"
-          severity: "CRITICAL,HIGH"
-          exit-code: '0'  # Don't fail the build on vulnerabilities
+          format: 'sarif'
+          output: 'trivy-scan-results.sarif'
+          severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
-          ignorefile: ".github/trivy-ignore.yaml"  # Use the ignore file
-          skip-files: "/etc/ssl/certs/ca-certificates.crt"  # Keep existing skip files
-          timeout: '5m'  # 5 minute timeout per image
-          version: '0.46.0'  # Use a valid Trivy version
+          exit-code: '0'  # Don't fail the build on vulnerabilities
+          skip-files: "/etc/ssl/certs/ca-certificates.crt"
+          timeout: '5m'
 
       - name: Upload Trivy scan results
         uses: actions/upload-artifact@v4
