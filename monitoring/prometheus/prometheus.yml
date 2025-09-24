@@ -1,0 +1,70 @@
+# Prometheus configuration for Raspberry Pi Home Server
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: "pihole-server"
+    replica: "A"
+
+rule_files:
+  - "/etc/prometheus/rules/*.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+scrape_configs:
+  # Prometheus itself
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Node Exporter (system metrics)
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Pi-hole metrics
+  - job_name: "pihole"
+    static_configs:
+      - targets: ["pihole:80"]
+    scrape_interval: 30s
+    metrics_path: /admin/api.php?summaryRaw
+    params:
+      format: ["json"]
+
+  # Docker containers
+  - job_name: "caddy-exporter"
+    static_configs:
+      - targets: ["caddy-exporter:9094"]
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Unbound DNS
+  - job_name: "unbound"
+    static_configs:
+      - targets: ["unbound:5053"]
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Grafana
+  - job_name: "grafana"
+    static_configs:
+      - targets: ["grafana:3000"]
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+  # Uptime Kuma
+  - job_name: "uptime-kuma"
+    static_configs:
+      - targets: ["uptime-kuma:3001"]
+    scrape_interval: 30s
+    metrics_path: /metrics
+
+
