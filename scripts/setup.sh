@@ -5,25 +5,8 @@
 
 set -euo pipefail
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Logging function
-log() {
-    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
-}
-
-warn() {
-    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARNING: $1${NC}"
-}
-
-error() {
-    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}"
-    exit 1
-}
+# Source utility functions
+source "$(dirname "$0")"/utils.sh
 
 # Check if running as root
 if [[ $EUID -eq 0 ]]; then
@@ -181,33 +164,44 @@ EOF
 
 # Create backup script
 log "Creating backup script..."
-tee ~/pihole-server/scripts/backup.sh > /dev/null <<'EOF'
+sudo tee ~/pihole-server/scripts/backup.sh > /dev/null <<'EOF'
 #!/bin/bash
+
+# Source utility functions
+source "$(dirname "$0")"/utils.sh
 
 BACKUP_DIR="${BACKUP_DIR:-/home/${USER}/pihole-server/backups/daily}"
 DATE=$(date +%Y%m%d_%H%M%S)
 RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-30}
 
+log "Starting backup to $BACKUP_DIR/$DATE..."
+
 # Create backup directory
-mkdir -p "$BACKUP_DIR/$DATE"
+mkdir -p "$BACKUP_DIR/$DATE" || error "Failed to create backup directory: $BACKUP_DIR/$DATE"
 
 # Backup Pi-hole configuration
 if docker ps | grep -q pihole; then
-    docker exec pihole pihole -a -t
+    log "Backing up Pi-hole configuration..."
+    docker exec pihole pihole -a -t || warn "Failed to run pihole -a -t command. Pi-hole backup may be incomplete."
     # Ensure backup path is dynamically derived from project structure
-    cp "$(pwd)"/docker/pihole/etc-pihole/* "$BACKUP_DIR/$DATE/" 2>/dev/null || true
+    cp "$(pwd)"/docker/pihole/etc-pihole/* "$BACKUP_DIR/$DATE/" 2>/dev/null || warn "Failed to copy Pi-hole configuration files."
+else
+    warn "Pi-hole container not running, skipping Pi-hole backup."
 fi
 
 # Backup Docker Compose files
-cp "$(pwd)"/docker/*.yml "$BACKUP_DIR/$DATE/" 2>/dev/null || true
+log "Backing up Docker Compose files..."
+cp "$(pwd)"/docker/*.yml "$BACKUP_DIR/$DATE/" || warn "Failed to copy Docker Compose files."
 
 # Backup configuration files
-cp -r "$(pwd)"/configs "$BACKUP_DIR/$DATE/" 2>/dev/null || true
+log "Backing up other configuration files..."
+cp -r "$(pwd)"/configs "$BACKUP_DIR/$DATE/" || warn "Failed to copy configuration files from 'configs' directory."
 
 # Clean up old backups
-find "$BACKUP_DIR" -type d -mtime +$RETENTION_DAYS -exec rm -rf {} + 2>/dev/null || true
+log "Cleaning up old backups (retaining $RETENTION_DAYS days)..."
+find "$BACKUP_DIR" -type d -mtime +$RETENTION_DAYS -exec rm -rf {} + 2>/dev/null || warn "Failed to clean up old backup directories."
 
-echo "Backup completed: $BACKUP_DIR/$DATE"
+log "Backup completed: $BACKUP_DIR/$DATE"
 EOF
 
 chmod +x ~/pihole-server/scripts/backup.sh

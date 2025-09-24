@@ -5,73 +5,8 @@
 
 set -euo pipefail
 
-# --- Functions ---
-
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Logging function
-log() {
-    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
-}
-
-warn() {
-    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARNING: $1${NC}"
-}
-
-error() {
-    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}"
-    exit 1
-}
-
-# Function to wait for a Docker container to become healthy
-wait_for_container_health() {
-    local container_name=$1
-    local timeout=${2:-120} # Default timeout of 120 seconds
-    local start_time; start_time=$(date +%s)
-    log "Waiting for container '$container_name' to become healthy (timeout: ${timeout}s)"
-
-    while true; do
-        current_time=$(date +%s)
-        elapsed_time=$((current_time - start_time))
-
-        if [[ $elapsed_time -ge $timeout ]]; then
-            error "Container '$container_name' did not become healthy within ${timeout} seconds."
-        fi
-
-        # Check if container exists and is running
-        if ! docker ps --format '{{.Names}}' | grep -q "^${container_name}$"; then
-            warn "Container '$container_name' not found or not running. Retrying..."
-            sleep 5
-            continue
-        fi
-
-        # Check container health status
-        health_status=$(docker inspect --format='{{json .State.Health}}' "$container_name" 2>/dev/null || true)
-        if [[ -n "$health_status" ]]; then
-            status=$(echo "$health_status" | jq -r '.Status')
-            if [[ "$status" == "healthy" ]]; then
-                log "✓ Container '$container_name' is healthy."
-                return 0
-            elif [[ "$status" == "unhealthy" ]]; then
-                warn "Container '$container_name' is unhealthy. Checking logs..."
-                docker logs "$container_name" | tail -10
-                error "Container '$container_name' is unhealthy."
-            fi
-        else
-            # No healthcheck defined, assume healthy if running
-            if docker ps --filter "name=^${container_name}$" --format '{{.Status}}' | grep -q "Up"; then
-                log "✓ Container '$container_name' is running and has no healthcheck defined (assuming healthy)."
-                return 0
-            fi
-        fi
-        log "Container '$container_name' not yet healthy. Retrying in 5 seconds..."
-        sleep 5
-    done
-}
+# Source utility functions
+source "$(dirname "$0")"/utils.sh
 
 # --- Initial Checks ---
 

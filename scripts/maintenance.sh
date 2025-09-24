@@ -5,25 +5,8 @@
 
 set -euo pipefail
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Logging function
-log() {
-    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
-}
-
-warn() { # shellcheck disable=SC2317
-    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARNING: $1${NC}"
-}
-
-error() { # shellcheck disable=SC2317
-    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}"
-    exit 1
-}
+# Source utility functions
+source "$(dirname "$0")"/utils.sh
 
 # Check if .env file exists
 if [[ ! -f ".env" ]]; then
@@ -76,6 +59,10 @@ run_backup() {
 }
 
 # Main script logic
+if [[ $# -eq 0 ]]; then
+    error "Usage: $0 {status|full|update|backup}"
+fi
+
 case "$1" in
     status)
         status_check
@@ -90,7 +77,6 @@ case "$1" in
         run_backup
         ;;
     *)
-        echo "Usage: $0 {status|full|update|backup}"
-        exit 1
+        error "Invalid argument: $1. Usage: $0 {status|full|update|backup}"
         ;;
 esac
