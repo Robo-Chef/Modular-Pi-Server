@@ -8,9 +8,12 @@ set -euo pipefail # Exit immediately if a command exits with a non-zero status, 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Source utility functions for consistent logging and error handling.
 # shellcheck source=./utils.sh
+# shellcheck disable=SC1091  # Not following: source was not specified as input
 source "${SCRIPT_DIR}/utils.sh"
+
+# shellcheck disable=SC2317  # Command appears to be unreachable (error is defined in utils.sh)
+# shellcheck disable=SC2120  # Allow functions to be called without arguments
 
 # Initialize counters for tracking test results.
 TESTS_PASSED=0
@@ -23,56 +26,51 @@ TOTAL_TESTS=0
 #   $2: The command string to execute.
 #   $3: The expected exit status (0 for success).
 run_test() {
-   local test_name="$1"
-   local test_command="$2"
-   local expected_result="$3"
-   local status
-   
-   TOTAL_TESTS=$((TOTAL_TESTS + 1))
-   
-   log "Running test: $test_name"
-   
-   # Execute the command and suppress its output, capturing only the exit status.
-   if eval "$test_command" >/dev/null 2>&1; then
-       status=$?
-       if [[ "$status" -eq "$expected_result" ]]; then
-           log " PASS: $test_name"
-           TESTS_PASSED=$((TESTS_PASSED + 1))
-           return 0
-       else
-           error " FAIL: $test_name (unexpected exit code: got $status; expected $expected_result)"
-           TESTS_FAILED=$((TESTS_FAILED + 1))
-           return 1
-       fi
-   else
-       status=$? # Capture exit status from eval in case the command itself failed.
-       error " FAIL: $test_name (command failed with status $status)"
-       TESTS_FAILED=$((TESTS_FAILED + 1))
-       return 1
-   fi
+    local test_name="$1"
+    local test_command="$2"
+    local expected_result="$3"
+    local status output
+    
+    TOTAL_TESTS=$((TOTAL_TESTS + 1))
+    
+    log "Running test: $test_name"
+    
+    # Execute the command and capture output and status
+    output="$(eval "$test_command" 2>&1)"
+    status=$?
+    
+    # Check if the actual status matches the expected result
+    if [ "$status" -eq "$expected_result" ]; then
+        log " PASS: $test_name"
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        return 0
+    else
+        error " FAIL: $test_name (unexpected exit code: got $status; expected $expected_result)"
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        return 1
+    fi
 }
 
 # Function to run a test with custom comparison logic.
 # Arguments:
 #   $1: Name/description of the test.
 #   $2: Command to execute (output will be captured).
-#   $3: Comparison command to evaluate the output.
-#   $4: Expected exit status (0 for success).
+#   $3: Command to evaluate the result (use $result to reference the output).
+#   $4: Expected result (0 for success, 1 for failure).
 run_test_custom() {
     local test_name="$1"
     local test_command="$2"
     local comparison_command="$3"
-    local expected_result="$4"
-    local output
-    local result
+    local expected_result="${4:-0}"  # Default to 0 if not provided
+    local output result status
     
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
     
     log "Running test: $test_name"
     
     # Execute the test command and capture output and status
-    output=$(eval "$test_command" 2>&1)
-    local status=$?
+    output="$(eval "$test_command" 2>&1)"
+    status=$?
     
     # Store the output in result for use in the comparison command
     result="$output"
