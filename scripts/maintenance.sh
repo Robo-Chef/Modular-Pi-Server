@@ -9,18 +9,16 @@ set -euo pipefail # Exit immediately if a command exits with a non-zero status, 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Source utility functions for consistent logging and error handling.
 # shellcheck source=./utils.sh
 source "${SCRIPT_DIR}/utils.sh"
+
+# shellcheck source=/dev/null
+source .env
 
 # Verify the .env file exists, which contains essential environment variables.
 if [[ ! -f ".env" ]]; then
     error ".env file not found. Please copy env.example to .env and configure it."
 fi
-
-# Source the .env file to load environment variables.
-# shellcheck source=/dev/null
-source .env
 
 # Function to display the current system and service status.
 # Includes checks for systemd service, running Docker containers, disk usage, memory usage, and CPU usage.

@@ -1,16 +1,21 @@
 #!/bin/bash
 
 # Quick Deploy Script for Raspberry Pi Home Server
-# This script provides a streamlined deployment process for Docker Compose services.
+# This script provides a streamlined deployment process for the server.
 
-set -euo pipefail # Exit immediately if a command exits with a non-zero status, exit if an undeclared variable is used, and propagate pipefail status.
+set -euo pipefail
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Source utility functions for logging, error handling, and container health checks.
 # shellcheck source=./utils.sh
 source "${SCRIPT_DIR}/utils.sh"
+
+# Source environment variables if .env exists
+if [[ -f ".env" ]]; then
+    # shellcheck source=/dev/null
+    source .env
+fi
 
 # --- Initial Checks ---
 
@@ -36,10 +41,6 @@ fi
 if [[ ! -f ".env" ]]; then
     error ".env file not found. Please copy env.example to .env and configure it."
 fi
-
-# Source the .env file to load environment variables.
-# shellcheck source=/dev/null
-source .env
 
 log "Starting Raspberry Pi Home Server Quick Deploy..."
 

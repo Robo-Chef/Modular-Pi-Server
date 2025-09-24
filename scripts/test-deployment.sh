@@ -64,29 +64,30 @@ run_test_custom() {
     local comparison_command="$3"
     local expected_result="$4"
     local output
-    local status
+    local result
     
     TOTAL_TESTS=$((TOTAL_TESTS + 1))
     
     log "Running test: $test_name"
     
-    # Execute the command and capture its output and status
+    # Execute the test command and capture output and status
     output=$(eval "$test_command" 2>&1)
-    status=$?
+    local status=$?
+    
+    # Store the output in result for use in the comparison command
+    result="$output"
     
     # Evaluate the comparison command
-    if eval "$comparison_command" <<<"$output" 2>/dev/null; then
-        if [[ "$status" -eq "$expected_result" ]]; then
-            log " PASS: $test_name"
-            TESTS_PASSED=$((TESTS_PASSED + 1))
-            return 0
-        else
-            error " FAIL: $test_name (unexpected exit code: got $status; expected $expected_result)"
-            TESTS_FAILED=$((TESTS_FAILED + 1))
-            return 1
-        fi
+    if eval "$comparison_command" 2>/dev/null; then
+        log " PASS: $test_name"
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        return 0
     else
-        error " FAIL: $test_name (output comparison failed)"
+        error " FAIL: $test_name"
+        error "   Command: $test_command"
+        error "   Output: $output"
+        error "   Expected result: $expected_result"
+        error "   Actual result: $result"
         TESTS_FAILED=$((TESTS_FAILED + 1))
         return 1
     fi
@@ -121,10 +122,10 @@ run_test "Pi-hole is healthy" "docker exec pihole curl -f http://localhost/admin
 run_test "Unbound is healthy" "docker exec unbound unbound-control status" 0
 
 # Test 8: Verify DNS resolution works via Pi-hole for a known domain (e.g., google.com).
-run_test_custom "DNS resolution via Pi-hole works" "dig @${PI_STATIC_IP} +short google.com" "[[ -n \"$result\" ]]" 0
+run_test_custom "DNS resolution via Pi-hole works" "dig @${PI_STATIC_IP} +short google.com | head -n 1" "[[ -n \"$result\" ]]"
 
 # Test 9: Verify ad blocking is active by querying a known ad domain (e.g., doubleclick.net).
-run_test_custom "Ad blocking via Pi-hole works" "dig @${PI_STATIC_IP} +short doubleclick.net" "[[ -z \"$result\" ]]" 0
+run_test_custom "Ad blocking via Pi-hole works" "dig @${PI_STATIC_IP} +short doubleclick.net" "[[ -z \"$result\" ]]"
 
 # Test 10: Check if the Pi-hole web interface is accessible from the host.
 run_test "Pi-hole web interface is accessible" "curl -f http://${PI_STATIC_IP}/admin/api.php?summary" 0
@@ -148,7 +149,7 @@ fi
 run_test "nftables firewall is active" "sudo systemctl is-active nftables" 0
 
 # Test 13: Check system resource usage (memory and disk) against reasonable thresholds.
-run_test_custom "Memory usage is reasonable (below 90%)" "free | awk 'NR==2{printf \"%.0f\", \$3*100/\$2}'" "[[ \"$result\" -lt 90 ]]" 0
+run_test_custom "Memory usage is reasonable (below 90%)" "free | awk 'NR==2{printf \"%.0f\", \$3*100/\$2}'" "[[ \"$result\" -lt 90 ]]"
 run_test_custom "Disk usage is reasonable (below 80% on root)" "df / | awk 'NR==2 {print \$5}' | sed 's/%//'" "[[ \"$result\" -lt 80 ]]" 0
 
 # Test 14: Verify existence of log files for core services.

@@ -39,20 +39,26 @@ wait_for_container_health() {
     local start_time
     start_time=$(date +%s)
     local i
+    local elapsed_seconds
 
     log "Waiting for container '$container_name' to become healthy..."
     for ((i=1; i<=retries; i++)); do
-        # Check Docker inspect for health status. Redirect stderr to /dev/null to suppress errors if container not found.
-        if docker inspect --format='{{.State.Health.Status}}' "$container_name" 2>/dev/null | grep -q "healthy"; then
-            log "Container '$container_name' is healthy."
+        local health_status
+        health_status=$(docker inspect --format '{{.State.Health.Status}}' "$container_name" 2>/dev/null || true)
+        
+        if [ "$health_status" = "healthy" ]; then
+            elapsed_seconds=$(( $(date +%s) - start_time ))
+            log "Container '$container_name' is healthy after ${elapsed_seconds} seconds"
             return 0
         fi
-        printf "Container '%s' not yet healthy (attempt %d/%d). Waiting %d seconds...\n" "$container_name" "$i" "$retries" "$delay"
-        sleep "$delay"
+        
+        if [ $i -lt $retries ]; then
+            sleep $delay
+        fi
     done
-
-    # If loop completes without container becoming healthy, raise an error.
-    error "Timed out waiting for container '$container_name' to become healthy after $((retries * delay)) seconds."
+    
+    elapsed_seconds=$(( $(date +%s) - start_time ))
+    error "Timed out after ${elapsed_seconds} seconds waiting for container '$container_name' to become healthy. Current status: ${health_status:-unknown}"
 }
 
 # Verifies the integrity of a backup by attempting a partial restore to a temporary location.
