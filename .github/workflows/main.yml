@@ -63,7 +63,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
-          cache: 'npm'
 
       - name: Install markdownlint-cli and prettier
         run: |
@@ -128,7 +127,8 @@ jobs:
           severity: "CRITICAL,HIGH"
           exit-code: '0'  # Don't fail the build on vulnerabilities
           ignore-unfixed: true
-          skip-files: "/etc/ssl/certs/ca-certificates.crt"  # Ignore common false positives
+          ignorefile: ".github/trivy-ignore.yaml"  # Use the ignore file
+          skip-files: "/etc/ssl/certs/ca-certificates.crt"  # Keep existing skip files
           timeout: '5m'  # 5 minute timeout per image
 
       - name: Upload Trivy scan results
