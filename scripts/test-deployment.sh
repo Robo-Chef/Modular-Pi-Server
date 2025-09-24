@@ -22,7 +22,7 @@ warn() { # shellcheck disable=SC2317
 
 error() { # shellcheck disable=SC2317
     echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}"
-    exit 1
+    return 1
 }
 
 # Test counters
@@ -46,14 +46,14 @@ run_test() {
             TESTS_PASSED=$((TESTS_PASSED + 1))
             return 0
         else
-            error "✗ FAIL: $test_name (unexpected exit code)"
-            TESTS_FAILED=$((TESTS_FAILED + 1))
-            return 1
+            error "✗ FAIL: $test_name (unexpected exit code)" # shellcheck disable=SC2317
+            TESTS_FAILED=$((TESTS_FAILED + 1)) # shellcheck disable=SC2317
+            return 1 # shellcheck disable=SC2317
         fi
     else
-        error "✗ FAIL: $test_name"
-        TESTS_FAILED=$((TESTS_FAILED + 1))
-        return 1
+        error "✗ FAIL: $test_name" # shellcheck disable=SC2317
+        TESTS_FAILED=$((TESTS_FAILED + 1)) # shellcheck disable=SC2317
+        return 1 # shellcheck disable=SC2317
     fi
 }
 
@@ -75,9 +75,9 @@ run_test_custom() {
         TESTS_PASSED=$((TESTS_PASSED + 1))
         return 0
     else
-        error "✗ FAIL: $test_name"
-        TESTS_FAILED=$((TESTS_FAILED + 1))
-        return 1
+        error "✗ FAIL: $test_name" # shellcheck disable=SC2317
+        TESTS_FAILED=$((TESTS_FAILED + 1)) # shellcheck disable=SC2317
+        return 1 # shellcheck disable=SC2317
     fi
 }
 
@@ -206,7 +206,7 @@ if [[ $TESTS_FAILED -eq 0 ]]; then
     exit 0
 else
     error "❌ $TESTS_FAILED tests failed. Please check the issues above."
-    exit 1
+    exit 1 # shellcheck disable=SC2317
 fi
 
 
