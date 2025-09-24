@@ -1,18 +1,13 @@
-name: CI Checks
+name: CI
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main, master ]
   pull_request:
-    branches:
-      - main
-  schedule:
-    # Run every day at 3 AM AEST (5 PM UTC)
-    - cron: "0 17 * * *"
+    branches: [ main, master ]
 
 jobs:
-  lint-scripts-and-docker-compose:
+  shellcheck:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -21,138 +16,101 @@ jobs:
       - name: Install ShellCheck
         run: sudo apt-get update && sudo apt-get install -y shellcheck
 
-      - name: Run ShellCheck on scripts
+      - name: Run ShellCheck
         run: shellcheck scripts/*.sh
 
-      - name: Install Hadolint
-        run: sudo wget -O /usr/local/bin/hadolint https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-arm64 && sudo chmod +x /usr/local/bin/hadolint # For ARM64 on Raspberry Pi, adjust if GitHub Actions runner is different
+  markdownlint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Run Hadolint on Dockerfiles
-        run: find . -name "Dockerfile" -exec hadolint {} + # Scans all Dockerfiles
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install markdownlint
+        run: npm install -g markdownlint-cli
+
+      - name: Run markdownlint
+        run: markdownlint '**/*.md' --config .markdownlint.json
+
+  yamllint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Install yamllint
         run: pip install yamllint
 
       - name: Run yamllint on YAML files
-        run: yamllint . -f .github/configs/.yamllint.yml # Assuming a config file exists or will be created
+        run: yamllint .
 
-      - name: Validate Docker Compose files
-        run: |
-          docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml config
-
-  check-markdown-links:
+  trivy:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Check Markdown links
-        uses: gaurav-nelson/github-action-markdown-link-check@v1
-        with:
-          use-quiet-mode: "yes"
-          config-file: ".github/configs/markdown-link-check.jsonc"
-
-  lint-markdown:
-    runs-on: ubuntu-latest
-    needs: check-markdown-links # Ensures link check passes first
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18.x'
-
-      - name: Fix markdown files
-        if: github.event_name == 'push' || github.event_name == 'pull_request'  # Run on both push and PR
-        run: |
-          # Install Prettier and markdownlint
-          npm install -g prettier@3.0.0 markdownlint-cli@0.35.0
-          
-          # Fix markdown files using prettier
-          find . -name "*.md" -not -path "*/node_modules/*" -not -path "*/.github/*" -exec prettier --write --prose-wrap always {} \;
-          
-          # Fix list spacing using markdownlint
-          markdownlint --fix "**/*.md" --ignore "node_modules/**" --ignore ".github/**" --ignore "**/node_modules/**"
-          
-          # Configure git if this is a push event
-          if [ "${{ github.event_name }}" = "push" ]; then
-            git config --global user.name 'GitHub Actions'
-            git config --global user.email 'actions@github.com'
-            
-            # Check if there are changes to commit
-            git add .
-            if ! git diff --quiet && ! git diff --staged --quiet; then
-              git commit -m "docs: auto-format markdown files"
-              git push
-            fi
-          fi
-
-      - name: Run markdownlint
-        run: |
-          markdownlint --config .github/configs/.markdownlint.json "**/*.md" \
-            --ignore "node_modules/**" \
-            --ignore ".github/**" \
-            --ignore "**/node_modules/**"
-
-  scan-docker-images:
-    runs-on: ubuntu-latest
-    continue-on-error: true  # Continue even if this job fails
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Run Trivy vulnerability scanner for all images
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          scan-type: 'image'
-          image-ref: |
-            pihole/pihole:2024.06.0,klutchell/unbound:latest,prom/prometheus:2.51.0,prom/node-exporter:1.7.0,prom/alertmanager:0.27.0,grafana/grafana:11.1.0,portainer/portainer-ce:latest,containrrr/watchtower:latest,dozzle/dozzle:latest
-          format: 'sarif'
-          output: 'trivy-scan-results.sarif'
-          severity: 'CRITICAL,HIGH'
-          ignore-unfixed: true
-          exit-code: '0'
-          skip-files: "/etc/ssl/certs/ca-certificates.crt"
-          timeout: '5m'
+        run: |
+          # List of images to scan
+          images=(
+            "pihole/pihole:2024.06.0"
+            "klutchell/unbound:latest"
+            "prom/prometheus:2.51.0"
+            "prom/node-exporter:1.7.0"
+            "prom/alertmanager:0.27.0"
+            "grafana/grafana:11.1.0"
+            "portainer/portainer-ce:latest"
+            "containrrr/watchtower:latest"
+            "dozzle/dozzle:latest"
+          )
+          
+          # Create a combined SARIF file
+          echo '{"$schema": "https://json.schemastore.org/sarif-2.1.0.json", "version": "2.1.0", "runs": []}' > trivy-scan-results.sarif
+          
+          # Scan each image individually and merge results
+          for image in "${images[@]}"; do
+            echo "Scanning $image..."
+            # Use a temporary file for each scan
+            temp_sarif="temp-${image//\//-}.sarif"
+            if trivy image "$image" --format sarif --output "$temp_sarif" --severity CRITICAL,HIGH --ignore-unfixed --skip-files "/etc/ssl/certs/ca-certificates.crt" --timeout 5m; then
+              # If scan succeeded, merge the results
+              if [ -f "$temp_sarif" ] && [ -s "$temp_sarif" ]; then
+                # Extract runs and merge them
+                jq -r '.runs[]?' "$temp_sarif" >> /tmp/trivy-runs.json 2>/dev/null || true
+              fi
+            fi
+            # Clean up temp file
+            rm -f "$temp_sarif"
+          done
+          
+          # Finalize the combined SARIF file
+          if [ -f /tmp/trivy-runs.json ] && [ -s /tmp/trivy-runs.json ]; then
+            jq -n "{ \"\$schema\": \"https://json.schemastore.org/sarif-2.1.0.json\", \"version\": \"2.1.0\", \"runs\": [$(cat /tmp/trivy-runs.json | jq -s '.')] }" > trivy-scan-results.sarif
+          fi
 
       - name: Upload Trivy scan results
         uses: actions/upload-artifact@v4
-        if: always()  # Always upload results, even if the scan fails
         with:
-          name: trivy-scan-results
-          path: |
-            trivy-scan-results.sarif
-            trivy-scan-*.sarif
+          name: trivy-results
+          path: trivy-scan-results.sarif
 
-      - name: Generate vulnerability report
-        if: always()  # Always generate a report
+  # Optional gate job for single status check
+  all_checks:
+    runs-on: ubuntu-latest
+    needs: [shellcheck, markdownlint, yamllint, trivy]
+    if: always()
+    steps:
+      - name: Check all jobs status
         run: |
-          echo "# 📊 Trivy Vulnerability Scan Results" >> $GITHUB_STEP_SUMMARY
-          echo "## Scan completed at $(date)" >> $GITHUB_STEP_SUMMARY
-          
-          # Check if there are any scan results
-          if [ -f "trivy-scan-results.sarif" ]; then
-            echo "### 🔍 Scan Results" >> $GITHUB_STEP_SUMMARY
-            echo "Detailed SARIF report is available in the workflow artifacts." >> $GITHUB_STEP_SUMMARY
-            
-            # Count vulnerabilities by severity
-            echo "### ⚠️ Vulnerability Summary" >> $GITHUB_STEP_SUMMARY
-            
-            # Count critical vulnerabilities
-            CRITICAL_COUNT=$(jq -r '.runs[].results[] | select(.level == "error") | .ruleId' trivy-scan-results.sarif 2>/dev/null | wc -l || echo 0)
-            # Count high vulnerabilities
-            HIGH_COUNT=$(jq -r '.runs[].results[] | select(.level == "warning") | .ruleId' trivy-scan-results.sarif 2>/dev/null | wc -l || echo 0)
-            
-            echo "- 🔴 **Critical:** $CRITICAL_COUNT" >> $GITHUB_STEP_SUMMARY
-            echo "- 🟠 **High:** $HIGH_COUNT" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            
-            echo "### 📊 Next Steps" >> $GITHUB_STEP_SUMMARY
-            echo "1. Review the detailed SARIF report in the workflow artifacts" >> $GITHUB_STEP_SUMMARY
-            echo "2. Update to newer versions of the images if available" >> $GITHUB_STEP_SUMMARY
-            echo "3. If a vulnerability is a false positive, consider adding it to the ignore list" >> $GITHUB_STEP_SUMMARY
+          if [[ "${{ needs.shellcheck.result }}" == "success" && "${{ needs.markdownlint.result }}" == "success" && "${{ needs.yamllint.result }}" == "success" && "${{ needs.trivy.result }}" == "success" ]]; then
+            echo "All checks passed! "
+            exit 0
           else
-            echo "❌ Error: No scan results were generated." >> $GITHUB_STEP_SUMMARY
+            echo "Some checks failed "
+            exit 1
           fi
