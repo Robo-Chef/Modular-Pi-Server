@@ -7,6 +7,9 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    # Run every Monday at 3 AM AEST (5 PM UTC Sunday)
+    - cron: "0 17 * * 0"
 
 jobs:
   lint-scripts-and-docker-compose:
