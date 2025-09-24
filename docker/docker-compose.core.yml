@@ -1,65 +1,66 @@
 services:
   pihole:
-    image: pihole/pihole:2024.06.0
-    container_name: pihole
-    hostname: pihole-server
+    image: pihole/pihole:2024.06.0 # Specifies the Pi-hole Docker image and a specific version tag for stability.
+    container_name: pihole # Assigns a static name to the container for easy referencing.
+    hostname: pihole-server # Sets the hostname within the container.
     networks:
-      pihole_net:
-        ipv4_address: 172.20.0.3
-      isolated_net: # Block outbound DNS
+      pihole_net: # Connects Pi-hole to the custom bridge network.
+        ipv4_address: 172.20.0.3 # Assigns a static IP address to Pi-hole within the `pihole_net`.
+      isolated_net:# Connects Pi-hole to an internal-only network to block outbound internet access.
+        # This ensures Pi-hole only forwards to Unbound, not external DNS servers.
     volumes:
-      - ./pihole/etc-pihole:/etc/pihole
-      - ./pihole/etc-dnsmasq.d:/etc/dnsmasq.d
-      - ./pihole/logs:/var/log/pihole
+      - ./pihole/etc-pihole:/etc/pihole # Mounts persistent configuration for Pi-hole.
+      - ./pihole/etc-dnsmasq.d:/etc/dnsmasq.d # Mounts custom dnsmasq configurations.
+      - ./pihole/logs:/var/log/pihole # Mounts logs for persistent storage and easier access.
     environment:
-      TZ: ${TZ:-Australia/Sydney}
-      WEBPASSWORD: ${PIHOLE_PASSWORD}
-      DNS1: 172.20.0.2#5053 # Unbound
-      # DNS2: 127.0.0.1#5053 # Fallback to Unbound (redundant with DNS1)
-      VIRTUAL_HOST: pihole.local
-      VIRTUAL_PORT: 80
-      # ServerIP: ${PI_STATIC_IP:-192.168.1.XXX} # Removed: Not needed in Docker bridge network setup
-      PIHOLE_DNS_: 172.20.0.2#5053
-      # PIHOLE_INTERFACE: eth0 # Removed: Default for Docker containers
-      FTLCONF_LOCAL_IPV4: 172.20.0.3
+      TZ: ${TZ:-Australia/Sydney} # Sets the timezone, defaulting to Australia/Sydney.
+      WEBPASSWORD: ${PIHOLE_PASSWORD} # Sets the web interface password from the .env file.
+      DNS1: 172.20.0.2#5053 # Configures Pi-hole to use Unbound as its primary (and only) upstream DNS server.
+      # DNS2: 127.0.0.1#5053                   # This is redundant with DNS1 pointing to Unbound, so it's commented out.
+      VIRTUAL_HOST: pihole.local # Virtual host setting, useful for reverse proxies, but often not strictly needed in LAN-only.
+      VIRTUAL_PORT: 80 # Virtual port setting, similar to VIRTUAL_HOST.
+      # ServerIP: ${PI_STATIC_IP:-192.168.1.XXX} # Removed as it's not strictly needed in a Docker bridge network setup for Pi-hole's internal config.
+      PIHOLE_DNS_: 172.20.0.2#5053 # Explicitly sets the internal DNS server for FTL. Redundant with DNS1.
+      # PIHOLE_INTERFACE: eth0                  # Removed as Docker containers usually handle network interfaces abstractly.
+      FTLCONF_LOCAL_IPV4: 172.20.0.3 # Ensures FTL binds to the correct IP within the Docker network.
     ports:
-      - "53:53/tcp"
-      - "53:53/udp"
-      - "80:80/tcp"
-    restart: unless-stopped
+      - "53:53/tcp" # Exposes DNS TCP port to the host.
+      - "53:53/udp" # Exposes DNS UDP port to the host.
+      - "80:80/tcp" # Exposes HTTP (Pi-hole web interface) to the host.
+    restart: unless-stopped # Ensures the container restarts automatically unless explicitly stopped.
     deploy:
       resources:
-        limits:
-          cpus: "1.0"
-          memory: 512M
-        reservations:
-          memory: 256M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost/admin/api.php?summary"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-    # dns:
+        limits: # Hard limits for resource usage to prevent resource exhaustion.
+          cpus: "1.0" # Limits CPU usage to 1 full CPU core.
+          memory: 512M # Limits memory usage to 512 Megabytes.
+        reservations: # Guaranteed minimum resources for the container.
+          memory: 256M # Reserves 256 Megabytes of memory.
+    healthcheck: # Defines a health check to determine if the service is operational.
+      test: ["CMD", "curl", "-f", "http://localhost/admin/api.php?summary"] # Checks Pi-hole's API endpoint.
+      interval: 30s # How often to perform the check.
+      timeout: 10s # How long to wait for a response.
+      retries: 3 # How many times to retry before marking as unhealthy.
+      start_period: 30s # Grace period for the container to start up.
+    # dns:                              # This section is redundant as DNS1 already points to Unbound.
     #   - 172.20.0.2
     #   - 127.0.0.1 # Redundant with 172.20.0.2
 
   unbound:
-    image: klutchell/unbound:latest
-    container_name: unbound
-    hostname: unbound-server
+    image: klutchell/unbound:latest # Specifies the Unbound Docker image.
+    container_name: unbound # Assigns a static name to the container.
+    hostname: unbound-server # Sets the hostname within the container.
     networks:
-      pihole_net:
-        ipv4_address: 172.20.0.2
+      pihole_net: # Connects Unbound to the same custom bridge network as Pi-hole.
+        ipv4_address: 172.20.0.2 # Assigns a static IP address to Unbound within the `pihole_net`.
     volumes:
-      - ./unbound/config:/etc/unbound/custom
-      - ./unbound/logs:/var/log/unbound
+      - ./unbound/config:/etc/unbound/custom # Mounts custom Unbound configuration files.
+      - ./unbound/logs:/var/log/unbound # Mounts logs for persistent storage.
     environment:
-      TZ: ${TZ:-Australia/Sydney}
-    # ports:
-    #   - "127.0.0.1:5053:5053/tcp"
-    #   - "127.0.0.1:5053:5053/udp"
-    restart: unless-stopped
+      TZ: ${TZ:-Australia/Sydney} # Sets the timezone, defaulting to Australia/Sydney.
+    # ports:                            # These ports are commented out as Unbound only needs to be accessible by Pi-hole internally.
+    #   - "127.0.0.1:5053:5053/tcp" # Only accessible from host for debugging/direct query
+    #   - "127.0.0.1:5053:5053/udp" # Only accessible from host for debugging/direct query
+    restart: unless-stopped # Ensures the container restarts automatically unless explicitly stopped.
     deploy:
       resources:
         limits:
@@ -68,21 +69,21 @@ services:
         reservations:
           memory: 128M
     healthcheck:
-      test: ["CMD", "unbound-control", "status"]
+      test: ["CMD", "unbound-control", "status"] # Checks Unbound's status via unbound-control utility.
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
-    command: -d -v
+    command: -d -v # Starts Unbound in debug and verbose mode for detailed logging.
 
 networks:
   pihole_net:
-    driver: bridge
+    driver: bridge # Defines a custom bridge network for Pi-hole and Unbound.
     ipam:
       config:
-        - subnet: 172.20.0.0/24
-          gateway: 172.20.0.1
-    internal: false
+        - subnet: 172.20.0.0/24 # Specifies the subnet for this Docker network.
+          gateway: 172.20.0.1 # Sets the gateway IP for this network.
+    internal: false # Allows containers in this network to communicate with other Docker networks or the host.
   isolated_net:
-    driver: bridge
-    internal: true
+    driver: bridge # Defines a separate internal bridge network.
+    internal: true # This makes the network isolated, blocking all outbound internet access for containers connected to it.

@@ -1,67 +1,67 @@
 services:
   homeassistant:
-    image: ghcr.io/home-assistant/home-assistant:stable
-    container_name: homeassistant
-    hostname: homeassistant-server
-    network_mode: host # Crucial for local device discovery
+    image: ghcr.io/home-assistant/home-assistant:stable # Specifies the Home Assistant Docker image. Using `stable` for predictable updates.
+    container_name: homeassistant # Assigns a static name to the container.
+    hostname: homeassistant-server # Sets the hostname within the container.
+    network_mode: host # Crucial for Home Assistant to discover local network devices (e.g., smart home hubs).
     volumes:
-      - homeassistant_data:/config
-      - /etc/localtime:/etc/localtime:ro
+      - homeassistant_data:/config # Mounts a named volume for persistent Home Assistant configuration.
+      - /etc/localtime:/etc/localtime:ro # Mounts the host's localtime to ensure correct time within the container.
     environment:
-      TZ: ${TZ:-Australia/Sydney}
-      PUID: 1000
-      PGID: 1000
+      TZ: ${TZ:-Australia/Sydney} # Sets the timezone for the container.
+      PUID: 1000 # Sets the User ID for the container process.
+      PGID: 1000 # Sets the Group ID for the container process.
     ports:
-      - "8123:8123"
-    restart: unless-stopped
+      - "8123:8123" # Exposes Home Assistant's web interface.
+    restart: unless-stopped # Ensures the container restarts automatically unless explicitly stopped.
     deploy:
       resources:
-        limits:
-          cpus: "1.0"
-          memory: 1G
-        reservations:
-          memory: 512M
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8123"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+        limits: # Hard limits for resource usage.
+          cpus: "1.0" # Limits CPU usage to 1 full core.
+          memory: 1G # Limits memory usage to 1 Gigabyte.
+        reservations: # Guaranteed minimum resources.
+          memory: 512M # Reserves 512 Megabytes of memory.
+    healthcheck: # Defines a health check for Home Assistant.
+      test: ["CMD", "curl", "-f", "http://localhost:8123"] # Checks Home Assistant's HTTP endpoint.
+      interval: 30s # How often to perform the check.
+      timeout: 10s # How long to wait for a response.
+      retries: 3 # How many times to retry.
+      start_period: 60s # Grace period for startup, Home Assistant can take longer to initialize.
     devices:
-      - /dev/ttyUSB0:/dev/ttyUSB0 # Z-Wave/Zigbee dongle (uncomment if you have a Z-Wave/Zigbee USB dongle and ensure path is correct)
-      - /dev/ttyACM0:/dev/ttyACM0 # Alternative USB device (uncomment if you have another USB device and ensure path is correct)
+      - /dev/ttyUSB0:/dev/ttyUSB0 # Z-Wave/Zigbee dongle (uncomment and adjust path if you have a Z-Wave/Zigbee USB dongle, e.g., ConBee II)
+      - /dev/ttyACM0:/dev/ttyACM0 # Alternative USB device (uncomment and adjust path if you have another USB device, e.g., a custom sensor)
 
   gitea:
-    image: gitea/gitea:1.22.1
-    container_name: gitea
-    hostname: gitea-server
+    image: gitea/gitea:1.22.1 # Specifies the Gitea Docker image and a specific version tag.
+    container_name: gitea # Assigns a static name.
+    hostname: gitea-server # Sets the hostname within the container.
     networks:
-      - dev_net
+      - dev_net # Connects Gitea to the custom development network.
     volumes:
-      - gitea_data:/data
-      - /etc/timezone:/etc/timezone:ro
-      - /etc/localtime:/etc/localtime:ro
+      - gitea_data:/data # Mounts a named volume for persistent Gitea data (database, repositories).
+      - /etc/timezone:/etc/timezone:ro # Mounts host's timezone.
+      - /etc/localtime:/etc/localtime:ro # Mounts host's localtime.
     environment:
-      TZ: ${TZ:-Australia/Sydney}
-      USER_UID: 1000
-      USER_GID: 1000
-      GITEA__database__DB_TYPE: sqlite3
-      GITEA__database__PATH: /data/gitea/gitea.db
-      GITEA__server__DOMAIN: ${GITEA_DOMAIN:-gitea.local}
-      GITEA__server__ROOT_URL: ${GITEA_ROOT_URL:-http://gitea.local:3000}
-      GITEA__server__SSH_DOMAIN: gitea.local
-      GITEA__server__SSH_PORT: 2222
-      GITEA__server__HTTP_PORT: 3000
-      GITEA__server__PROTOCOL: http
-      GITEA__security__INSTALL_LOCK: true
-      GITEA__service__DISABLE_REGISTRATION: false
-      GITEA__service__REQUIRE_SIGNIN_VIEW: false
-      GITEA__log__LEVEL: Info
-      GITEA__log__ROOT_PATH: /data/gitea/log
+      TZ: ${TZ:-Australia/Sydney} # Sets the timezone.
+      USER_UID: 1000 # Sets the User ID for Gitea process.
+      USER_GID: 1000 # Sets the Group ID for Gitea process.
+      GITEA__database__DB_TYPE: sqlite3 # Configures Gitea to use SQLite as its database.
+      GITEA__database__PATH: /data/gitea/gitea.db # Path to the SQLite database file within the container.
+      GITEA__server__DOMAIN: ${GITEA_DOMAIN:-gitea.local} # Sets the Gitea domain, configurable via .env.
+      GITEA__server__ROOT_URL: ${GITEA_ROOT_URL:-http://gitea.local:3000} # Sets the root URL, configurable via .env.
+      GITEA__server__SSH_DOMAIN: gitea.local # Domain for SSH access.
+      GITEA__server__SSH_PORT: 2222 # Internal SSH port for Gitea (container port).
+      GITEA__server__HTTP_PORT: 3000 # Internal HTTP port for Gitea (container port).
+      GITEA__server__PROTOCOL: http # Protocol for the server.
+      GITEA__security__INSTALL_LOCK: true # Locks installation after first run for security.
+      GITEA__service__DISABLE_REGISTRATION: false # Allows users to register (can be set to true for private instances).
+      GITEA__service__REQUIRE_SIGNIN_VIEW: false # Allows public access to repositories without sign-in.
+      GITEA__log__LEVEL: Info # Sets logging level.
+      GITEA__log__ROOT_PATH: /data/gitea/log # Path for Gitea logs.
     ports:
-      - "3002:3000"
-      - "2223:22"
-    restart: unless-stopped
+      - "3002:3000" # Maps host port 3002 to container's HTTP port 3000 for web access.
+      - "2223:22" # Maps host port 2223 to container's SSH port 22 to avoid conflict with host SSH (port 2222).
+    restart: unless-stopped # Ensures the container restarts automatically.
     deploy:
       resources:
         limits:
@@ -70,7 +70,7 @@ services:
         reservations:
           memory: 256M
     healthcheck:
-      test:
+      test: # Checks Gitea's web interface for health.
         [
           "CMD",
           "wget",
@@ -85,19 +85,19 @@ services:
       start_period: 30s
 
   portainer:
-    image: portainer/portainer-ce:2.21.5
-    container_name: portainer
-    hostname: portainer-server
+    image: portainer/portainer-ce:2.21.5 # Specifies the Portainer Community Edition Docker image.
+    container_name: portainer # Assigns a static name.
+    hostname: portainer-server # Sets the hostname within the container.
     networks:
-      - management_net
+      - management_net # Connects Portainer to the custom management network.
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - portainer_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Mounts Docker socket for Portainer to manage Docker.
+      - portainer_data:/data # Mounts a named volume for persistent Portainer data.
     environment:
-      TZ: ${TZ:-Australia/Sydney}
+      TZ: ${TZ:-Australia/Sydney} # Sets the timezone.
     ports:
-      - "9000:9000"
-    restart: unless-stopped
+      - "9000:9000" # Exposes Portainer's web interface.
+    restart: unless-stopped # Ensures the container restarts automatically.
     deploy:
       resources:
         limits:
@@ -106,7 +106,7 @@ services:
         reservations:
           memory: 128M
     healthcheck:
-      test:
+      test: # Checks Portainer's web interface for health.
         [
           "CMD",
           "wget",
@@ -121,18 +121,18 @@ services:
       start_period: 30s
 
   dozzle:
-    image: amir20/dozzle:latest
-    container_name: dozzle
-    hostname: dozzle-server
+    image: amir20/dozzle:latest # Specifies the Dozzle Docker image (live log viewer).
+    container_name: dozzle # Assigns a static name.
+    hostname: dozzle-server # Sets the hostname within the container.
     networks:
-      - management_net
+      - management_net # Connects Dozzle to the custom management network.
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Mounts Docker socket for Dozzle to read container logs.
     environment:
-      TZ: ${TZ:-Australia/Sydney}
+      TZ: ${TZ:-Australia/Sydney} # Sets the timezone.
     ports:
-      - "8080:8080" # Dozzle web interface
-    restart: unless-stopped
+      - "8080:8080" # Exposes Dozzle web interface.
+    restart: unless-stopped # Ensures the container restarts automatically.
     deploy:
       resources:
         limits:
@@ -141,7 +141,7 @@ services:
         reservations:
           memory: 64M
     healthcheck:
-      test:
+      test: # Checks Dozzle's web interface for health.
         [
           "CMD",
           "wget",
@@ -156,21 +156,21 @@ services:
       start_period: 30s
 
   speedtest-tracker:
-    image: henrywhitaker3/speedtest-tracker:latest
-    container_name: speedtest-tracker
-    hostname: speedtest-tracker-server
+    image: henrywhitaker3/speedtest-tracker:latest # Specifies the Speedtest Tracker Docker image.
+    container_name: speedtest-tracker # Assigns a static name.
+    hostname: speedtest-tracker-server # Sets the hostname within the container.
     networks:
-      - management_net
+      - management_net # Connects Speedtest Tracker to the custom management network.
     volumes:
-      - speedtest_data:/config
+      - speedtest_data:/config # Mounts a named volume for persistent configuration and data.
     environment:
-      TZ: ${TZ:-Australia/Sydney}
-      PUID: 1000
-      PGID: 1000
-      OOKLA_EULA_GDPR: "true" # Accept Ookla EULA
+      TZ: ${TZ:-Australia/Sydney} # Sets the timezone.
+      PUID: 1000 # Sets the User ID for the container process.
+      PGID: 1000 # Sets the Group ID for the container process.
+      OOKLA_EULA_GDPR: "true" # Automatically accepts the Ookla EULA/GDPR terms.
     ports:
-      - "8787:80" # Speedtest Tracker web interface
-    restart: unless-stopped
+      - "8787:80" # Maps host port 8787 to container's HTTP port 80 for web access.
+    restart: unless-stopped # Ensures the container restarts automatically.
     deploy:
       resources:
         limits:
@@ -179,35 +179,41 @@ services:
         reservations:
           memory: 128M
     healthcheck:
-      test:
-        ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost"]
+      test: [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost",
+        ] # Checks the Speedtest Tracker web interface.
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
 
   watchtower:
-    image: containrrr/watchtower:latest
-    container_name: watchtower
-    hostname: watchtower-server
+    image: containrrr/watchtower:latest # Specifies the Watchtower Docker image for automated container updates.
+    container_name: watchtower # Assigns a static name.
+    hostname: watchtower-server # Sets the hostname within the container.
     networks:
-      - management_net
+      - management_net # Connects Watchtower to the custom management network.
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro # Mounts Docker socket to allow Watchtower to interact with Docker daemon.
     environment:
-      TZ: ${TZ:-Australia/Sydney}
-      WATCHTOWER_CLEANUP: true
-      WATCHTOWER_POLL_INTERVAL: 3600
-      WATCHTOWER_INCLUDE_STOPPED: true
-      WATCHTOWER_REVIVE_STOPPED: true
-      WATCHTOWER_NOTIFICATIONS: email
-      WATCHTOWER_NOTIFICATION_EMAIL_FROM: ${WATCHTOWER_EMAIL_FROM:-noreply@yourdomain.local}
-      WATCHTOWER_NOTIFICATION_EMAIL_TO: ${WATCHTOWER_EMAIL_TO:-admin@yourdomain.local}
-      WATCHTOWER_NOTIFICATION_EMAIL_SERVER: ${WATCHTOWER_EMAIL_SERVER:-smtp.gmail.com}
-      WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT: ${WATCHTOWER_EMAIL_PORT:-587}
-      WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER: ${WATCHTOWER_EMAIL_USER}
-      WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD: ${WATCHTOWER_EMAIL_PASSWORD}
-    restart: unless-stopped
+      TZ: ${TZ:-Australia/Sydney} # Sets the timezone.
+      WATCHTOWER_CLEANUP: true # Cleans up old images after updating.
+      WATCHTOWER_POLL_INTERVAL: 3600 # Checks for new images every 3600 seconds (1 hour).
+      WATCHTOWER_INCLUDE_STOPPED: true # Includes stopped containers in update checks.
+      WATCHTOWER_REVIVE_STOPPED: true # Starts stopped containers after updating if they were stopped.
+      WATCHTOWER_NOTIFICATIONS: email # Enables email notifications.
+      WATCHTOWER_NOTIFICATION_EMAIL_FROM: ${WATCHTOWER_EMAIL_FROM:-noreply@yourdomain.local} # Sender email, configurable via .env.
+      WATCHTOWER_NOTIFICATION_EMAIL_TO: ${WATCHTOWER_EMAIL_TO:-admin@yourdomain.local} # Recipient email, configurable via .env.
+      WATCHTOWER_NOTIFICATION_EMAIL_SERVER: ${WATCHTOWER_EMAIL_SERVER:-smtp.gmail.com} # SMTP server for sending emails.
+      WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT: ${WATCHTOWER_EMAIL_PORT:-587} # SMTP server port.
+      WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER: ${WATCHTOWER_EMAIL_USER} # SMTP authentication username.
+      WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD: ${WATCHTOWER_EMAIL_PASSWORD} # SMTP authentication password.
+    restart: unless-stopped # Ensures the container restarts automatically.
     deploy:
       resources:
         limits:
@@ -217,31 +223,31 @@ services:
           memory: 64M
 
 volumes:
-  homeassistant_data:
+  homeassistant_data: # Named volume for Home Assistant persistent data.
     driver: local
-  gitea_data:
+  gitea_data: # Named volume for Gitea persistent data.
     driver: local
-  portainer_data:
+  portainer_data: # Named volume for Portainer persistent data.
     driver: local
-  speedtest_data:
+  speedtest_data: # Named volume for Speedtest Tracker persistent data.
     driver: local
 
 networks:
   smart_home_net:
-    driver: bridge
+    driver: bridge # Defines a custom bridge network for smart home services.
     ipam:
       config:
-        - subnet: 172.22.0.0/24
-          gateway: 172.22.0.1
+        - subnet: 172.22.0.0/24 # Specifies the subnet for this network.
+          gateway: 172.22.0.1 # Sets the gateway IP.
   dev_net:
-    driver: bridge
+    driver: bridge # Defines a custom bridge network for development services (e.g., Gitea).
     ipam:
       config:
-        - subnet: 172.23.0.0/24
-          gateway: 172.23.0.1
+        - subnet: 172.23.0.0/24 # Specifies the subnet for this network.
+          gateway: 172.23.0.1 # Sets the gateway IP.
   management_net:
-    driver: bridge
+    driver: bridge # Defines a custom bridge network for management tools.
     ipam:
       config:
-        - subnet: 172.24.0.0/24
-          gateway: 172.24.0.1
+        - subnet: 172.24.0.0/24 # Specifies the subnet for this network.
+          gateway: 172.24.0.1 # Sets the gateway IP.
