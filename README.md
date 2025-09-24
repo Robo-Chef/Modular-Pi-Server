@@ -8,76 +8,185 @@ A comprehensive, modular **LAN-only** home server setup using Raspberry Pi 3 B+ 
 - **Base OS**: Raspberry Pi OS (64-bit)
 - **Static IP**: Configured via `.env` (e.g., `192.168.1.XXX`)
 - **Core Services**: Pi-hole + Unbound for DNS and ad blocking ![Screenshot: Pi-hole Admin Dashboard example]
-- **Monitoring**: Prometheus, Grafana, Uptime Kuma
+- **Monitoring**: Prometheus, Grafana, Uptime Kuma ![Screenshot: Uptime Kuma status page]
 - **Optional**: Home Assistant, Gitea
 - **Security**: `nftables` firewall, SSH hardening, container isolation
 - **Resilience**: Configured for graceful recovery after network interruptions (e.g., router reboots)
 
 ## Getting Started
 
-For **detailed setup instructions**, including initial OS flashing, configuration, and deployment, please refer to:
+For **detailed setup instructions**, including initial OS flashing, configuration, and deployment, please refer to:  
 ➡️ [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md)
 
 Additionally, for a deeper understanding of the project's core philosophy, design choices, and constraints, consult the [LAN-Only Stack Plan](docs/LAN_ONLY_STACK_PLAN.md).
 
 ### 🚀 Quick Installation Steps
 
-Before proceeding, ensure your Raspberry Pi OS is **already installed and configured** according to the detailed instructions in:
+Before proceeding, ensure your Raspberry Pi OS is **already installed and configured** according to the detailed instructions in:  
 ➡️ [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md)
 
 These steps assume you have completed the initial OS setup via Raspberry Pi Imager (hostname, username, password, timezone, static IP, SSH enabled) and are currently connected to your Pi via SSH.
 
 1.  **Handle SSH Host Key Changes (if re-imaging Pi):**
-    If you re-flashed your Raspberry Pi and receive a `REMOTE HOST IDENTIFICATION HAS CHANGED` warning, remove the old host key from your computer's `~/.ssh/known_hosts` file (on your computer):
-
     ```bash
     ssh-keygen -R 192.168.1.XXX # Replace with your Pi's IP
     ```
 
 2.  **Clone the repository (on your Pi):**
-
     ```bash
     git clone https://github.com/Robo-Chef/Modular-Pi-Server.git ~/pihole-server
     cd ~/pihole-server
     ```
 
-    _(Note: If you forked the repository, use your fork's URL instead of the original.)_
-
 3.  **Configure your `.env` file (on your Pi):**
-
     ```bash
     cp env.example .env
     nano .env
     ```
+    - Replace placeholders with real values. `UNIVERSAL_PASSWORD` will be used by multiple services. Ensure `TZ`, `PI_STATIC_IP`, `PIHOLE_HOSTNAME` match your Pi OS setup.
 
-    - **Crucial:** Open `.env` and replace all placeholder values. The `UNIVERSAL_PASSWORD` should be your primary secure password, and it will be referenced by other services. Ensure `TZ`, `PI_STATIC_IP`, `PIHOLE_HOSTNAME` match your initial Raspberry Pi OS setup. _Refer to `env.example` for detailed inline comments and examples._
-
-    - Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X` in `nano`).
-
-4.  **Install dependencies and run setup script (on your Pi):**
-
+4.  **Install dependencies and run setup script:**
     ```bash
-    sudo apt update                 # Refresh package lists
-    sudo apt install -y dos2unix dnsutils # Install essential utilities
-    dos2unix .env scripts/*.sh      # Ensure correct line endings
-    chmod +x scripts/*.sh           # Make scripts executable
-    ./scripts/setup.sh              # Run the initial system setup
+    sudo apt update
+    sudo apt install -y dos2unix dnsutils
+    dos2unix .env scripts/*.sh
+    chmod +x scripts/*.sh
+    ./scripts/setup.sh
     ```
+    - ⚠️ **Docker Group Change Requires Re-login!** After `setup.sh`, log out and back in to apply Docker group membership.
 
-    - **⚠️ IMPORTANT: Docker Group Change Requires Re-login! ⚠️**
-      If `setup.sh` installs Docker, it adds your user to the `docker` group. **This change only takes effect after a new SSH login session.** If prompted by the script to log out and back in:
-      1.  Type `exit` to close your current SSH session.
-      2.  Reconnect: `ssh your_username@192.168.1.XXX`
-      3.  After logging back in, navigate back to your project: `cd ~/pihole-server`
-          Then proceed to the next step.
-
-5.  **Deploy services (on your Pi):**
-
+5.  **Deploy services:**
     ```bash
     ./scripts/quick-deploy.sh
     ```
 
-6.  **Configure your Router:** Set your Raspberry Pi's static IP address (e.g., `192.168.1.XXX`) as the **Primary DNS Server** in your router's settings. (Refer to `RASPBERRY_PI_SERVER_SETUP.md` for more details).
+6.  **Configure your Router:** Set the Pi static IP (e.g., `192.168.1.XXX`) as **Primary DNS Server** in router settings.
+
+---
+
+## 📦 Deployment, Verification & Troubleshooting
+
+This section provides a full operational reference once your Pi is configured.
+
+### 🐳 Deployment Options
+
+**Option 1: Full Deployment (Recommended)**
+```bash
+./scripts/quick-deploy.sh
+```
+
+**Option 2: Staged Deployment**
+```bash
+docker-compose -f docker/docker-compose.core.yml up -d
+docker-compose -f docker/monitoring/docker-compose.monitoring.yml up -d
+docker-compose -f docker/optional/docker-compose.optional.yml up -d
+```
+
+---
+
+### 🔍 Verification Steps
+
+**Check Services:**
+```bash
+docker ps
+docker-compose logs
+docker-compose logs pihole
+```
+
+**Test Core Services:**
+```bash
+./scripts/test-deployment.sh
+ping 192.168.1.100
+curl http://192.168.1.100/admin/
+dig @192.168.1.100 google.com
+```
+
+**Test Monitoring Stack:**
+```bash
+curl http://localhost:9090/-/healthy   # Prometheus
+curl http://localhost:3000/api/health # Grafana
+curl http://localhost:9100/metrics    # Node Exporter
+```
+
+---
+
+### 🌐 Access Your Services
+
+- **Core**
+  - Pi-hole: `http://192.168.1.100/admin` ![Screenshot: Pi-hole Admin Dashboard example]
+  - Portainer: `http://192.168.1.100:9000` ![Screenshot: Portainer dashboard view]
+  - Dozzle: `http://192.168.1.100:9999` ![Screenshot: Dozzle live logs interface]
+
+- **Monitoring**
+  - Grafana: `http://192.168.1.100:3000`
+  - Prometheus: `http://192.168.1.100:9090`
+  - Alertmanager: `http://192.168.1.100:9093`
+  - Uptime Kuma: `http://192.168.1.100:3001` ![Screenshot: Uptime Kuma status page]
+
+---
+
+### ⚠️ Troubleshooting
+
+**DNS Problems:**
+```bash
+docker-compose restart pihole unbound
+docker-compose exec pihole pihole -t
+```
+
+**Container Startup Issues:**
+```bash
+docker-compose logs <service>
+docker-compose restart <service>
+docker-compose up -d --force-recreate <service>
+```
+
+**Network Connectivity:**
+```bash
+ufw status
+ip addr show
+ping 8.8.8.8
+```
+
+---
+
+### 🔒 Security Hardening
+
+```bash
+sudo ufw enable
+sudo ufw allow ssh http https
+```
+- Change default passwords (Grafana, Pi-hole).
+- Enable fail2ban if configured:
+  ```bash
+  sudo systemctl enable fail2ban
+  sudo systemctl start fail2ban
+  ```
+
+---
+
+### 📊 Monitoring Setup
+
+- Grafana: `http://192.168.1.100:3000` (default login: `admin/admin` → change password)
+- Add Prometheus datasource: `http://prometheus:9090`
+- Import dashboards for system metrics, Pi-hole queries, Docker stats.
+
+---
+
+### 🎯 Final Verification
+
+```bash
+./scripts/test-deployment.sh
+htop
+docker stats
+curl http://localhost:9090/api/v1/query?query=up
+```
+Expected results:  
+✅ All containers running  
+✅ DNS resolution works  
+✅ Monitoring accessible  
+✅ Security active  
+
+---
 
 ## Directory Structure
 
@@ -92,32 +201,29 @@ These steps assume you have completed the initial OS setup via Raspberry Pi Imag
 
 ## Key Features & Security Notes
 
-- All core services are easily configurable via the central `.env` file.
-- SSH key-based authentication is highly recommended (after initial password setup).
-- _For detailed instructions on setting up SSH key-based authentication for enhanced security, refer to the [Security Hardening Guide](docs/security-hardening.md)._
-- Firewall (`nftables`) is configured to block unnecessary incoming ports. ![Screenshot: Uptime Kuma status page]
-- Containers run in isolated Docker networks. ![Screenshot: Portainer dashboard view]
-- Automated backups for critical configurations are set up. ![Screenshot: Dozzle live logs interface]
+- All core services configurable via `.env`
+- SSH key-based authentication recommended
+- Firewall (`nftables`) configured to block unnecessary ports
+- Containers run in isolated Docker networks
+- Automated backups for critical configs
 
 ## 🌐 Why a LAN-Only Server?
 
-This project is designed for a **LAN-only home server** setup, a rational choice for several common scenarios:
+This project is designed for a **LAN-only home server**, a rational choice for common scenarios:
 
-- **ISP & Router Limitations:** Many Internet Service Providers (ISPs) use technologies like Carrier-Grade NAT (CGNAT), which prevent direct inbound connections from the internet to devices on your home network. Stock router firmware often has limited capabilities for advanced DNS redirection, NAT loopback, or complex firewall rules.
-- **Hardware Constraints:** Raspberry Pi devices, especially older models like the Pi 3 B+ with 1GB RAM, have limited resources. Running demanding services (e.g., VPN servers, extensive remote access solutions) simultaneously with core functions like Pi-hole and Unbound can lead to performance issues and instability.
+- **ISP & Router Limitations:** CGNAT and stock routers often block inbound access.
+- **Hardware Constraints:** Pi 3 B+ has limited resources, so remote access solutions can destabilize performance.
 
-By focusing on a LAN-only approach, this project offers a **reliable, consistent, and lightweight solution** for enhancing your home network's privacy and control, without battling common external access limitations or overstraining the Pi's capabilities. Remote access solutions are often more complex and prone to issues in such environments.
+By focusing on LAN-only, this project provides a **reliable, lightweight, consistent solution** without external access complexity.
 
 ---
 
 ## Next Steps
 
-After successfully deploying your Raspberry Pi Home Server, consider these next steps to fully customize and maintain your setup:
-
-1.  **Review the full documentation:** Explore `RASPBERRY_PI_SERVER_SETUP.md`, `docs/security-hardening.md`, and `docs/troubleshooting.md` for in-depth guides.
-2.  **Configure Pi-hole:** Log into the Pi-hole Admin Panel (`http://${PI_STATIC_IP}/admin`) to add custom blocklists, whitelist specific domains, and fine-tune your ad-blocking experience.
-3.  **Set up monitoring dashboards:** Access Grafana (`http://${PI_STATIC_IP}:3000`) and Uptime Kuma (`http://${PI_STATIC_IP}:3001`) to explore metrics, create custom dashboards, and set up alerts.
-4.  **Enable optional services:** If you enabled Home Assistant, Gitea, Portainer, Dozzle, or Speedtest Tracker in your `.env` file, access their web interfaces and configure them as needed.
-5.  **Implement SSH key-based authentication:** For enhanced security, consider replacing password authentication with SSH keys. Refer to the [Security Hardening Guide](docs/security-hardening.md) for instructions.
-6.  **Schedule regular maintenance:** Utilize the `scripts/maintenance.sh` script for automated updates and backups.
-7.  **Explore further optimizations:** Consult documentation for performance tuning and advanced configurations.
+1. Review full documentation (`RASPBERRY_PI_SERVER_SETUP.md`, `docs/security-hardening.md`, `docs/troubleshooting.md`).
+2. Configure Pi-hole block/allow lists in Admin Panel.
+3. Explore Grafana dashboards & Uptime Kuma alerts.
+4. Enable optional services (Home Assistant, Gitea, Portainer, Dozzle, Speedtest Tracker).
+5. Implement SSH key-based authentication for security.
+6. Use `scripts/maintenance.sh` for updates/backups.
+7. Explore advanced optimizations for performance and resilience.
