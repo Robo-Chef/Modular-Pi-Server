@@ -1,0 +1,33 @@
+--- # .markdownlint.yml
+# Custom configuration for markdownlint-cli
+# For available rules and options, see: https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+
+# Extend default rules
+extends: ".github/configs/.markdownlint.json"
+
+rules:
+  # Disable specific rules that might be overly strict or not align with project style
+  MD013: false # Line length
+  MD033: # Allow HTML tags (useful for custom formatting or Mermaid diagrams)
+    # HTML elements to allow without warning (e.g., <br>, <img>, <div>)
+    # Customize this list based on what HTML tags you use in your Markdown.
+    allowed_elements:
+      ["br", "img", "div", "span", "figure", "figcaption", "details", "summary"]
+  MD036: false # Emphasis used instead of a heading
+  MD007: # Unordered list indentation
+    indent: 2 # Enforce 2-space indentation for unordered lists
+  MD004: # Unordered list style
+    style: "dash" # Enforce dash (-) for unordered list items
+  MD005: false # Inconsistent indentation for list items at the same level
+  MD026: # Trailing punctuation in header
+    punctuation: ".,;"
+  MD029: # Ordered list item prefix
+    style: "ordered" # Enforce ordered (1. 2. 3.) for ordered lists
+  MD034: false # Bare URL used
+  MD041: false # First line in file should be a top-level heading
+
+# General options
+# See: https://github.com/markdownlint/markdownlint/blob/main/schema/.markdownlint.jsonc
+# Example of setting specific tag styles globally:
+# tags:
+#   "style": "."
