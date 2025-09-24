@@ -24,19 +24,19 @@ When flashing Raspberry Pi OS (64-bit Full recommended) onto your SD card using 
 _**Note:** Values for hostname, username, password, and timezone should match those configured in your `.env` file (copied from `env.example`)._
 
 - **Set hostname:** `my-pihole.local`
-    _Explanation: Choose a descriptive hostname like `my-pihole.local` to easily identify your Raspberry Pi on your local network. You will set this same value for `PIHOLE_HOSTNAME` in your `.env` file later._
+  _Explanation: Choose a descriptive hostname like `my-pihole.local` to easily identify your Raspberry Pi on your local network. You will set this same value for `PIHOLE_HOSTNAME` in your `.env` file later._
 - **Set username and password:**
   - Username: `your_username`
   - Password: `CHANGE_ME`
     _Explanation: Choose a strong, unique username and password. This will be your primary login for the Raspberry Pi via SSH. You will set this same password for `UNIVERSAL_PASSWORD` in your `.env` file later._
 - **Configure wireless LAN:** Leave blank (as wired Ethernet is primary)
-    _Explanation: For a server, a wired Ethernet connection is generally more stable and reliable than Wi-Fi. We prioritize a wired connection._
+  _Explanation: For a server, a wired Ethernet connection is generally more stable and reliable than Wi-Fi. We prioritize a wired connection._
 - **Set locale settings:**
   - Time Zone: `America/New_York`
     _Explanation: Setting the correct timezone is crucial for accurate logging, scheduling, and overall system functionality. You will set this same value for `TZ` in your `.env` file later._
   - Keyboard Layout: (Default, can confirm later)
 - **Enable SSH:** `✓` **Use password authentication**
-    _Explanation: SSH (Secure Shell) allows you to remotely access and control your Raspberry Pi from another computer. Enabling password authentication is for initial setup, which will later be hardened with key-based authentication for enhanced security._
+  _Explanation: SSH (Secure Shell) allows you to remotely access and control your Raspberry Pi from another computer. Enabling password authentication is for initial setup, which will later be hardened with key-based authentication for enhanced security._
 - **Options:**
   - Eject media when finished: `✓`
   - Enable telemetry: `✓`
@@ -159,24 +159,28 @@ This is crucial for handling daily router reboots. We will configure the `system
 For network-wide ad blocking and DNS resolution, your router needs to be configured to use your Raspberry Pi (running Pi-hole) as its primary DNS server. The exact steps vary by router model and internet service provider (ISP).
 
 1.  **Access Your Router's Administration Interface:**
-    -   Typically, you can access your router by entering its gateway IP address (e.g., `192.168.1.1` from your `.env` file) into a web browser.
-    -   Log in with your router's administrative credentials.
+
+    - Typically, you can access your router by entering its gateway IP address (e.g., `192.168.1.1` from your `.env` file) into a web browser.
+    - Log in with your router's administrative credentials.
 
 2.  **Locate DNS Settings:**
-    -   Navigate to the network, WAN, or DHCP settings section of your router's interface.
-    -   Find the fields for Primary DNS Server and (optionally) Secondary DNS Server.
+
+    - Navigate to the network, WAN, or DHCP settings section of your router's interface.
+    - Find the fields for Primary DNS Server and (optionally) Secondary DNS Server.
 
 3.  **Set Primary DNS to Raspberry Pi's Static IP:**
-    -   Enter your Raspberry Pi's static IP address (configured as `PI_STATIC_IP` in your `.env` file, e.g., `192.168.1.XXX`) as the **Primary DNS Server**.
-    -   For the Secondary DNS, you can either leave it blank (if your router allows) or set it to a public DNS server like `8.8.8.8` (Google DNS) as a fallback.
+
+    - Enter your Raspberry Pi's static IP address (configured as `PI_STATIC_IP` in your `.env` file, e.g., `192.168.1.XXX`) as the **Primary DNS Server**.
+    - For the Secondary DNS, you can either leave it blank (if your router allows) or set it to a public DNS server like `8.8.8.8` (Google DNS) as a fallback.
 
 4.  **Consider DHCP Configuration (Optional but Recommended):**
-    -   For optimal Pi-hole functionality (e.g., seeing individual client names instead of just the router's IP), it is often recommended to **disable your router's DHCP server** and enable Pi-hole's built-in DHCP server.
-    -   If you choose to do this, ensure Pi-hole's DHCP server is configured **before** disabling it on your router to avoid network interruption.
-    -   Refer to the Pi-hole documentation for detailed instructions on configuring its DHCP server.
+
+    - For optimal Pi-hole functionality (e.g., seeing individual client names instead of just the router's IP), it is often recommended to **disable your router's DHCP server** and enable Pi-hole's built-in DHCP server.
+    - If you choose to do this, ensure Pi-hole's DHCP server is configured **before** disabling it on your router to avoid network interruption.
+    - Refer to the Pi-hole documentation for detailed instructions on configuring its DHCP server.
 
 5.  **Save and Apply Settings:**
-    -   Save the changes on your router. Your router may reboot to apply the new settings.
+    - Save the changes on your router. Your router may reboot to apply the new settings.
 
 ---
 

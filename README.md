@@ -59,8 +59,8 @@ Additionally, for a deeper understanding of the project's core philosophy, desig
 
 This project is designed for a **LAN-only home server** setup, a rational choice for several common scenarios:
 
--   **ISP & Router Limitations:** Many Internet Service Providers (ISPs) use technologies like Carrier-Grade NAT (CGNAT), which prevent direct inbound connections from the internet to devices on your home network. Stock router firmware often has limited capabilities for advanced DNS redirection, NAT loopback, or complex firewall rules.
--   **Hardware Constraints:** Raspberry Pi devices, especially older models like the Pi 3 B+ with 1GB RAM, have limited resources. Running demanding services (e.g., VPN servers, extensive remote access solutions) simultaneously with core functions like Pi-hole and Unbound can lead to performance issues and instability.
+- **ISP & Router Limitations:** Many Internet Service Providers (ISPs) use technologies like Carrier-Grade NAT (CGNAT), which prevent direct inbound connections from the internet to devices on your home network. Stock router firmware often has limited capabilities for advanced DNS redirection, NAT loopback, or complex firewall rules.
+- **Hardware Constraints:** Raspberry Pi devices, especially older models like the Pi 3 B+ with 1GB RAM, have limited resources. Running demanding services (e.g., VPN servers, extensive remote access solutions) simultaneously with core functions like Pi-hole and Unbound can lead to performance issues and instability.
 
 By focusing on a LAN-only approach, this project offers a **reliable, consistent, and lightweight solution** for enhancing your home network's privacy and control, without battling common external access limitations or overstraining the Pi's capabilities. Remote access solutions are often more complex and prone to issues in such environments.
 
