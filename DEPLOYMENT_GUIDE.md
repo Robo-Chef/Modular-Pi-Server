@@ -46,6 +46,7 @@ This guide will help you deploy a complete home server on your Raspberry Pi 3 B+
    git clone https://github.com/Robo-Chef/Modular-Pi-Server.git ~/pihole-server
    cd ~/pihole-server
    ```
+
    _**Note:** Replace `https://github.com/Robo-Chef/Modular-Pi-Server.git` with the URL of your forked repository, or if you haven't forked, you can use the original._
 
 2. **Configure environment**

@@ -1,6 +1,7 @@
 # Raspberry Pi Home Server Setup Guide
 
 This document outlines the detailed steps and configurations required to set up your Raspberry Pi 3 B+ as a high-performance, self-contained home server. It includes network-wide ad/tracker blocking (Pi-hole + Unbound), local DNS resolution with DNSSEC validation, and real-time monitoring (Prometheus/Grafana, Uptime Kuma).
+For the foundational design principles and rationale behind this LAN-only setup, refer to the [LAN-Only Stack Plan](docs/LAN_ONLY_STACK_PLAN.md).
 
 ---
 
