@@ -22,21 +22,21 @@ When flashing Raspberry Pi OS (64-bit Full recommended) onto your SD card using 
 
 _**Note:** Values for hostname, username, password, and timezone should match those configured in your `.env` file (copied from `env.example`)._
 
-- **Set hostname:** `my-pihole.local` (Match `PIHOLE_HOSTNAME` in `.env`)
-  _Explanation: Setting a descriptive hostname like `my-pihole.local` makes it easier to identify your Raspberry Pi on your local network._
+- **Set hostname:** `my-pihole.local`
+    _Explanation: Choose a descriptive hostname like `my-pihole.local` to easily identify your Raspberry Pi on your local network. You will set this same value for `PIHOLE_HOSTNAME` in your `.env` file later._
 - **Set username and password:**
-  - Username: `your_username` (You can change this, but remember to update `scripts/setup.sh` and other relevant files if you do.)
-  - Password: `CHANGE_ME` (Match `UNIVERSAL_PASSWORD` in `.env`)
-    _Explanation: Choose a strong, unique username and password. This will be your primary login for the Raspberry Pi via SSH. The password should match the `UNIVERSAL_PASSWORD` in your `.env` for initial consistency._
-- Configure wireless LAN: Leave blank (as wired Ethernet is primary)
-  _Explanation: For a server, a wired Ethernet connection is generally more stable and reliable than Wi-Fi. We prioritize a wired connection._
-- Set locale settings:
-  - Time Zone: `America/New_York` (Match `TZ` in `.env`)
-    _Explanation: Setting the correct timezone is crucial for accurate logging, scheduling, and overall system functionality._
+  - Username: `your_username`
+  - Password: `CHANGE_ME`
+    _Explanation: Choose a strong, unique username and password. This will be your primary login for the Raspberry Pi via SSH. You will set this same password for `UNIVERSAL_PASSWORD` in your `.env` file later._
+- **Configure wireless LAN:** Leave blank (as wired Ethernet is primary)
+    _Explanation: For a server, a wired Ethernet connection is generally more stable and reliable than Wi-Fi. We prioritize a wired connection._
+- **Set locale settings:**
+  - Time Zone: `America/New_York`
+    _Explanation: Setting the correct timezone is crucial for accurate logging, scheduling, and overall system functionality. You will set this same value for `TZ` in your `.env` file later._
   - Keyboard Layout: (Default, can confirm later)
-- Enable SSH: `✓` **Use password authentication**
-  _Explanation: SSH (Secure Shell) allows you to remotely access and control your Raspberry Pi from another computer. Enabling password authentication is for initial setup, which will later be hardened with key-based authentication for enhanced security._
-- Options:
+- **Enable SSH:** `✓` **Use password authentication**
+    _Explanation: SSH (Secure Shell) allows you to remotely access and control your Raspberry Pi from another computer. Enabling password authentication is for initial setup, which will later be hardened with key-based authentication for enhanced security._
+- **Options:**
   - Eject media when finished: `✓`
   - Enable telemetry: `✓`
     _Explanation: Enabling telemetry provides anonymous usage data to the Raspberry Pi Foundation, helping them improve future versions of the Imager and OS. This is optional and can be disabled if preferred._
@@ -48,7 +48,7 @@ _**Note:** Values for hostname, username, password, and timezone should match th
 
 Once the Pi has booted with the new OS, you should be able to SSH into it:
 
-_**Note:** Ensure all placeholder values (e.g., `your_username`, `192.168.1.XXX`, `CHANGE_ME`) match your `.env` configuration (copied from `env.example`)._
+_**Important:** The `your_username` and `192.168.1.XXX` values here should match what you configured during the initial OS setup in the Raspberry Pi Imager._
 
 1.  **Wait 3-5 minutes** for the Pi to fully boot.
 2.  **SSH into the Pi:**
@@ -73,7 +73,9 @@ _**Note:** Ensure all placeholder values (e.g., `your_username`, `192.168.1.XXX`
     nano .env
     ```
 
-    _Ensure the following values are set with your desired personalized details (these are examples from `env.example`):_
+    _**Crucial:** Ensure the values you set here for `PIHOLE_HOSTNAME`, `UNIVERSAL_PASSWORD`, `TZ`, `PI_STATIC_IP`, `PI_GATEWAY`, and `PI_DNS_SERVERS` precisely match the choices you made during the **Initial Pi OS Setup** (using Raspberry Pi Imager). Also, configure `PIHOLE_PASSWORD`, `PIHOLE_ADMIN_EMAIL`, and `GRAFANA_ADMIN_PASSWORD` with your desired secure values._
+
+    _Example placeholders from `env.example` (update these!):_
 
     ```ini
     UNIVERSAL_PASSWORD=CHANGE_ME
