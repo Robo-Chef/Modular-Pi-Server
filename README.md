@@ -17,6 +17,70 @@ A comprehensive, modular **LAN-only** home server setup using Raspberry Pi 3 B+ 
 For detailed setup instructions, including initial OS flashing, configuration, and deployment, please refer to: [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md)
 Additionally, for a deeper understanding of the project's core philosophy, design choices, and constraints, consult the [LAN-Only Stack Plan](docs/LAN_ONLY_STACK_PLAN.md).
 
+### 🚀 Quick Installation Steps
+
+These steps assume you have already flashed Raspberry Pi OS and connected to your Pi via SSH.
+
+1.  **Handle SSH Host Key Changes (if re-imaging Pi):**
+    If you re-flashed your Raspberry Pi and receive a `REMOTE HOST IDENTIFICATION HAS CHANGED` warning when trying to SSH, remove the old host key from your computer's `known_hosts` file:
+
+    ```bash
+    ssh-keygen -R 192.168.1.XXX # Replace with your Pi's IP
+    ```
+
+2.  **Clone the repository:**
+
+    ```bash
+    git clone https://github.com/Robo-Chef/Modular-Pi-Server.git ~/pihole-server
+    cd ~/pihole-server
+    ```
+
+    _(Note: If you forked the repository, use your fork's URL instead of the original.)_
+
+3.  **Configure your `.env` file:**
+
+    ```bash
+    cp env.example .env
+    nano .env
+    ```
+
+    - **Crucial:** Open `.env` and replace all placeholder values. The `UNIVERSAL_PASSWORD` should be your primary secure password, and it will be referenced by other services:
+
+      ```ini
+      # Universal password for all services
+      UNIVERSAL_PASSWORD=YourStrongAndSecurePassword
+
+      # Pi-hole specific (references UNIVERSAL_PASSWORD)
+      PIHOLE_PASSWORD=${UNIVERSAL_PASSWORD}
+      PIHOLE_ADMIN_EMAIL=admin@yourdomain.local
+      PIHOLE_HOSTNAME=my-pihole.local
+
+      # Timezone (e.g., Australia/Sydney, America/New_York, Europe/London)
+      TZ=Australia/Sydney # Example: America/New_York
+
+      # Network configuration (match your Pi's OS setup)
+      PI_STATIC_IP=192.168.1.185 # Example: Your Pi's LAN IP
+      PI_GATEWAY=192.168.1.1
+      PI_DNS_SERVERS=8.8.8.8,8.8.4.4
+
+      # Monitoring (references UNIVERSAL_PASSWORD)
+      GRAFANA_ADMIN_PASSWORD=${UNIVERSAL_PASSWORD}
+
+      # ... other variables ...
+      ```
+
+    - Ensure values like `TZ`, `PI_STATIC_IP`, `PIHOLE_HOSTNAME` match your initial Raspberry Pi OS setup.
+    - Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X` in `nano`).
+
+4.  **Prepare and run setup scripts:**
+    ```bash
+    sudo apt update && sudo apt install -y dos2unix
+    dos2unix .env scripts/*.sh
+    chmod +x scripts/*.sh
+    ./scripts/setup.sh
+    ./scripts/quick-deploy.sh
+    ```
+
 ## ⚙️ Personalization
 
 **Before you begin**, it is crucial to personalize your server settings. All key configurations are managed through the `.env` file.
@@ -29,10 +93,11 @@ Additionally, for a deeper understanding of the project's core philosophy, desig
 
 2.  **Edit `.env`:** Open the newly created `.env` file and replace placeholders (e.g., `CHANGE_ME`, `your_timezone`, `192.168.1.XXX`). At minimum set:
 
+    - `UNIVERSAL_PASSWORD` (your main secure password)
     - `TZ` (e.g., `Australia/Sydney`)
     - `PI_STATIC_IP` (your Pi's LAN IP)
-    - `PIHOLE_PASSWORD` (admin password)
-    - `GRAFANA_ADMIN_PASSWORD` (if monitoring enabled)
+    - `PIHOLE_PASSWORD` (will reference `UNIVERSAL_PASSWORD`)
+    - `GRAFANA_ADMIN_PASSWORD` (will reference `UNIVERSAL_PASSWORD` if monitoring enabled)
     - Optional: Watchtower email vars if you want update notifications
 
     Save the file when done.

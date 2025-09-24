@@ -74,15 +74,33 @@ _**Important:** The `your_username` and `192.168.1.XXX` values here should match
     nano .env
     ```
 
-    \_**Crucial:** Open the newly created `.env` file and replace all placeholder values (e.g., `CHANGE_ME`, `your_timezone`, `192.168.1.XXX`) with your desired, secure, and unique settings. At minimum set:
+    **Crucial:** Open the newly created `.env` file and replace all placeholder values. The `UNIVERSAL_PASSWORD` should be your primary secure password, and it will be referenced by other services:
 
-    - `TZ` (e.g., `Australia/Sydney`)
-    - `PI_STATIC_IP` (your Pi's LAN IP)
-    - `PIHOLE_PASSWORD` (admin password)
-    - `GRAFANA_ADMIN_PASSWORD` (if monitoring enabled)
-    - Optional: Watchtower email vars if you want update notifications
+    ```ini
+    # Universal password for all services
+    UNIVERSAL_PASSWORD=YourStrongAndSecurePassword
 
-    _Ensure you save the changes to `.env` after editing._
+    # Pi-hole specific (references UNIVERSAL_PASSWORD)
+    PIHOLE_PASSWORD=${UNIVERSAL_PASSWORD}
+    PIHOLE_ADMIN_EMAIL=admin@yourdomain.local
+    PIHOLE_HOSTNAME=my-pihole.local
+
+    # Timezone (e.g., Australia/Sydney, America/New_York, Europe/London)
+    TZ=Australia/Sydney # Example: America/New_York
+
+    # Network configuration (match your Pi's OS setup)
+    PI_STATIC_IP=192.168.1.185 # Example: Your Pi's LAN IP
+    PI_GATEWAY=192.168.1.1
+    PI_DNS_SERVERS=8.8.8.8,8.8.4.4
+
+    # Monitoring (references UNIVERSAL_PASSWORD)
+    GRAFANA_ADMIN_PASSWORD=${UNIVERSAL_PASSWORD}
+
+    # ... other variables ...
+    ```
+
+    - Ensure values like `TZ`, `PI_STATIC_IP`, `PIHOLE_HOSTNAME` match your initial Raspberry Pi OS setup.
+    - Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X` in `nano`).
 
 5.  **Fix line endings for scripts (install `dos2unix` first):**
 
