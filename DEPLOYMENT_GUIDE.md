@@ -19,17 +19,17 @@ This guide will help you deploy a complete home server on your Raspberry Pi 3 B+
    - Select "Raspberry Pi OS (64-bit)" - Full version
    - Configure advanced options:
      - Enable SSH with key authentication
-     - Set hostname: `pihole-server`
-     - Set username: `pi`
-     - Set static IP: `192.168.0.185/24`
-     - Gateway: `192.168.0.1`
-     - DNS: `8.8.8.8,8.8.4.4`
+     - Set hostname: `my-pihole.local` (Match `PIHOLE_HOSTNAME` in `.env`)
+     - Set username: `your_username` (Match your chosen username during OS setup and `UNIVERSAL_PASSWORD` in `.env`)
+     - Set static IP: `192.168.1.XXX/24` (Match `PI_STATIC_IP` in `.env`)
+     - Gateway: `192.168.0.1` (Match `PI_GATEWAY` in `.env`)
+     - DNS: `8.8.8.8,8.8.4.4` (Match `PI_DNS_SERVERS` in `.env`)
 
 2. **First Boot**
 
    ```bash
    # Connect via SSH
-   ssh pi@192.168.0.185
+   ssh pi@192.168.1.XXX
 
    # Update system
    sudo apt update && sudo apt upgrade -y
@@ -54,10 +54,13 @@ This guide will help you deploy a complete home server on your Raspberry Pi 3 B+
    cp env.example .env
    nano .env
 
-   # Set your passwords and preferences
-   UNIVERSAL_PASSWORD=your_secure_password_here
-   PIHOLE_PASSWORD=your_secure_password_here
-   GRAFANA_ADMIN_PASSWORD=your_secure_password_here
+   # IMPORTANT: Replace ALL placeholder values with your personalized settings.
+   # Examples:
+   # UNIVERSAL_PASSWORD=your_secure_password_here
+   # PIHOLE_PASSWORD=your_secure_password_here
+   # GRAFANA_ADMIN_PASSWORD=your_secure_password_here
+   # PI_STATIC_IP=192.168.1.100
+   # PIHOLE_ADMIN_EMAIL=your_email@example.com
    ```
 
 3. **Run the setup script**
@@ -79,7 +82,7 @@ This guide will help you deploy a complete home server on your Raspberry Pi 3 B+
 
    - Access your router's admin interface (usually `192.168.0.1` or `192.168.1.1`)
    - Navigate to DNS settings
-   - Set primary DNS to `192.168.0.185`
+   - Set primary DNS to `192.168.1.XXX`
    - Set secondary DNS to `8.8.8.8` (fallback)
 
 2. **Optional: Disable Router DHCP**
@@ -92,18 +95,18 @@ This guide will help you deploy a complete home server on your Raspberry Pi 3 B+
 
    ```bash
    # Test from the Pi
-   dig @192.168.0.185 google.com
-   nslookup google.com 192.168.0.185
+   dig @192.168.1.XXX google.com
+   nslookup google.com 192.168.1.XXX
 
    # Test from another device
-   nslookup google.com 192.168.0.185
+   nslookup google.com 192.168.1.XXX
    ```
 
 2. **Check Web Interfaces**
 
-   - Pi-hole Admin: http://192.168.0.185/admin
-   - Grafana: http://192.168.0.185:3000
-   - Uptime Kuma: http://192.168.0.185:3001
+   - Pi-hole Admin: http://192.168.1.XXX/admin
+   - Grafana: http://192.168.1.XXX:3000
+   - Uptime Kuma: http://192.168.1.XXX:3001
 
 3. **Verify Ad Blocking**
    - Visit a site with ads
@@ -166,7 +169,7 @@ docker logs -f pihole
 
 - **Location**: `docker/pihole/etc-pihole/`
 - **Key files**: `pihole-FTL.conf`, `custom.list`
-- **Web interface**: http://192.168.0.185/admin
+- **Web interface**: http://192.168.1.XXX/admin
 
 ### Unbound Configuration
 
@@ -237,7 +240,7 @@ sudo dd if=/dev/mmcblk0 | gzip > backups/pi3b-full-$(date +%Y%m%d).img.gz
 
    - Check Pi-hole status: `docker logs pihole`
    - Verify router DNS settings
-   - Test with: `dig @192.168.0.185 google.com`
+   - Test with: `dig @192.168.1.XXX google.com`
 
 2. **Web interface not accessible**
 
@@ -260,7 +263,7 @@ sudo dd if=/dev/mmcblk0 | gzip > backups/pi3b-full-$(date +%Y%m%d).img.gz
 
 1. **Check logs first**: `docker logs <container_name>`
 2. **Verify network**: `ping 8.8.8.8`
-3. **Test DNS**: `dig @192.168.0.185 google.com`
+3. **Test DNS**: `dig @192.168.1.XXX google.com`
 4. **Review documentation**: `docs/troubleshooting.md`
 
 ## Optional Services
@@ -357,5 +360,3 @@ vm.dirty_background_ratio=5
 ---
 
 **Congratulations!** You now have a fully functional home server with DNS filtering, monitoring, and optional services. The system is designed to be self-healing with automated backups and health checks.
-
-

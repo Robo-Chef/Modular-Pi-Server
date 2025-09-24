@@ -13,8 +13,8 @@
 docker logs pihole
 
 # Test DNS resolution
-dig @192.168.0.185 google.com
-nslookup google.com 192.168.0.185
+dig @192.168.1.XXX google.com
+nslookup google.com 192.168.1.XXX
 
 # Check Unbound status
 docker logs unbound
@@ -25,13 +25,13 @@ docker compose -f docker-compose.core.yml restart
 
 **Router Configuration**:
 
-- Ensure router DNS is set to `192.168.0.185`
+- Ensure router DNS is set to `192.168.1.XXX`
 - Some routers require DHCP to be disabled when using static DNS
 - Check for DNS rebinding protection settings
 
 ### 2. Pi-hole Web Interface Not Accessible
 
-**Problem**: Can't access Pi-hole admin interface at `http://192.168.0.185/admin`.
+**Problem**: Can't access Pi-hole admin interface at `http://192.168.1.XXX/admin`.
 
 **Solutions**:
 
@@ -134,8 +134,8 @@ sudo systemctl status nftables
 sudo nft list ruleset
 
 # Test connectivity
-telnet 192.168.0.185 53
-telnet 192.168.0.185 80
+telnet 192.168.1.XXX 53
+telnet 192.168.1.XXX 80
 
 # Temporarily disable firewall for testing
 sudo systemctl stop nftables
@@ -241,7 +241,7 @@ docker exec pihole pihole -t
 docker exec pihole sqlite3 /etc/pihole/pihole-FTL.db "SELECT domain FROM gravity WHERE type = 1;"
 
 # Check statistics
-curl -s http://192.168.0.185/admin/api.php?summary | jq
+curl -s http://192.168.1.XXX/admin/api.php?summary | jq
 ```
 
 ### 2. System Logs
@@ -292,7 +292,7 @@ rm -rf ~/pihole-server
 
 1. Check the logs first: `docker logs <container_name>`
 2. Verify network connectivity: `ping 8.8.8.8`
-3. Test DNS resolution: `dig @192.168.0.185 google.com`
+3. Test DNS resolution: `dig @192.168.1.XXX google.com`
 4. Check system resources: `htop`, `df -h`, `free -h`
 5. Review firewall rules: `sudo nft list ruleset`
 
@@ -301,5 +301,3 @@ For additional support, check the official documentation:
 - [Pi-hole Documentation](https://docs.pi-hole.net/)
 - [Unbound Documentation](https://nlnetlabs.nl/documentation/unbound/)
 - [Docker Documentation](https://docs.docker.com/)
-
-

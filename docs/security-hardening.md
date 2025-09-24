@@ -17,7 +17,7 @@ Port 2222
 PermitRootLogin no
 PasswordAuthentication no
 PubkeyAuthentication yes
-AllowUsers pi
+AllowUsers your_username
 AllowTcpForwarding no
 X11Forwarding no
 MaxAuthTries 3
@@ -363,9 +363,9 @@ sudo systemctl start fail2ban
 tee ~/pihole-server/scripts/secure-backup.sh > /dev/null <<'EOF'
 #!/bin/bash
 
-BACKUP_DIR="/home/pi/pihole-server/backups/secure"
+BACKUP_DIR="/home/your_username/pihole-server/backups/secure"
 DATE=$(date +%Y%m%d_%H%M%S)
-ENCRYPTION_KEY="/home/pi/pihole-server/backups/backup.key"
+ENCRYPTION_KEY="/home/your_username/pihole-server/backups/backup.key"
 
 # Create backup directory
 mkdir -p "$BACKUP_DIR/$DATE"
@@ -400,7 +400,7 @@ tee ~/pihole-server/scripts/verify-backup.sh > /dev/null <<'EOF'
 #!/bin/bash
 
 BACKUP_FILE="$1"
-ENCRYPTION_KEY="/home/pi/pihole-server/backups/backup.key"
+ENCRYPTION_KEY="/home/your_username/pihole-server/backups/backup.key"
 
 if [[ -z "$BACKUP_FILE" ]]; then
     echo "Usage: $0 <backup_file>"
@@ -457,7 +457,7 @@ EOF
 chmod +x ~/pihole-server/scripts/security-monitor.sh
 
 # Add to crontab
-(crontab -l 2>/dev/null; echo "*/15 * * * * /home/pi/pihole-server/scripts/security-monitor.sh") | crontab -
+(crontab -l 2>/dev/null; echo "*/15 * * * * /home/your_username/pihole-server/scripts/security-monitor.sh") | crontab -
 ```
 
 ## Regular Security Maintenance
@@ -496,9 +496,7 @@ EOF
 chmod +x ~/pihole-server/scripts/weekly-security.sh
 
 # Add to crontab
-(crontab -l 2>/dev/null; echo "0 2 * * 0 /home/pi/pihole-server/scripts/weekly-security.sh") | crontab -
+(crontab -l 2>/dev/null; echo "0 2 * * 0 /home/your_username/pihole-server/scripts/weekly-security.sh") | crontab -
 ```
 
 This security hardening guide provides comprehensive protection for your Raspberry Pi home server. Regular maintenance and monitoring are essential to maintain security over time.
-
-

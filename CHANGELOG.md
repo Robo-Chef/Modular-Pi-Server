@@ -25,7 +25,7 @@ All notable changes to the Raspberry Pi Home Server project will be documented i
   - Pi-hole DNS server with ad/tracker blocking
   - Unbound recursive DNS resolver with DNSSEC
   - Isolated Docker networks for security
-  - Static IP configuration (192.168.0.185)
+  - Static IP configuration (192.168.1.XXX)
 
 - **Monitoring & Observability**
 
@@ -68,11 +68,11 @@ All notable changes to the Raspberry Pi Home Server project will be documented i
 
 ### Configuration
 
-- **DNS Server**: 192.168.0.185
+- **DNS Server**: 192.168.1.XXX
 - **Web Interfaces**:
-  - Pi-hole Admin: http://192.168.0.185/admin
-  - Grafana: http://192.168.0.185:3000
-  - Uptime Kuma: http://192.168.0.185:3001
+  - Pi-hole Admin: http://192.168.1.XXX/admin
+  - Grafana: http://192.168.1.XXX:3000
+  - Uptime Kuma: http://192.168.1.XXX:3001
 - **SSH Port**: 2222 (custom)
 - **Docker Networks**: 172.20.0.0/24 (pihole), 172.21.0.0/24 (monitoring)
 
@@ -186,5 +186,3 @@ All notable changes to the Raspberry Pi Home Server project will be documented i
 ---
 
 For more information about this project, see the [README.md](README.md) and [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md).
-
-

@@ -31,11 +31,6 @@ if [[ $EUID -eq 0 ]]; then
    error "This script should not be run as root. Please run as a regular user with sudo privileges."
 fi
 
-# Check if running as correct user
-if [[ "$USER" != "borklord" ]]; then
-   warn "Expected user 'borklord' but running as '$USER'. Please run as borklord user."
-fi
-
 # Check if .env file exists
 if [[ ! -f ".env" ]]; then
     error ".env file not found. Please copy env.example to .env and configure it."

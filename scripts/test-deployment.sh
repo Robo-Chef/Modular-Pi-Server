@@ -106,13 +106,13 @@ run_test "Pi-hole is healthy" "docker exec pihole curl -f http://localhost/admin
 run_test "Unbound is healthy" "docker exec unbound unbound-control status"
 
 # Test 8: Test DNS resolution
-run_test_custom "DNS resolution works" "dig @192.168.0.185 +short google.com" "[[ -n '$result' ]]"
+run_test_custom "DNS resolution works" "dig @192.168.1.XXX +short google.com" "[[ -n '$result' ]]"
 
 # Test 9: Test ad blocking
-run_test_custom "Ad blocking works" "dig @192.168.0.185 +short doubleclick.net" "[[ -z '$result' ]]"
+run_test_custom "Ad blocking works" "dig @192.168.1.XXX +short doubleclick.net" "[[ -z '$result' ]]"
 
 # Test 10: Check Pi-hole web interface
-run_test "Pi-hole web interface accessible" "curl -f http://192.168.0.185/admin/api.php?summary"
+run_test "Pi-hole web interface accessible" "curl -f http://192.168.1.XXX/admin/api.php?summary"
 
 # Test 11: Check if monitoring services are running (if enabled)
 if [[ "${ENABLE_UPTIME_KUMA:-true}" == "true" ]]; then
@@ -121,8 +121,8 @@ if [[ "${ENABLE_UPTIME_KUMA:-true}" == "true" ]]; then
     run_test "Prometheus container is running" "docker ps | grep -q prometheus"
     
     # Test monitoring web interfaces
-    run_test "Grafana is accessible" "curl -f http://192.168.0.185:3000/api/health"
-    run_test "Uptime Kuma is accessible" "curl -f http://192.168.0.185:3001"
+    run_test "Grafana is accessible" "curl -f http://192.168.1.XXX:3000/api/health"
+    run_test "Uptime Kuma is accessible" "curl -f http://192.168.1.XXX:3001"
 fi
 
 # Test 12: Check firewall status
@@ -158,7 +158,7 @@ run_test "SSH is configured securely" "grep -q 'PasswordAuthentication no' /etc/
 log "Running performance tests..."
 
 # Test 21: DNS response time
-run_test_custom "DNS response time is acceptable" "time dig @192.168.0.185 google.com | grep 'Query time' | awk '{print \$4}'" "[[ $result -lt 100 ]]"
+run_test_custom "DNS response time is acceptable" "time dig @192.168.1.XXX google.com | grep 'Query time' | awk '{print \$4}'" "[[ $result -lt 100 ]]"
 
 # Test 22: Container startup time
 run_test_custom "Container startup time is acceptable" "time docker restart pihole" "[[ $? -eq 0 ]]"
@@ -173,16 +173,16 @@ run_test_custom "CPU usage is reasonable" "top -bn1 | grep 'Cpu(s)' | awk '{prin
 run_test "Internet connectivity works" "ping -c 1 8.8.8.8"
 
 # Test 26: Port accessibility
-run_test "Port 53 is accessible" "nc -z 192.168.0.185 53"
-run_test "Port 80 is accessible" "nc -z 192.168.0.185 80"
+run_test "Port 53 is accessible" "nc -z 192.168.1.XXX 53"
+run_test "Port 80 is accessible" "nc -z 192.168.1.XXX 80"
 
 if [[ "${ENABLE_UPTIME_KUMA:-true}" == "true" ]]; then
-    run_test "Port 3000 is accessible" "nc -z 192.168.0.185 3000"
-    run_test "Port 3001 is accessible" "nc -z 192.168.0.185 3001"
+    run_test "Port 3000 is accessible" "nc -z 192.168.1.XXX 3000"
+    run_test "Port 3001 is accessible" "nc -z 192.168.1.XXX 3001"
 fi
 
 # Test 27: SSL/TLS (if configured)
-# run_test "SSL certificate is valid" "openssl s_client -connect 192.168.0.185:443 -servername pihole.local < /dev/null"
+# run_test "SSL certificate is valid" "openssl s_client -connect 192.168.1.XXX:443 -servername pihole.local < /dev/null"
 
 # Test 28: Database integrity
 run_test "Pi-hole database is accessible" "docker exec pihole sqlite3 /etc/pihole/pihole-FTL.db 'SELECT COUNT(*) FROM gravity;'"

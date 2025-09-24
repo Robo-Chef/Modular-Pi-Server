@@ -20,9 +20,11 @@ This document outlines the detailed steps and configurations required to set up 
 
 When flashing Raspberry Pi OS (64-bit Full recommended) onto your SD card using the Raspberry Pi Imager, use the **OS Customisation (Ctrl+Shift+X)** settings as follows:
 
+_**Note:** Values for hostname, username, password, and timezone should match those configured in your `.env` file (copied from `env.example`)._
+
 - **Set hostname:** `my-pihole.local` (Match `PIHOLE_HOSTNAME` in `.env`)
 - **Set username and password:**
-  - Username: `borklord` (You can change this, but remember to update `scripts/setup.sh` and other relevant files if you do.)
+  - Username: `your_username` (You can change this, but remember to update `scripts/setup.sh` and other relevant files if you do.)
   - Password: `CHANGE_ME` (Match `UNIVERSAL_PASSWORD` in `.env`)
 - **Configure wireless LAN:** Leave blank (as wired Ethernet is primary)
 - **Set locale settings:**
@@ -40,11 +42,13 @@ When flashing Raspberry Pi OS (64-bit Full recommended) onto your SD card using 
 
 Once the Pi has booted with the new OS, you should be able to SSH into it:
 
+_**Note:** Ensure all placeholder values (e.g., `your_username`, `192.168.1.XXX`, `CHANGE_ME`) match your `.env` configuration (copied from `env.example`)._
+
 1.  **Wait 3-5 minutes** for the Pi to fully boot.
 2.  **SSH into the Pi:**
 
     ```bash
-    ssh borklord@192.168.1.XXX # Use the static IP from your .env
+    ssh your_username@192.168.1.XXX # Use the static IP from your .env
     ```
 
     (Password: `CHANGE_ME` - Match `UNIVERSAL_PASSWORD` from `.env`)
@@ -187,5 +191,3 @@ Log into the Pi-hole Admin Panel (`http://${PI_STATIC_IP}/admin`, password `CHAN
 
 1.  Re-enable your router's daily 4 AM reboot schedule.
 2.  After 4 AM, verify that Pi-hole and all services are still running and accessible.
-
-

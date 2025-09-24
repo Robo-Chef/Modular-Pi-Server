@@ -16,6 +16,25 @@ A comprehensive, modular home server setup using Raspberry Pi 3 B+ with Pi-hole,
 
 For detailed setup instructions, including initial OS flashing, configuration, and deployment, please refer to: [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md)
 
+## ⚙️ Personalization
+
+**Before you begin**, it is crucial to personalize your server settings. All key configurations are managed through the `.env` file.
+
+1.  **Copy `env.example` to `.env`:**
+
+    ```bash
+    cp env.example .env
+    ```
+
+2.  **Edit `.env`:** Open the newly created `.env` file and replace all placeholder values (e.g., `CHANGE_ME`, `192.168.1.XXX`, `your_username`, `yourdomain.local`) with your desired, secure, and unique settings. This includes:
+
+    - Passwords for various services
+    - Your desired static IP address for the Raspberry Pi
+    - Hostnames and email addresses
+    - Timezone and other network settings
+
+    _Ensure you save the changes to `.env` after editing._
+
 ## Directory Structure
 
 ```
