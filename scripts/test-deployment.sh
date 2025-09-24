@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# shellcheck source=./utils.sh
+# shellcheck disable=SC1091  # Not following: source was not specified as input
+
 # Test Deployment Script for Raspberry Pi Home Server
 # This script validates the deployment and runs comprehensive tests against the deployed services.
 
@@ -8,8 +11,7 @@ set -euo pipefail # Exit immediately if a command exits with a non-zero status, 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# shellcheck source=./utils.sh
-# shellcheck disable=SC1091  # Not following: source was not specified as input
+# Source utility functions for consistent logging and error handling.
 source "${SCRIPT_DIR}/utils.sh"
 
 # shellcheck disable=SC2317  # Command appears to be unreachable (error is defined in utils.sh)
