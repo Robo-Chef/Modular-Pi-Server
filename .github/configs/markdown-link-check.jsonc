@@ -19,6 +19,9 @@
       "pattern": "^http://192\\.168\\.1\\.XXX:3001"
     }, 
     {
+      "pattern": "^https://www\\.raspberrypi\\.com/software/"
+    }, 
+    {
       "pattern": "^https://canyoublockit.com"
     }
   ],

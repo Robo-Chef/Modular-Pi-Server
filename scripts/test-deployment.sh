@@ -16,12 +16,13 @@ log() {
     echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] $1${NC}"
 }
 
-warn() {
+warn() { # shellcheck disable=SC2317
     echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] WARNING: $1${NC}"
 }
 
-error() {
+error() { # shellcheck disable=SC2317
     echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}"
+    exit 1
 }
 
 # Test counters

@@ -35,7 +35,7 @@ if [[ ! -f ".env" ]]; then
     error ".env file not found. Please copy env.example to .env and configure it."
 fi
 
-# Source environment variables
+# shellcheck disable=SC1091
 source .env
 
 log "Starting Raspberry Pi Home Server setup..."
