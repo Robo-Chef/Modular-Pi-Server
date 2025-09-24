@@ -1,0 +1,36 @@
+apiVersion: 1
+
+# This defines basic system alerts for the Raspberry Pi Home Server
+# These alerts cover critical resources like CPU and disk usage.
+# Make sure to configure notification channels in Grafana's UI.
+
+# Alerting contact points are configured via Grafana UI (e.g., email, Discord, Slack)
+# Go to Alerting -> Contact points to add new ones.
+
+################################################################################
+# High CPU Usage Alert
+################################################################################
+- name: Raspberry Pi CPU Usage
+  rules:
+    - alert: HighCpuUsage
+      expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+      for: 5m
+      labels:
+        severity: critical
+      annotations:
+        summary: "High CPU usage detected on Raspberry Pi ({{ $labels.instance }})"
+        description: "CPU usage has been above 80% for 5 minutes. This may indicate a performance bottleneck or runaway process. Current value: {{ $value | humanize }}%"
+
+################################################################################
+# Low Disk Space Alert
+################################################################################
+- name: Raspberry Pi Disk Space
+  rules:
+    - alert: LowDiskSpace
+      expr: node_filesystem_avail_bytes{fstype="ext4", mountpoint="/"} / node_filesystem_size_bytes{fstype="ext4", mountpoint="/"} * 100 < 10
+      for: 10m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Low disk space detected on Raspberry Pi ({{ $labels.instance }})"
+        description: "Disk space on / partition is below 10%. This can lead to system instability. Current free space: {{ $value | humanizeBytes }}%"

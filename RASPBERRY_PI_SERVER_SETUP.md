@@ -209,6 +209,18 @@ Log into the Pi-hole Admin Panel (`http://${PI_STATIC_IP}/admin`, password `${UN
 
 ## ✔️ **Verification**
 
+### Uptime Kuma Notification Configuration
+
+To receive alerts for service outages, configure notification channels in Uptime Kuma:
+
+1.  Access the Uptime Kuma web interface: `http://${PI_STATIC_IP}:3001`.
+2.  Log in with your credentials.
+3.  Navigate to **Settings** (gear icon) -> **Notifications**.
+4.  Click **Setup Notification** and choose your preferred notification type (e.g., Email, Telegram, Discord, Webhook).
+5.  Follow the on-screen instructions to configure the chosen notification channel.
+6.  Once configured, you can test the notification to ensure it's working correctly.
+7.  Edit your existing monitors (or create new ones) and associate them with the newly configured notification channel.
+
 - **Test Pi-hole functionality:**
   - `dig @${PI_STATIC_IP} doubleclick.net` (Should return `0.0.0.0`)
   - `dig @${PI_STATIC_IP} google.com` (Should return real IP)
