@@ -23,17 +23,23 @@ When flashing Raspberry Pi OS (64-bit Full recommended) onto your SD card using 
 _**Note:** Values for hostname, username, password, and timezone should match those configured in your `.env` file (copied from `env.example`)._
 
 - **Set hostname:** `my-pihole.local` (Match `PIHOLE_HOSTNAME` in `.env`)
+  _Explanation: Setting a descriptive hostname like `my-pihole.local` makes it easier to identify your Raspberry Pi on your local network._
 - **Set username and password:**
   - Username: `your_username` (You can change this, but remember to update `scripts/setup.sh` and other relevant files if you do.)
   - Password: `CHANGE_ME` (Match `UNIVERSAL_PASSWORD` in `.env`)
-- **Configure wireless LAN:** Leave blank (as wired Ethernet is primary)
-- **Set locale settings:**
+    _Explanation: Choose a strong, unique username and password. This will be your primary login for the Raspberry Pi via SSH. The password should match the `UNIVERSAL_PASSWORD` in your `.env` for initial consistency._
+- Configure wireless LAN: Leave blank (as wired Ethernet is primary)
+  _Explanation: For a server, a wired Ethernet connection is generally more stable and reliable than Wi-Fi. We prioritize a wired connection._
+- Set locale settings:
   - Time Zone: `America/New_York` (Match `TZ` in `.env`)
+    _Explanation: Setting the correct timezone is crucial for accurate logging, scheduling, and overall system functionality._
   - Keyboard Layout: (Default, can confirm later)
-- **Enable SSH:** `✓` **Use password authentication**
-- **Options:**
+- Enable SSH: `✓` **Use password authentication**
+  _Explanation: SSH (Secure Shell) allows you to remotely access and control your Raspberry Pi from another computer. Enabling password authentication is for initial setup, which will later be hardened with key-based authentication for enhanced security._
+- Options:
   - Eject media when finished: `✓`
   - Enable telemetry: `✓`
+    _Explanation: Enabling telemetry provides anonymous usage data to the Raspberry Pi Foundation, helping them improve future versions of the Imager and OS. This is optional and can be disabled if preferred._
   - Play sound when finished: `✗`
 
 ---
