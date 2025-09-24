@@ -190,12 +190,11 @@ graph TB
 
 **2.2 Hardware Specifications**
 
-| **Component**    | **Specification**                | **Rationale**                      |
-| ---------------- | -------------------------------- | ---------------------------------- |
-| **Raspberry Pi** | 3 B+ (1.4GHz quad-core, 1GB RAM) | Balanced performance/power         |
-| **Storage**      | 32GB SanDisk High Endurance      | 5x longer lifespan vs. standard SD |
-| **Power Supply** | Official 5.1V/3A with UPS        | Prevents SD card corruption        |
-| **Cooling**      | Passive heatsink + fan           | Sustains performance under load    |
+| **Component**    | **Specification**                |
+| ---------------- | -------------------------------- |
+| **Raspberry Pi** | 3 B+ (1.4GHz quad-core, 1GB RAM) |
+| **Storage**      | 32GB SanDisk High Endurance      |
+| **Cooling**      | Passive heatsink + fan           |
 
 **2.3 Performance Baseline**
 
