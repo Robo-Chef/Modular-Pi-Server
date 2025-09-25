@@ -13,6 +13,7 @@ source "${SCRIPT_DIR}/utils.sh"
 
 # Source environment variables if .env exists
 if [[ -f ".env" ]]; then
+    # shellcheck source=/dev/null
     source .env
 fi
 

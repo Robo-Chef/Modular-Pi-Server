@@ -22,7 +22,6 @@ TOTAL_VALIDATIONS=0
 run_validation() {
     local test_name="$1"
     local test_command="$2"
-    local expected_result="${3:-0}"
     
     TOTAL_VALIDATIONS=$((TOTAL_VALIDATIONS + 1))
     
@@ -46,6 +45,7 @@ run_validation ".env file exists" "test -f .env"
 
 # Check if .env has required variables (if .env exists)
 if [[ -f ".env" ]]; then
+    # shellcheck source=/dev/null
     source .env
     run_validation "PI_STATIC_IP is set" "[[ -n \"\${PI_STATIC_IP:-}\" ]]"
     run_validation "UNIVERSAL_PASSWORD is set" "[[ -n \"\${UNIVERSAL_PASSWORD:-}\" ]]"
