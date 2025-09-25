@@ -251,9 +251,9 @@ Type=oneshot          # Service runs once and stays active.
 RemainAfterExit=yes   # Systemd considers the service active even after ExecStart finishes.
 WorkingDirectory=/home/${USER}/pihole-server/docker # Set working directory to access docker-compose files.
 # Start all Docker Compose services as a combined stack.
-ExecStart=/usr/bin/docker compose -f docker-compose.core.yml -f docker-compose.monitoring.yml -f docker-compose.optional.yml up -d || error "Failed to start Docker Compose services."
+ExecStart=/usr/bin/docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml up -d || error "Failed to start Docker Compose services."
 # Stop all Docker Compose services.
-ExecStop=/usr/bin/docker compose -f docker-compose.core.yml -f docker-compose.monitoring.yml -f docker-compose.optional.yml down || warn "Failed to stop Docker Compose services gracefully."
+ExecStop=/usr/bin/docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml down || warn "Failed to stop Docker Compose services gracefully."
 TimeoutStartSec=0     # Disable startup timeout.
 
 [Install]

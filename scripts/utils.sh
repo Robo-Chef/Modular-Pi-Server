@@ -28,6 +28,11 @@ error() {
     exit 1
 }
 
+# Logs an error message to stderr in red without exiting. Used for non-critical error reporting.
+log_error() {
+    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR: $1${NC}" >&2
+}
+
 # Waits for a specified Docker container to report a 'healthy' status via its healthcheck.
 # Arguments:
 #   $1: The name of the Docker container to monitor.

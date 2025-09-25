@@ -10,35 +10,28 @@ services:
       - ./prometheus/rules:/etc/prometheus/rules # Mounts custom alerting rules for Prometheus.
       - prometheus_data:/prometheus # Mounts a named volume for persistent Prometheus data.
     environment:
-      TZ: ${TZ:-Australia/Sydney} # Sets the timezone for the container, defaulting to Australia/Sydney.
+      TZ: ${TZ:-America/New_York} # Sets the timezone for the container, defaulting to America/New_York.
     command: # Command to start Prometheus with specific configuration.
-      - "--config.file=/etc/prometheus/prometheus.yml" # Specifies the configuration file path.
-      - "--storage.tsdb.path=/prometheus" # Specifies the path for time-series database storage.
-      - "--web.console.libraries=/etc/prometheus/console_libraries" # Path to console libraries.
-      - "--web.console.templates=/etc/prometheus/consoles" # Path to console templates.
-      - "--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}" # Data retention period, configurable via .env.
-      - "--web.enable-lifecycle" # Enables API endpoints for managing the server lifecycle.
-      - "--web.enable-admin-api" # Enables admin API for operations like snapshotting.
+      - '--config.file=/etc/prometheus/prometheus.yml' # Specifies the configuration file path.
+      - '--storage.tsdb.path=/prometheus' # Specifies the path for time-series database storage.
+      - '--web.console.libraries=/etc/prometheus/console_libraries' # Path to console libraries.
+      - '--web.console.templates=/etc/prometheus/consoles' # Path to console templates.
+      - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}' # Data retention period, configurable via .env.
+      - '--web.enable-lifecycle' # Enables API endpoints for managing the server lifecycle.
+      - '--web.enable-admin-api' # Enables admin API for operations like snapshotting.
     ports:
-      - "127.0.0.1:9090:9090" # Exposes Prometheus web UI on localhost:9090 (accessible only from the host Pi).
+      - '127.0.0.1:9090:9090' # Exposes Prometheus web UI on localhost:9090 (accessible only from the host Pi).
     restart: unless-stopped # Ensures the container restarts automatically unless explicitly stopped.
     deploy:
       resources:
         limits: # Hard limits for resource usage.
-          cpus: "0.5" # Limits CPU usage to 0.5 of a core.
+          cpus: '0.5' # Limits CPU usage to 0.5 of a core.
           memory: 512M # Limits memory usage to 512MB.
         reservations: # Guaranteed minimum resources.
           memory: 256M # Reserves 256MB of memory.
     healthcheck: # Defines a health check for Prometheus.
       test: # Checks Prometheus's /-/healthy endpoint.
-        [
-          "CMD",
-          "wget",
-          "--quiet",
-          "--tries=1",
-          "--spider",
-          "http://localhost:9090/-/healthy",
-        ]
+        ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:9090/-/healthy']
       interval: 30s # How often to perform the check.
       timeout: 10s # How long to wait for a response.
       retries: 3 # How many times to retry.
@@ -56,7 +49,7 @@ services:
       - ./grafana/dashboards:/var/lib/grafana/dashboards # Mounts custom dashboards.
       - ./grafana/provisioning/alerting:/etc/grafana/provisioning/alerting # Mounts alert rule provisioning files.
     environment:
-      TZ: ${TZ:-Australia/Sydney} # Sets the timezone.
+      TZ: ${TZ:-America/New_York} # Sets the timezone.
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD} # Sets the admin password from .env.
       GF_ALERTING_ENABLED: true # Explicitly enables Grafana's unified alerting.
       GF_ALERTING_ALLOW_EXT_ALERTMANAGERS: true # Allows integration with external Alertmanagers if needed.
@@ -70,21 +63,18 @@ services:
       GF_SESSION_PROVIDER: file # Configures file-based session storage.
       GF_SESSION_PROVIDER_CONFIG: sessions # Specifies the directory for session files.
     ports:
-      - "3000:3000" # Exposes Grafana web UI on port 3000.
+      - '3000:3000' # Exposes Grafana web UI on port 3000.
     restart: unless-stopped # Ensures the container restarts automatically.
     deploy:
       resources:
         limits:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 512M
         reservations:
           memory: 256M
     healthcheck:
       test: # Checks Grafana's API health endpoint.
-        [
-          "CMD-SHELL",
-          "wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1",
-        ]
+        ['CMD-SHELL', 'wget --quiet --tries=1 --spider http://localhost:3000/api/health || exit 1']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -103,17 +93,17 @@ services:
       - /sys:/host/sys:ro # Mounts /sys for system metrics.
       - /:/rootfs:ro # Mounts the root filesystem for disk usage metrics.
     command: # Command to run Node Exporter, specifying paths.
-      - "--path.procfs=/host/proc" # Tells Node Exporter where to find /proc.
-      - "--path.rootfs=/rootfs" # Tells Node Exporter where to find the root filesystem.
-      - "--path.sysfs=/host/sys" # Tells Node Exporter where to find /sys.
-      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)" # Excludes certain mount points.
+      - '--path.procfs=/host/proc' # Tells Node Exporter where to find /proc.
+      - '--path.rootfs=/rootfs' # Tells Node Exporter where to find the root filesystem.
+      - '--path.sysfs=/host/sys' # Tells Node Exporter where to find /sys.
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)' # Excludes certain mount points.
     ports:
-      - "127.0.0.1:9100:9100" # Exposes Node Exporter metrics on localhost:9100.
+      - '127.0.0.1:9100:9100' # Exposes Node Exporter metrics on localhost:9100.
     restart: unless-stopped
     deploy:
       resources:
         limits:
-          cpus: "0.1"
+          cpus: '0.1'
           memory: 128M
         reservations:
           memory: 64M
@@ -127,27 +117,20 @@ services:
     volumes:
       - uptime_kuma_data:/app/data # Mounts a named volume for persistent Uptime Kuma data.
     environment:
-      TZ: ${TZ:-Australia/Sydney} # Sets the timezone.
+      TZ: ${TZ:-America/New_York} # Sets the timezone.
     ports:
-      - "3001:3001" # Exposes Uptime Kuma web UI on port 3001.
+      - '3001:3001' # Exposes Uptime Kuma web UI on port 3001.
     restart: unless-stopped
     deploy:
       resources:
         limits:
-          cpus: "0.3"
+          cpus: '0.3'
           memory: 256M
         reservations:
           memory: 128M
     healthcheck:
       test: # Checks Uptime Kuma's web interface.
-        [
-          "CMD",
-          "wget",
-          "--quiet",
-          "--tries=1",
-          "--spider",
-          "http://localhost:3001",
-        ]
+        ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3001']
       interval: 30s
       timeout: 10s
       retries: 3

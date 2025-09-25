@@ -8,21 +8,21 @@ services:
       - homeassistant_data:/config # Mounts a named volume for persistent Home Assistant configuration.
       - /etc/localtime:/etc/localtime:ro # Mounts the host's localtime to ensure correct time within the container.
     environment:
-      TZ: ${TZ:-Australia/Sydney} # Sets the timezone for the container.
+      TZ: ${TZ:-America/New_York} # Sets the timezone for the container.
       PUID: 1000 # Sets the User ID for the container process.
       PGID: 1000 # Sets the Group ID for the container process.
     ports:
-      - "8123:8123" # Exposes Home Assistant's web interface.
+      - '8123:8123' # Exposes Home Assistant's web interface.
     restart: unless-stopped # Ensures the container restarts automatically unless explicitly stopped.
     deploy:
       resources:
         limits: # Hard limits for resource usage.
-          cpus: "1.0" # Limits CPU usage to 1 full core.
+          cpus: '1.0' # Limits CPU usage to 1 full core.
           memory: 1G # Limits memory usage to 1 Gigabyte.
         reservations: # Guaranteed minimum resources.
           memory: 512M # Reserves 512 Megabytes of memory.
     healthcheck: # Defines a health check for Home Assistant.
-      test: ["CMD", "curl", "-f", "http://localhost:8123"] # Checks Home Assistant's HTTP endpoint.
+      test: ['CMD', 'curl', '-f', 'http://localhost:8123'] # Checks Home Assistant's HTTP endpoint.
       interval: 30s # How often to perform the check.
       timeout: 10s # How long to wait for a response.
       retries: 3 # How many times to retry.
@@ -42,7 +42,7 @@ services:
       - /etc/timezone:/etc/timezone:ro # Mounts host's timezone.
       - /etc/localtime:/etc/localtime:ro # Mounts host's localtime.
     environment:
-      TZ: ${TZ:-Australia/Sydney} # Sets the timezone.
+      TZ: ${TZ:-America/New_York} # Sets the timezone.
       USER_UID: 1000 # Sets the User ID for Gitea process.
       USER_GID: 1000 # Sets the Group ID for Gitea process.
       GITEA__database__DB_TYPE: sqlite3 # Configures Gitea to use SQLite as its database.
@@ -59,26 +59,19 @@ services:
       GITEA__log__LEVEL: Info # Sets logging level.
       GITEA__log__ROOT_PATH: /data/gitea/log # Path for Gitea logs.
     ports:
-      - "3002:3000" # Maps host port 3002 to container's HTTP port 3000 for web access.
-      - "2223:22" # Maps host port 2223 to container's SSH port 22 to avoid conflict with host SSH (port 2222).
+      - '3002:3000' # Maps host port 3002 to container's HTTP port 3000 for web access.
+      - '2223:22' # Maps host port 2223 to container's SSH port 22 to avoid conflict with host SSH (port 2222).
     restart: unless-stopped # Ensures the container restarts automatically.
     deploy:
       resources:
         limits:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 512M
         reservations:
           memory: 256M
     healthcheck:
       test: # Checks Gitea's web interface for health.
-        [
-          "CMD",
-          "wget",
-          "--quiet",
-          "--tries=1",
-          "--spider",
-          "http://localhost:3000",
-        ]
+        ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3000']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -94,27 +87,20 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro # Mounts Docker socket for Portainer to manage Docker.
       - portainer_data:/data # Mounts a named volume for persistent Portainer data.
     environment:
-      TZ: ${TZ:-Australia/Sydney} # Sets the timezone.
+      TZ: ${TZ:-America/New_York} # Sets the timezone.
     ports:
-      - "9000:9000" # Exposes Portainer's web interface.
+      - '9000:9000' # Exposes Portainer's web interface.
     restart: unless-stopped # Ensures the container restarts automatically.
     deploy:
       resources:
         limits:
-          cpus: "0.2"
+          cpus: '0.2'
           memory: 256M
         reservations:
           memory: 128M
     healthcheck:
       test: # Checks Portainer's web interface for health.
-        [
-          "CMD",
-          "wget",
-          "--quiet",
-          "--tries=1",
-          "--spider",
-          "http://localhost:9000",
-        ]
+        ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:9000']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -129,27 +115,20 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro # Mounts Docker socket for Dozzle to read container logs.
     environment:
-      TZ: ${TZ:-Australia/Sydney} # Sets the timezone.
+      TZ: ${TZ:-America/New_York} # Sets the timezone.
     ports:
-      - "8080:8080" # Exposes Dozzle web interface.
+      - '8080:8080' # Exposes Dozzle web interface.
     restart: unless-stopped # Ensures the container restarts automatically.
     deploy:
       resources:
         limits:
-          cpus: "0.1"
+          cpus: '0.1'
           memory: 128M
         reservations:
           memory: 64M
     healthcheck:
       test: # Checks Dozzle's web interface for health.
-        [
-          "CMD",
-          "wget",
-          "--quiet",
-          "--tries=1",
-          "--spider",
-          "http://localhost:8080",
-        ]
+        ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:8080']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -164,29 +143,22 @@ services:
     volumes:
       - speedtest_data:/config # Mounts a named volume for persistent configuration and data.
     environment:
-      TZ: ${TZ:-Australia/Sydney} # Sets the timezone.
+      TZ: ${TZ:-America/New_York} # Sets the timezone.
       PUID: 1000 # Sets the User ID for the container process.
       PGID: 1000 # Sets the Group ID for the container process.
-      OOKLA_EULA_GDPR: "true" # Automatically accepts the Ookla EULA/GDPR terms.
+      OOKLA_EULA_GDPR: 'true' # Automatically accepts the Ookla EULA/GDPR terms.
     ports:
-      - "8787:80" # Maps host port 8787 to container's HTTP port 80 for web access.
+      - '8787:80' # Maps host port 8787 to container's HTTP port 80 for web access.
     restart: unless-stopped # Ensures the container restarts automatically.
     deploy:
       resources:
         limits:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 256M
         reservations:
           memory: 128M
     healthcheck:
-      test: [
-          "CMD",
-          "wget",
-          "--quiet",
-          "--tries=1",
-          "--spider",
-          "http://localhost",
-        ] # Checks the Speedtest Tracker web interface.
+      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost'] # Checks the Speedtest Tracker web interface.
       interval: 30s
       timeout: 10s
       retries: 3
@@ -201,7 +173,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro # Mounts Docker socket to allow Watchtower to interact with Docker daemon.
     environment:
-      TZ: ${TZ:-Australia/Sydney} # Sets the timezone.
+      TZ: ${TZ:-America/New_York} # Sets the timezone.
       WATCHTOWER_CLEANUP: true # Cleans up old images after updating.
       WATCHTOWER_POLL_INTERVAL: 3600 # Checks for new images every 3600 seconds (1 hour).
       WATCHTOWER_INCLUDE_STOPPED: true # Includes stopped containers in update checks.
@@ -217,7 +189,7 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.1"
+          cpus: '0.1'
           memory: 128M
         reservations:
           memory: 64M

@@ -44,10 +44,10 @@ fi
 
 log "Starting Raspberry Pi Home Server Quick Deploy..."
 
-# Change to the project root directory. The directory structure and initial setup
-# (including file copying/permissions) are handled by `scripts/setup.sh`.
-if ! cd ~/pihole-server; then
-    error "Failed to change directory to ~/pihole-server. Ensure setup.sh has been run."
+# Ensure we're in the project root directory
+# The directory structure and initial setup are handled by `scripts/setup.sh`.
+if [[ ! -f "docker/docker-compose.core.yml" ]]; then
+    error "Docker Compose files not found. Ensure you're in the project root directory."
 fi
 
 # Set necessary permissions for Docker volumes and configurations.
@@ -64,9 +64,8 @@ docker network create --internal isolated_net 2>/dev/null || true # `isolated_ne
 # --- Service Deployment ---
 
 # Start core services (Pi-hole and Unbound) as defined in docker-compose.core.yml.
-log "Starting core services (Pi-hole + Unbound) from docker-compose.core.yml..."
-cd docker || error "Failed to change directory to docker/."
-docker compose -f docker-compose.core.yml up -d || error "Failed to start core Docker Compose services."
+log "Starting core services (Pi-hole + Unbound) from docker/docker-compose.core.yml..."
+docker compose -f docker/docker-compose.core.yml up -d || error "Failed to start core Docker Compose services."
 
 log "Waiting for core services to become healthy..."
 wait_for_container_health pihole || error "Pi-hole container failed health check."
@@ -74,8 +73,8 @@ wait_for_container_health unbound || error "Unbound container failed health chec
 
 # Start monitoring services if ENABLE_MONITORING is set to 'true' in .env.
 if [[ "${ENABLE_MONITORING:-true}" == "true" ]]; then
-    log "Starting monitoring services from monitoring/docker-compose.monitoring.yml..."
-    docker compose -f monitoring/docker-compose.monitoring.yml up -d || error "Failed to start monitoring Docker Compose services."
+    log "Starting monitoring services from docker/monitoring/docker-compose.monitoring.yml..."
+    docker compose -f docker/monitoring/docker-compose.monitoring.yml up -d || error "Failed to start monitoring Docker Compose services."
     
     log "Waiting for monitoring services to become healthy..."
     # Perform health checks for each monitoring service.
@@ -89,8 +88,8 @@ fi
 
 # Start optional services if their respective ENABLE flags are set to 'true' in .env.
 # Note: This logic assumes that individual ENABLE_SERVICE flags are checked here or within optional/docker-compose.optional.yml.
-log "Starting optional services from optional/docker-compose.optional.yml (if enabled in .env)..."
-docker compose -f optional/docker-compose.optional.yml up -d || warn "Optional services deployment failed or encountered issues. Check logs."
+log "Starting optional services from docker/optional/docker-compose.optional.yml (if enabled in .env)..."
+docker compose -f docker/optional/docker-compose.optional.yml up -d || warn "Optional services deployment failed or encountered issues. Check logs."
 
 # Wait for optional services to become healthy (add individual health checks as needed)
 if [[ "${ENABLE_HOME_ASSISTANT:-false}" == "true" ]]; then
@@ -117,8 +116,7 @@ if [[ "${ENABLE_WATCHTOWER:-true}" == "true" ]]; then
     fi
 fi
 
-# Return to project root directory.
-popd > /dev/null || error "Failed to return to original directory after docker compose."
+# All services should now be running from the project root directory.
 
 # Display a summary of all running Docker services.
 log "Service status:"
