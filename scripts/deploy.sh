@@ -53,6 +53,19 @@ log "✅ Prerequisites check passed. Starting deployment..."
 # Run the quick deployment
 ./scripts/quick-deploy.sh
 
+# Deploy monitoring stack if enabled
+if [[ "${ENABLE_MONITORING:-false}" == "true" ]]; then
+    log ""
+    log "📊 Deploying monitoring stack..."
+    ./scripts/deploy-monitoring.sh || warn "Monitoring deployment failed, but core services are running"
+else
+    log ""
+    log "📊 Monitoring is disabled. To enable monitoring:"
+    log "   1. Set ENABLE_MONITORING=true in your .env file"
+    log "   2. Run: ./scripts/deploy-monitoring.sh"
+fi
+
+log ""
 log "🎉 Deployment completed successfully!"
 log ""
 log "📋 Next Steps:"
@@ -60,8 +73,24 @@ log "1. Configure your router to use ${PI_STATIC_IP} as Primary DNS"
 log "2. Test DNS resolution: dig @${PI_STATIC_IP} google.com"
 log "3. Test ad blocking: dig @${PI_STATIC_IP} doubleclick.net"
 log "4. Access Pi-hole Admin: http://${PI_STATIC_IP}/admin"
-log "5. Access Grafana: http://${PI_STATIC_IP}:3000"
-log "6. Run comprehensive tests: ./scripts/test-deployment.sh"
+if [[ "${ENABLE_MONITORING:-false}" == "true" ]]; then
+    log "5. Access Grafana: http://${PI_STATIC_IP}:${GRAFANA_PORT:-3000}"
+    log "6. Access Uptime Kuma: http://${PI_STATIC_IP}:${UPTIME_KUMA_PORT:-3001}"
+    log "7. Run comprehensive tests: ./scripts/test-deployment.sh"
+else
+    log "5. Run comprehensive tests: ./scripts/test-deployment.sh"
+fi
+log ""
+log "🎯 Your network now has:"
+log "   ✅ Ad-blocking (Pi-hole)"
+log "   ✅ Recursive DNS resolution (Unbound)" 
+log "   ✅ DNSSEC validation"
+log "   ✅ Privacy-focused DNS (no external tracking)"
+if [[ "${ENABLE_MONITORING:-false}" == "true" ]]; then
+    log "   ✅ Network health monitoring"
+    log "   ✅ Automated recovery systems"
+    log "   ✅ Performance dashboards"
+fi
 log ""
 log "🔧 For maintenance: ./scripts/maintenance.sh status"
 log "📊 For monitoring: ./scripts/maintenance.sh full"
