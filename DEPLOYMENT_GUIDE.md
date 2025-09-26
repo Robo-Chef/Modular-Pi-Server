@@ -120,6 +120,7 @@ explanations.
     **Stage 2 (Second Run):**
 
     ```bash
+    cd ~/pihole-server  # Navigate to project directory
     ./scripts/deploy.sh  # Run again - will deploy services successfully
     ```
 

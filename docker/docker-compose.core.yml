@@ -70,7 +70,7 @@ services:
         reservations:
           memory: 128M
     healthcheck:
-      test: ["CMD", "sh", "-c", "timeout 5 sh -c 'echo > /dev/tcp/127.0.0.1/53' || exit 1"] # Tests DNS port connectivity.
+      test: ['CMD', 'sh', '-c', "timeout 5 sh -c 'echo > /dev/tcp/127.0.0.1/53' || exit 1"] # Tests DNS port connectivity.
       interval: 30s
       timeout: 10s
       retries: 3
