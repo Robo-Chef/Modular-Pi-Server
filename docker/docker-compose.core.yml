@@ -24,19 +24,19 @@ services:
       # PIHOLE_INTERFACE: eth0                  # Removed as Docker containers usually handle network interfaces abstractly.
       FTLCONF_LOCAL_IPV4: 172.20.0.3 # Ensures FTL binds to the correct IP within the Docker network.
     ports:
-      - "53:53/tcp" # Exposes DNS TCP port to the host.
-      - "53:53/udp" # Exposes DNS UDP port to the host.
-      - "80:80/tcp" # Exposes HTTP (Pi-hole web interface) to the host.
+      - '53:53/tcp' # Exposes DNS TCP port to the host.
+      - '53:53/udp' # Exposes DNS UDP port to the host.
+      - '80:80/tcp' # Exposes HTTP (Pi-hole web interface) to the host.
     restart: unless-stopped # Ensures the container restarts automatically unless explicitly stopped.
     deploy:
       resources:
         limits: # Hard limits for resource usage to prevent resource exhaustion.
-          cpus: "1.0" # Limits CPU usage to 1 full CPU core.
+          cpus: '1.0' # Limits CPU usage to 1 full CPU core.
           memory: 512M # Limits memory usage to 512 Megabytes.
         reservations: # Guaranteed minimum resources for the container.
           memory: 256M # Reserves 256 Megabytes of memory.
     healthcheck: # Defines a health check to determine if the service is operational.
-      test: ["CMD", "curl", "-f", "http://localhost/admin/api.php?summary"] # Checks Pi-hole's API endpoint.
+      test: ['CMD', 'curl', '-f', 'http://localhost/admin/api.php?summary'] # Checks Pi-hole's API endpoint.
       interval: 30s # How often to perform the check.
       timeout: 10s # How long to wait for a response.
       retries: 3 # How many times to retry before marking as unhealthy.
@@ -64,12 +64,12 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.5"
+          cpus: '0.5'
           memory: 256M
         reservations:
           memory: 128M
     healthcheck:
-      test: ["CMD", "unbound-control", "status"] # Checks Unbound's status via unbound-control utility.
+      test: ['CMD', 'unbound-control', 'status'] # Checks Unbound's status via unbound-control utility.
       interval: 30s
       timeout: 10s
       retries: 3

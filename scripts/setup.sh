@@ -69,8 +69,14 @@ sudo sed -i 's/^Port 22/Port 2222/' /etc/ssh/sshd_config || warn "Could not expl
 # Ensure password authentication is enabled (crucial for initial setup before key-based auth).
 sudo sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config || warn "Could not uncomment PasswordAuthentication yes."
 sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config || warn "Could not set PasswordAuthentication to yes. Check sshd_config."
-# Restart SSH service for changes to take effect.
-sudo systemctl restart sshd || error "Failed to restart SSH daemon. Manual intervention may be required."
+# Check which SSH service exists and restart it
+if systemctl list-units | grep -q "ssh.service"; then
+  sudo systemctl restart ssh || error "Failed to restart SSH daemon. Manual intervention may be required."
+elif systemctl list-units | grep -q "sshd.service"; then
+  sudo systemctl restart sshd || error "Failed to restart SSH daemon. Manual intervention may be required."
+else
+  warn "Could not determine SSH service name. Please restart SSH manually."
+fi
 
 # Create essential project directories if they don't exist.
 log "Creating project directories for configs, docker, scripts, monitoring, backups, and docs..."

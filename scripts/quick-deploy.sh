@@ -44,6 +44,13 @@ fi
 
 log "Starting Raspberry Pi Home Server Quick Deploy..."
 
+# Create required directory structure if missing
+log "Ensuring required directory structure exists..."
+mkdir -p docker/pihole/etc-pihole
+mkdir -p docker/pihole/etc-dnsmasq.d
+mkdir -p docker/pihole/logs
+mkdir -p docker/unbound/logs
+
 # Ensure we're in the project root directory
 # The directory structure and initial setup are handled by `scripts/setup.sh`.
 if [[ ! -f "docker/docker-compose.core.yml" ]]; then
