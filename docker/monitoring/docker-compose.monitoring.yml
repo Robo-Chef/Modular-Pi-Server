@@ -1,6 +1,6 @@
 services:
   prometheus:
-    image: prom/prometheus:latest # Specifies the Prometheus Docker image and a specific version tag.
+    image: prom/prometheus:v2.45.0 # Specifies the Prometheus Docker image and a specific version tag.
     container_name: prometheus # Assigns a static name to the container.
     hostname: prometheus-server # Sets the hostname within the container.
     networks:
@@ -17,6 +17,11 @@ services:
     ports:
       - '${PROMETHEUS_PORT:-9090}:9090' # Exposes Prometheus web UI (configurable port).
     restart: unless-stopped # Ensures the container restarts automatically unless explicitly stopped.
+    logging:
+      driver: json-file
+      options:
+        max-size: '50m'
+        max-file: '5'
     deploy:
       resources:
         limits: # Hard limits for resource usage.
@@ -33,7 +38,7 @@ services:
       start_period: 30s # Grace period for startup.
 
   grafana:
-    image: grafana/grafana:latest # Specifies the Grafana Docker image.
+    image: grafana/grafana:10.1.0 # Specifies the Grafana Docker image.
     container_name: grafana # Assigns a static name.
     hostname: grafana-server # Sets the hostname within the container.
     networks:
@@ -77,7 +82,7 @@ services:
       - prometheus
 
   node-exporter:
-    image: prom/node-exporter:latest # Specifies the Node Exporter Docker image.
+    image: prom/node-exporter:v1.6.1 # Specifies the Node Exporter Docker image.
     container_name: node-exporter # Assigns a static name.
     hostname: node-exporter # Sets the hostname within the container.
     networks:
@@ -103,7 +108,7 @@ services:
           memory: 64M
 
   uptime-kuma:
-    image: louislam/uptime-kuma:latest # Specifies the Uptime Kuma Docker image.
+    image: louislam/uptime-kuma:1.23.0 # Specifies the Uptime Kuma Docker image.
     container_name: uptime-kuma # Assigns a static name.
     hostname: uptime-kuma-server # Sets the hostname within the container.
     networks:

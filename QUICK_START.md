@@ -55,7 +55,7 @@ Update these values in your `.env` file:
 # Your Pi's static IP (set during OS flashing)
 PI_STATIC_IP=192.168.1.100
 
-# Strong password for all services
+# Strong password for all services (for ease of use)
 UNIVERSAL_PASSWORD=YourSecurePassword123!
 
 # Your timezone

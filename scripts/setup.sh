@@ -67,7 +67,7 @@ fi
 
 # Install Docker Compose plugin if it's not already present.
 log "Installing Docker Compose plugin (if not already installed)..."
-if ! command -v docker-compose &> /dev/null; then
+if ! command -v docker compose &> /dev/null; then
     if ! sudo apt install -y docker-compose-plugin; then
         error "Failed to install Docker Compose plugin."
     fi

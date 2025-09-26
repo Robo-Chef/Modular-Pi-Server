@@ -29,6 +29,11 @@ services:
       - '${DNS_PORT:-53}:53/udp' # Exposes DNS UDP port to the host.
       - '${HTTP_PORT:-80}:80/tcp' # Exposes HTTP (Pi-hole web interface) to the host.
     restart: unless-stopped # Ensures the container restarts automatically unless explicitly stopped.
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
     deploy:
       resources:
         limits: # Hard limits for resource usage to prevent resource exhaustion.
@@ -62,6 +67,11 @@ services:
     #   - "127.0.0.1:5353:53/tcp" # Only accessible from host for debugging/direct query
     #   - "127.0.0.1:5353:53/udp" # Only accessible from host for debugging/direct query
     restart: unless-stopped # Ensures the container restarts automatically unless explicitly stopped.
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
     deploy:
       resources:
         limits:

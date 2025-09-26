@@ -200,12 +200,10 @@ explanations.
     **Available if `ENABLE_MONITORING=true`:**
 
     - **Grafana**: `http://192.168.1.XXX:3000`
-      - ✅ **Auto-configured**: Login `admin/raspberry` (from
-        GRAFANA_ADMIN_PASSWORD)
+      - ✅ **Auto-configured**: Login `admin/[UNIVERSAL_PASSWORD]` (set in .env)
       - ✅ **Zero-setup**: Prometheus data source and Pi-hole dashboard ready!
     - **Uptime Kuma**: `http://192.168.1.XXX:3001`
-      - ✅ **Auto-configured**: Login `admin/raspberry` (from
-        UNIVERSAL_PASSWORD)
+      - ✅ **Auto-configured**: Login `admin/[UNIVERSAL_PASSWORD]` (set in .env)
       - ✅ **Zero-setup**: Admin account already created!
     - **Prometheus**: `http://192.168.1.XXX:9090`
       - Direct metrics interface (advanced users)
@@ -214,6 +212,39 @@ explanations.
       - Create admin password on first visit
 
 3.  **Verify Ad Blocking:** Confirm ads are blocked on websites.
+
+## 🔒 Security Best Practices
+
+### Password Security
+
+- **Use one strong password** for all services (`UNIVERSAL_PASSWORD`)
+- **Set a memorable but secure password** (12+ characters, mixed case, numbers,
+  symbols)
+- **Easy to remember** - no need to manage multiple passwords
+
+### Network Security
+
+- **All services are LAN-accessible** for easy management
+- **Prometheus**: `http://192.168.1.XXX:9090` (LAN accessible)
+- **Admin UIs**: Accessible from any device on your LAN
+
+### Service Access
+
+- **Pi-hole**: `http://192.168.1.XXX/admin` (LAN accessible)
+- **Grafana**: `http://192.168.1.XXX:3000` (LAN accessible)
+- **Uptime Kuma**: `http://192.168.1.XXX:3001` (LAN accessible)
+- **Prometheus**: `http://192.168.1.XXX:9090` (LAN accessible)
+- **Portainer**: `http://192.168.1.XXX:9000` (LAN accessible)
+
+### Firewall Configuration
+
+The system uses `nftables` for firewall protection. Key rules:
+
+- **Default policy**: Drop all incoming traffic
+- **Allow established connections**: Essential for active sessions
+- **Allow SSH**: On configured port (default 22)
+- **Allow DNS**: Port 53 (TCP/UDP) for Pi-hole
+- **Allow Web Interfaces**: Ports 80, 443, 3000, 3001, 9000, 9090, 8787
 
 ## Common Issues & Quick Fixes
 
