@@ -78,24 +78,50 @@ explanations.
     **Stage 1 (First Run):**
 
     - Install Docker and dependencies
-    - Show Docker group errors (THIS IS NORMAL - see below)
+    - Show Docker group errors (THIS IS NORMAL)
     - Exit with instructions to logout and reconnect
 
-    **You MUST do this:** `exit` then SSH back in:
-    `ssh your_username@192.168.1.XXX`
+    **Expected Normal Warnings:**
+
+    ```
+    Cannot connect to the Docker daemon at unix:///var/run/docker.sock
+    usermod: group 'docker' does not exist
+    ERROR: Failed to add user to docker group
+    ```
+
+    ❌ Don't panic - these errors are completely expected!
+
+    **You MUST do this (reconnection required):**
+
+    ```bash
+    exit  # Step 1: Close SSH connection
+    ssh your_username@192.168.1.XXX  # Step 2: Reconnect to Pi
+    cd ~/pihole-server  # Step 3: Navigate to project (REQUIRED!)
+    ```
+
+    **If Docker fails to start (common issue):**
+
+    ```bash
+    # Fix Docker group issue (run these if needed)
+    sudo groupadd docker
+    sudo usermod -aG docker $USER
+    sudo chown root:docker /var/run/docker.sock
+    sudo chmod 660 /var/run/docker.sock
+    sudo systemctl start docker
+    ```
+
+    **Alternative (most reliable):** Simply reboot your Pi:
+
+    ```bash
+    sudo reboot
+    # Then reconnect and navigate back: cd ~/pihole-server
+    ```
 
     **Stage 2 (Second Run):**
 
-    - Run `./scripts/deploy.sh` again
-    - Deploy all services successfully
-
-    **Expected Normal Warnings (Don't Panic!):**
-
-    - ❌ `Cannot connect to the Docker daemon` - Normal during fresh install
-    - ❌ `usermod: group 'docker' does not exist` - Normal, fixed by
-      logout/login
-    - ❌ `Failed to add user to docker group` - Normal, requires reconnection
-    - ✅ These errors are expected and will be resolved after reconnecting
+    ```bash
+    ./scripts/deploy.sh  # Run again - will deploy services successfully
+    ```
 
 #### **Option B: Step-by-Step Deployment**
 
@@ -125,9 +151,7 @@ explanations.
 1.  Access your router's admin interface.
 2.  Locate DNS settings.
 3.  Set Primary DNS to your Raspberry Pi's static IP (e.g., `192.168.1.XXX`).
-4.  **(Optional):** Disable router's DHCP and enable Pi-hole's DHCP server for
-    better client recognition.
-5.  Save and apply settings.
+4.  Save and apply settings.
 
 ### Step 4: Verify Installation (Refer to [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md) for details)
 
@@ -167,22 +191,43 @@ explanations.
 If `./scripts/deploy.sh` exits with Docker group errors, this is **completely
 normal** for fresh installations:
 
-**What You'll See (Normal):**
+**Quick Reminder Steps:**
 
+```bash
+exit  # Step 1: Close SSH connection
+ssh your_username@192.168.1.XXX  # Step 2: Reconnect to Pi
+cd ~/pihole-server  # Step 3: Navigate to project (REQUIRED!)
+./scripts/deploy.sh  # Step 4: Run again - will work perfectly
 ```
-Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
-usermod: group 'docker' does not exist
-[DATE TIME] ERROR: Failed to add user to docker group.
+
+**If Docker won't start (common):**
+
+```bash
+sudo reboot  # Most reliable fix
+# Or manually fix: sudo groupadd docker && sudo usermod -aG docker $USER
 ```
 
-**What To Do:**
+(See detailed explanation in Option A deployment section above)
 
-1. **Don't panic** - these errors are expected
-2. Log out of SSH: `exit`
-3. Log back in: `ssh your_username@192.168.1.XXX`
-4. Navigate back: `cd ~/pihole-server`
-5. Run deploy script again: `./scripts/deploy.sh`
-6. **Second run will work perfectly**
+### Docker Service Won't Start
+
+If you see `Failed to resolve group docker` or `docker.socket failed`:
+
+**Quick Fix:**
+
+```bash
+sudo reboot  # Restart Pi (most reliable)
+```
+
+**Manual Fix:**
+
+```bash
+sudo groupadd docker
+sudo usermod -aG docker $USER
+sudo chown root:docker /var/run/docker.sock
+sudo chmod 660 /var/run/docker.sock
+sudo systemctl start docker
+```
 
 ### DNS Queries Fail
 
