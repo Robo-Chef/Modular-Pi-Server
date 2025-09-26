@@ -63,7 +63,15 @@ TZ=America/New_York
 
 # Your Pi's hostname
 PIHOLE_HOSTNAME=my-pihole.local
+
+# Network Configuration (use defaults unless you have conflicts)
+PIHOLE_NETWORK=172.20.0.0/24      # Pi-hole/Unbound network
+PIHOLE_NET_IP_PIHOLE=172.20.0.3    # Pi-hole container IP
+PIHOLE_NET_IP_UNBOUND=172.20.0.2   # Unbound container IP
 ```
+
+**Important**: The deployment script automatically configures Pi-hole to accept
+queries from your LAN network. No manual network configuration is needed.
 
 ## **Post-Deployment Steps**
 

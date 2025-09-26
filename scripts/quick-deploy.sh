@@ -13,8 +13,12 @@ source "${SCRIPT_DIR}/utils.sh"
 
 # Source environment variables if .env exists
 if [[ -f ".env" ]]; then
+    # Export all environment variables from .env file
+    set -a  # automatically export all variables
     # shellcheck source=/dev/null
     source .env
+    set +a  # stop automatically exporting
+    log "Environment variables loaded from .env file"
 fi
 
 # --- Initial Checks ---
@@ -50,6 +54,7 @@ mkdir -p docker/pihole/etc-pihole
 mkdir -p docker/pihole/etc-dnsmasq.d
 mkdir -p docker/pihole/logs
 mkdir -p docker/unbound/logs
+mkdir -p docker/unbound/config
 
 # Ensure we're in the project root directory
 # The directory structure and initial setup are handled by `scripts/setup.sh`.
@@ -58,8 +63,11 @@ if [[ ! -f "docker/docker-compose.core.yml" ]]; then
 fi
 
 # Set necessary permissions for Docker volumes and configurations.
-chmod 755 docker/pihole docker/unbound monitoring || warn "Failed to set permissions on Docker configuration directories."
-chmod 700 docker/pihole/logs docker/unbound/logs || warn "Failed to set permissions on Docker log directories."
+chmod 755 docker/pihole docker/unbound monitoring 2>/dev/null || warn "Failed to set permissions on Docker configuration directories."
+chmod 700 docker/pihole/logs docker/unbound/logs 2>/dev/null || warn "Failed to set permissions on Docker log directories."
+
+# Ensure Pi-hole can write to its directories (Pi-hole runs as UID 999)
+sudo chown -R 999:999 docker/pihole/ 2>/dev/null || warn "Could not set Pi-hole directory ownership. You may need to run: sudo chown -R 999:999 docker/pihole/"
 
 # Create Docker custom bridge networks for service isolation.
 log "Creating Docker networks (pihole_net, monitoring_net, isolated_net) if they don't exist..."
@@ -109,6 +117,10 @@ docker compose -f docker/docker-compose.core.yml up -d || error "Failed to start
 log "Waiting for core services to become healthy..."
 wait_for_container_health pihole || error "Pi-hole container failed health check."
 wait_for_container_health unbound || error "Unbound container failed health check."
+
+# Configure Pi-hole to accept queries from all local networks (not just container network)
+log "Configuring Pi-hole network permissions..."
+docker exec pihole pihole -a -i all >/dev/null 2>&1 || warn "Could not configure Pi-hole network permissions automatically. You may need to run: docker exec pihole pihole -a -i all"
 
 # Start monitoring services if ENABLE_MONITORING is set to 'true' in .env.
 if [[ "${ENABLE_MONITORING:-true}" == "true" ]]; then

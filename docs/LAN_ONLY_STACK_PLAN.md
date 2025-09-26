@@ -5,49 +5,72 @@ It serves as the foundational design document, providing context for the technic
 
 # Raspberry Pi LAN-Only Stack Plan
 
-This project is designed to transform your Raspberry Pi into a **self-contained, private home server (LAN-only)**. For a detailed rationale behind this architectural choice, refer to the [LAN-Only Design ADR](adr/0001-lan-only-design.md).
+This project is designed to transform your Raspberry Pi into a **self-contained,
+private home server (LAN-only)**. For a detailed rationale behind this
+architectural choice, refer to the
+[LAN-Only Design ADR](adr/0001-lan-only-design.md).
 
 It aims to achieve the following:
 
 1. **Protect and clean your internet connection inside the house**
    - Pi-hole blocks ads and trackers for every device on your Wi-Fi or Ethernet.
-   - Unbound resolves domains directly, cutting out Google, Cloudflare, or your ISP. You get faster, more private lookups without depending on third-party DNS.
+   - Unbound resolves domains directly, cutting out Google, Cloudflare, or your
+     ISP. You get faster, more private lookups without depending on third-party
+     DNS.
 2. **Provide easy ways to manage and monitor it**
-   - **Portainer** → a web dashboard to control all your Docker apps in one place. ![Screenshot: Portainer dashboard view]
-   - **Dozzle** → a live log viewer, so you can spot issues without touching the terminal. ![Screenshot: Dozzle live logs interface]
-   - **Uptime Kuma** → a “status page” that alerts you if Pi-hole or other services stop responding. ![Screenshot: Uptime Kuma status page]
-   - **Speedtest Tracker** → scheduled internet speed tests, building evidence if your ISP underperforms. ![Screenshot: Speedtest Tracker results dashboard]
+   - **Portainer** → a web dashboard to control all your Docker apps in one
+     place. ![Screenshot: Portainer dashboard view]
+   - **Dozzle** → a live log viewer, so you can spot issues without touching the
+     terminal. ![Screenshot: Dozzle live logs interface]
+   - **Uptime Kuma** → a “status page” that alerts you if Pi-hole or other
+     services stop responding. ![Screenshot: Uptime Kuma status page]
+   - **Speedtest Tracker** → scheduled internet speed tests, building evidence
+     if your ISP underperforms.
+     ![Screenshot: Speedtest Tracker results dashboard]
 3. **Allow for optional growth into local services**
-   - **Home Assistant** → smart home automation without cloud reliance. ![Screenshot: Home Assistant dashboard example]
-   - **Gitea** → your own lightweight GitHub-style repo for projects. ![Screenshot: Gitea repository view]
-   - **Netdata/Glances** → advanced monitoring of CPU, memory, and system health.
+   - **Home Assistant** → smart home automation without cloud reliance.
+     ![Screenshot: Home Assistant dashboard example]
+   - **Gitea** → your own lightweight GitHub-style repo for projects.
+     ![Screenshot: Gitea repository view]
+   - **Netdata/Glances** → advanced monitoring of CPU, memory, and system
+     health.
    - **code-server** → VS Code in your browser (when you’re at home on LAN).
 4. **Maintain a clean, safe, and lightweight setup**
    - Everything is Dockerized → portable, restartable, easy to back up.
-   - Runs only on your LAN → no exposure to the wider internet, no port forwarding, no CGNAT headaches.
-   - Minimal load → a Pi 3 B+ with 1 GB RAM can run Pi-hole, Unbound, and lightweight QoL tools smoothly.
-   - Static LAN IP → always reachable at `192.168.1.XXX` from any device in the house.
+   - Runs only on your LAN → no exposure to the wider internet, no port
+     forwarding, no CGNAT headaches.
+   - Minimal load → a Pi 3 B+ with 1 GB RAM can run Pi-hole, Unbound, and
+     lightweight QoL tools smoothly.
+   - Static LAN IP → always reachable at `192.168.1.XXX` from any device in the
+     house.
 
 ## ❌ Why External/Remote Access Isn’t Feasible: Design Constraints
 
-This project was specifically designed with the following constraints in mind, which act as barriers to implementing more remote use cases:
+This project was specifically designed with the following constraints in mind,
+which act as barriers to implementing more remote use cases:
 
 - **ISP & Router Limitations**
   - Your public IP is shared (Carrier-Grade NAT).
-  - No true port forwarding is possible unless ISP explicitly assigns a public IP.
-  - Even if you configure your router correctly, inbound traffic from the internet won’t reach your Pi.
+  - No true port forwarding is possible unless ISP explicitly assigns a public
+    IP.
+  - Even if you configure your router correctly, inbound traffic from the
+    internet won’t reach your Pi.
 - **Router Limitations (Stock firmware)**
-  - Cannot fully enforce DNS redirection → some devices still talk to ISP DNS directly.
+  - Cannot fully enforce DNS redirection → some devices still talk to ISP DNS
+    directly.
   - No advanced NAT loopback or firewall rules to handle complex tunnels.
 - **Pi 3 B+ Hardware Constraints**
   - 1 GB RAM → can’t comfortably run heavy VPN + extras at the same time.
-  - WireGuard container (`wg-easy`) auto-overwrites configs → mismatched subnets and breakages.
+  - WireGuard container (`wg-easy`) auto-overwrites configs → mismatched subnets
+    and breakages.
 
-👉 Collectively, these factors make **external VPN/tunnel solutions** (WireGuard, Cloudflare Tunnel, etc.) _more pain than they’re worth_.
+👉 Collectively, these factors make **external VPN/tunnel solutions**
+(WireGuard, Cloudflare Tunnel, etc.) _more pain than they’re worth_.
 
 The **rational design choice** for this project is to:
 
-Focus on **LAN-only reliability**, where you actually get consistent results without battling ISP/router limitations.
+Focus on **LAN-only reliability**, where you actually get consistent results
+without battling ISP/router limitations.
 
 ## ✅ LAN-Only Plan (Feasible, Stable, and Lightweight)
 
@@ -57,14 +80,16 @@ Focus on **LAN-only reliability**, where you actually get consistent results wit
 - **Unbound** → recursive DNS resolver on `172.20.0.3`, validates with DNSSEC.
 - Pi-hole forwards queries only to Unbound.
 
-🔒 Result: All devices on LAN using Pi-hole → ads blocked, DNS private, ISP bypassed where possible.
+🔒 Result: All devices on LAN using Pi-hole → ads blocked, DNS private, ISP
+bypassed where possible.
 
 ---
 
 ### 2. **Network Design**
 
 - Pi has **static IP**: `192.168.1.XXX` (Ethernet only).
-- Router still leaks some DNS → workaround: set devices (PCs/phones) to use `192.168.1.XXX` manually.
+- Router still leaks some DNS → workaround: set devices (PCs/phones) to use
+  `192.168.1.XXX` manually.
 - Optional future upgrade: OpenWRT router → enforce DNS properly.
 
 ---
@@ -120,55 +145,82 @@ _Version 2.0 | Technical Deep Dive_
 
 ## **1. Executive Summary**
 
-This project transforms a **Raspberry Pi 3 B+** into a **high-performance, self-contained home server** with:
+This project transforms a **Raspberry Pi 3 B+** into a **high-performance,
+self-contained home server** with:
 
 - **Network-wide ad/tracker blocking** via Pi-hole + Unbound
 - **Local DNS resolution** with DNSSEC validation
 - **Real-time monitoring** (Prometheus/Grafana, Uptime Kuma)
-- **Optional expansion** to smart home (Home Assistant) and self-hosted Git (Gitea)
+- **Optional expansion** to smart home (Home Assistant) and self-hosted Git
+  (Gitea)
 
 **Additional information:**
 
-All required hardware is already on hand, including a **Raspberry Pi 3 B+** connected via Ethernet to **your router**, which in turn links to **your internet connection (e.g., FTTP NBN box)**. We will build a **new home network around the Pi**, assigning it a static IP of **`192.168.1.XXX`** as the LAN’s primary DNS, with no existing DNS/DHCP conflicts.
+All required hardware is already on hand, including a **Raspberry Pi 3 B+**
+connected via Ethernet to **your router**, which in turn links to **your
+internet connection (e.g., FTTP NBN box)**. We will build a **new home network
+around the Pi**, assigning it a static IP of **`192.168.1.XXX`** as the LAN’s
+primary DNS, with no existing DNS/DHCP conflicts.
 
-The base OS will be **Raspberry Pi OS (full)** with the following customisation settings:
+The base OS will be **Raspberry Pi OS (full)** with the following customisation
+settings:
 
 - **Hostname:** `my-pihole.local`
-- **User Account:** Username `your_username` with a universal password (shared across all services, editable via `.env`).
-- **SSH:** Enabled, password authentication (key-based access to be configured later).
+- **User Account:** Username `your_username` with a universal password (shared
+  across all services, editable via `.env`).
+- **SSH:** Enabled, password authentication (key-based access to be configured
+  later).
 - **Locale:** Time zone `your_timezone`; default keyboard layout.
 - **Networking:** Wired Ethernet primary; Wi-Fi SSID field present but unused.
 
-All services will share a single password, with the system designed so password changes propagate across containers. Backups will remain local on the SD card, and optional services will be selected pragmatically for maximum utility (e.g., monitoring or Home Assistant). The timeline is **ASAP**, with quality taking precedence over speed.
+All services will share a single password, with the system designed so password
+changes propagate across containers. Backups will remain local on the SD card,
+and optional services will be selected pragmatically for maximum utility (e.g.,
+monitoring or Home Assistant). The timeline is **ASAP**, with quality taking
+precedence over speed.
 
 **Key Innovations**:
 
-- **Zero Trust Networking**: Isolated Docker networks, no inbound internet exposure
+- **Zero Trust Networking**: Isolated Docker networks, no inbound internet
+  exposure
 - **Self-Healing**: Automated backups, log rotation, and container health checks
-- **Enterprise-Grade Security**: nftables firewall, DNSSEC, and automated updates
+- **Enterprise-Grade Security**: nftables firewall, DNSSEC, and automated
+  updates
 
 ---
 
 ### **Executive Constraints**
 
 1. **ISP & Router Limitations**
-   - **ISP DNS Lock:** Your ISP might enforce WAN-side DNS; setting the Pi (`192.168.1.XXX`) or `127.0.0.1` as WAN DNS might break resolution.
-   - **Router DNS Restriction:** Some router firmware blocks non-public IPs in WAN DNS fields.
-   - **DHCP Transition Risk:** Moving DHCP from your router to Pi-hole causes LAN downtime if not sequenced carefully.
-   - **Router Flexibility:** Your router might offer limited DHCP/DNS overrides compared to enterprise hardware.
+   - **ISP DNS Lock:** Your ISP might enforce WAN-side DNS; setting the Pi
+     (`192.168.1.XXX`) or `127.0.0.1` as WAN DNS might break resolution.
+   - **Router DNS Restriction:** Some router firmware blocks non-public IPs in
+     WAN DNS fields.
+   - **DHCP Transition Risk:** Moving DHCP from your router to Pi-hole causes
+     LAN downtime if not sequenced carefully.
+   - **Router Flexibility:** Your router might offer limited DHCP/DNS overrides
+     compared to enterprise hardware.
 2. **Hardware (Raspberry Pi 3 B+)**
    - **RAM:** 1GB → limited for multiple containers (risk of OOM).
-   - **CPU:** Quad-core, modest power → heavy services (Grafana, Home Assistant) need throttling.
-   - **Storage:** SD card only (no SSD planned) → wear risk and lower reliability under writes.
+   - **CPU:** Quad-core, modest power → heavy services (Grafana, Home Assistant)
+     need throttling.
+   - **Storage:** SD card only (no SSD planned) → wear risk and lower
+     reliability under writes.
    - **Networking:** Single Ethernet NIC → no VLAN isolation or dual-homing.
 3. **Service & Configuration**
-   - **Port 53 Conflict:** Pi-hole and Unbound both attempt to bind `:53`; requires explicit separation (Pi-hole → 53, Unbound → 127.0.0.1:5053).
-   - **Password Policy:** Requirement for one universal password across services → must be enforced via `.env` injection/automation.
-   - **Static IP Reliance:** Setup depends on Pi remaining fixed at `192.168.1.XXX`.
+   - **Port 53 Conflict:** Pi-hole and Unbound both attempt to bind `:53`;
+     requires explicit separation (Pi-hole → 53, Unbound → 53 on internal
+     network).
+   - **Password Policy:** Requirement for one universal password across services
+     → must be enforced via `.env` injection/automation.
+   - **Static IP Reliance:** Setup depends on Pi remaining fixed at
+     `192.168.1.XXX`.
 4. **Security & Maintenance**
    - **Update Risk:** No rollback plan for Docker updates → downtime possible.
-   - **Backup Limitation:** Only SD card backups; no external target (NAS/cloud/SSD).
-   - **Recovery Complexity:** Rebuilds are manual; no automated restore pipeline.
+   - **Backup Limitation:** Only SD card backups; no external target
+     (NAS/cloud/SSD).
+   - **Recovery Complexity:** Rebuilds are manual; no automated restore
+     pipeline.
 
 ---
 
@@ -264,12 +316,12 @@ services:
     environment:
       TZ: ${TZ:-Australia/Sydney}
       WEBPASSWORD: ${PIHOLE_PASSWORD}
-      DNS1: 172.20.0.2#5053  # Unbound
-      DNS2: 127.0.0.1#5053 # Fallback to Unbound (redundant if DNS1 is Unbound)
+      DNS1: 172.20.0.2#53  # Unbound
+      DNS2: 127.0.0.1#53 # Fallback to Unbound (redundant if DNS1 is Unbound)
       VIRTUAL_HOST: pihole.local # Consider removing if not using a reverse proxy
       VIRTUAL_PORT: 80 # Consider removing if not using a reverse proxy
       ServerIP: ${PI_STATIC_IP:-192.168.1.XXX} # Review for Docker bridge network usage
-      PIHOLE_DNS_: 172.20.0.2#5053 # Redundant with DNS1
+      PIHOLE_DNS_: 172.20.0.2#53 # Redundant with DNS1
       PIHOLE_INTERFACE: eth0 # Review for Docker bridge network usage
       FTLCONF_LOCAL_IPV4: 172.20.0.3
     ports:
@@ -305,8 +357,9 @@ services:
     environment:
       TZ: ${TZ:-Australia/Sydney}
     ports:
-      - "127.0.0.1:5053:5053/tcp" # Only accessible from host
-      - "127.0.0.1:5053:5053/udp" # Only accessible from host
+      # Unbound runs on internal network only - no host port binding needed
+      # - "127.0.0.1:5053:5053/tcp" # Only for debugging if needed
+      # - "127.0.0.1:5053:5053/udp" # Only for debugging if needed
     restart: unless-stopped
     deploy:
       resources:
@@ -673,7 +726,8 @@ for i in {1..1000}; do dig @192.168.1.XXX example.com & done
 
 **6.1 Monitoring Dashboard**
 
-- **Grafana**: **`http://192.168.1.XXX:3000`** ![Screenshot: Grafana dashboard with system and Pi-hole metrics]
+- **Grafana**: **`http://192.168.1.XXX:3000`**
+  ![Screenshot: Grafana dashboard with system and Pi-hole metrics]
   - Pi-hole stats
   - System metrics (CPU/RAM/Disk)
   - Network throughput
@@ -701,7 +755,9 @@ sudo dd if=/dev/mmcblk0 | gzip > /mnt/backup/pi3b-full-$(date +%Y%m%d).img.gz
 
 **A1: Complete Docker Compose**
 
-To view the full combined Docker Compose configuration, run `docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml config` in the project root.
+To view the full combined Docker Compose configuration, run
+`docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml config`
+in the project root.
 
 **A2: Custom Blocklists**
 

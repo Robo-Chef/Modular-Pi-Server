@@ -1,12 +1,18 @@
 # Troubleshooting Guide
 
-This guide provides solutions to common issues encountered when setting up and maintaining your Raspberry Pi Home Server. Each section outlines a problem, explains potential causes, and offers step-by-step solutions with relevant commands.
+This guide provides solutions to common issues encountered when setting up and
+maintaining your Raspberry Pi Home Server. Each section outlines a problem,
+explains potential causes, and offers step-by-step solutions with relevant
+commands.
 
 ## Common Issues and Solutions
 
 ### 1. DNS Resolution Issues
 
-**Problem**: Devices connected to your network are unable to resolve domain names (e.g., websites don't load, ad-blocking doesn't work as expected) after configuring Pi-hole as the primary DNS server. This often manifests as slow browsing or complete failure to load web pages.
+**Problem**: Devices connected to your network are unable to resolve domain
+names (e.g., websites don't load, ad-blocking doesn't work as expected) after
+configuring Pi-hole as the primary DNS server. This often manifests as slow
+browsing or complete failure to load web pages.
 
 **Potential Causes**:
 
@@ -26,7 +32,14 @@ docker logs pihole --tail 50
 # 2. Test DNS resolution directly from the Pi-hole container.
 # This verifies Pi-hole's ability to resolve domains through Unbound.
 log "Testing DNS resolution from within the Pi-hole container for a known domain (e.g., google.com)..."
-docker exec pihole dig @127.0.0.1 -p 5053 google.com
+docker exec pihole dig @127.0.0.1 google.com
+
+# 2a. If the above fails, check if Pi-hole is configured to accept queries from all networks
+log "Checking Pi-hole network listening configuration..."
+docker exec pihole cat /etc/pihole/setupVars.conf | grep DNSMASQ_LISTENING
+
+# If DNSMASQ_LISTENING is set to 'single', change it to 'all'
+docker exec pihole pihole -a -i all
 
 # 3. Test DNS resolution from the Raspberry Pi host, using Pi-hole as the DNS server.
 # Replace ${PI_STATIC_IP} with your Pi's actual static IP address.
@@ -46,14 +59,27 @@ docker compose -f docker/docker-compose.core.yml restart
 
 **Router Configuration Checks**:
 
-- **Primary DNS Setting**: Ensure your router's primary DNS server is set to your Raspberry Pi's static IP address (e.g., `192.168.1.XXX`). Clear any secondary DNS entries.
-- **DHCP Server**: Consider disabling your router's DHCP server and enabling Pi-hole's DHCP server for better client recognition and control. If you do this, ensure Pi-hole's DHCP range does not conflict with your router's IP range.
-- **DNS Rebinding Protection**: Some routers have "DNS rebinding protection" which can interfere with local DNS services like Pi-hole. Look for settings like "DNS Rebinding Protection", "Hairpin NAT", or "WAN Loopback" and disable them if necessary, or add `pihole.local` and your Pi's hostname to an allowed list.
-- **ISP DNS Override**: Certain ISPs might force their own DNS servers, bypassing your router's settings. You might need to check if your router has an option to prevent this or use a custom router firmware if available.
+- **Primary DNS Setting**: Ensure your router's primary DNS server is set to
+  your Raspberry Pi's static IP address (e.g., `192.168.1.XXX`). Clear any
+  secondary DNS entries.
+- **DHCP Server**: Consider disabling your router's DHCP server and enabling
+  Pi-hole's DHCP server for better client recognition and control. If you do
+  this, ensure Pi-hole's DHCP range does not conflict with your router's IP
+  range.
+- **DNS Rebinding Protection**: Some routers have "DNS rebinding protection"
+  which can interfere with local DNS services like Pi-hole. Look for settings
+  like "DNS Rebinding Protection", "Hairpin NAT", or "WAN Loopback" and disable
+  them if necessary, or add `pihole.local` and your Pi's hostname to an allowed
+  list.
+- **ISP DNS Override**: Certain ISPs might force their own DNS servers,
+  bypassing your router's settings. You might need to check if your router has
+  an option to prevent this or use a custom router firmware if available.
 
 ### 2. Pi-hole Web Interface Not Accessible
 
-**Problem**: You cannot access the Pi-hole admin interface at `http://${PI_STATIC_IP}/admin`. This means you can't monitor your network, manage ad lists, or configure Pi-hole settings.
+**Problem**: You cannot access the Pi-hole admin interface at
+`http://${PI_STATIC_IP}/admin`. This means you can't monitor your network,
+manage ad lists, or configure Pi-hole settings.
 
 **Potential Causes**:
 
@@ -89,7 +115,8 @@ docker logs pihole --tail 50
 
 ### 3. High Memory Usage
 
-**Problem**: Your Raspberry Pi is experiencing high memory usage, leading to slow performance, unresponsiveness, or even system crashes.
+**Problem**: Your Raspberry Pi is experiencing high memory usage, leading to
+slow performance, unresponsiveness, or even system crashes.
 
 **Potential Causes**:
 
@@ -132,7 +159,9 @@ log "Review and adjust memory limits/reservations in docker-compose files (e.g.,
 
 ### 4. Slow DNS Resolution
 
-**Problem**: DNS queries are noticeably slow, or domains are taking a long time to resolve, even if they eventually succeed. This can lead to a sluggish internet experience.
+**Problem**: DNS queries are noticeably slow, or domains are taking a long time
+to resolve, even if they eventually succeed. This can lead to a sluggish
+internet experience.
 
 **Potential Causes**:
 
@@ -168,7 +197,9 @@ log "If DNS remains slow, check overall system resource usage (CPU, Memory) as d
 
 ### 5. Container Startup Issues
 
-**Problem**: One or more Docker containers fail to start, exit unexpectedly, or enter a restart loop. This prevents the associated services from becoming available.
+**Problem**: One or more Docker containers fail to start, exit unexpectedly, or
+enter a restart loop. This prevents the associated services from becoming
+available.
 
 **Potential Causes**:
 
@@ -213,7 +244,9 @@ log "If all else fails, consider removing associated Docker volumes (WARNING: Th
 
 ### 6. Firewall Issues
 
-**Problem**: You cannot access services (web interfaces, SSH, DNS) even if containers appear to be running. This indicates that the `nftables` firewall might be blocking the necessary traffic.
+**Problem**: You cannot access services (web interfaces, SSH, DNS) even if
+containers appear to be running. This indicates that the `nftables` firewall
+might be blocking the necessary traffic.
 
 **Potential Causes**:
 
@@ -255,7 +288,8 @@ log "Review the /etc/nftables.conf file for incorrect rules. After making change
 
 ### 7. Backup and Recovery Issues
 
-**Problem**: Your automated backups are failing, or you are unable to successfully recover data from a backup.
+**Problem**: Your automated backups are failing, or you are unable to
+successfully recover data from a backup.
 
 **Potential Causes**:
 
@@ -305,7 +339,8 @@ echo "cp -r ~/pihole-server/backups/daily/YYYYMMDD_HHMMSS/etc-pihole/* ~/pihole-
 
 ### 8. Monitoring Issues (Grafana, Prometheus, Uptime Kuma)
 
-**Problem**: Grafana dashboards are not showing data, Prometheus is not scraping targets, or Uptime Kuma is not monitoring services correctly.
+**Problem**: Grafana dashboards are not showing data, Prometheus is not scraping
+targets, or Uptime Kuma is not monitoring services correctly.
 
 **Potential Causes**:
 
@@ -351,7 +386,8 @@ log "Review Uptime Kuma's dashboard (http://${PI_STATIC_IP}:3001) for specific m
 
 ### 9. SSH Connection Issues
 
-**Problem**: You cannot connect to your Raspberry Pi via SSH, or the connection is refused/timed out.
+**Problem**: You cannot connect to your Raspberry Pi via SSH, or the connection
+is refused/timed out.
 
 **Potential Causes**:
 
@@ -361,7 +397,8 @@ log "Review Uptime Kuma's dashboard (http://${PI_STATIC_IP}:3001) for specific m
 - SSH host key mismatch.
 - Password authentication disabled (if not using SSH keys).
 
-**Solutions** (run these commands on your Raspberry Pi _locally if possible, otherwise debug carefully_):
+**Solutions** (run these commands on your Raspberry Pi _locally if possible,
+otherwise debug carefully_):
 
 ```bash
 # 1. Check SSH daemon status on the Raspberry Pi.
@@ -433,7 +470,8 @@ sudo systemctl restart docker || error "Failed to restart Docker daemon after lo
 
 ### 3. Memory Optimization
 
-Fine-tuning kernel memory parameters can help reduce unnecessary writes and improve memory management.
+Fine-tuning kernel memory parameters can help reduce unnecessary writes and
+improve memory management.
 
 ```bash
 # 1. Configure kernel parameters for memory management in /etc/sysctl.d/99-rpi.conf.
@@ -456,7 +494,8 @@ Understanding how to effectively analyze logs is crucial for troubleshooting.
 
 ### 1. Pi-hole Logs
 
-Pi-hole generates detailed logs that are essential for diagnosing DNS and ad-blocking issues.
+Pi-hole generates detailed logs that are essential for diagnosing DNS and
+ad-blocking issues.
 
 ```bash
 # 1. View Pi-hole's real-time query log. This shows DNS queries as they happen.
@@ -476,7 +515,8 @@ curl -s http://${PI_STATIC_IP}/admin/api.php?summary | jq
 
 ### 2. System Logs
 
-General system logs provide insights into the operating system and Docker daemon's health.
+General system logs provide insights into the operating system and Docker
+daemon's health.
 
 ```bash
 # 1. Check systemd journal logs for the pihole-server service.
@@ -502,7 +542,8 @@ ip route show
 
 ## Emergency Recovery
 
-These steps describe how to recover from severe issues or completely reset your server.
+These steps describe how to recover from severe issues or completely reset your
+server.
 
 ### 1. Complete System Recovery
 
@@ -536,7 +577,8 @@ log "Verifying service status after recovery. Run 'sudo systemctl status pihole-
 
 ### 2. Factory Reset
 
-Performing a complete factory reset, removing all Docker data and project files. This is a drastic measure and should only be used as a last resort.
+Performing a complete factory reset, removing all Docker data and project files.
+This is a drastic measure and should only be used as a last resort.
 
 ```bash
 # 1. Remove all Docker containers, networks, images, and volumes.
@@ -562,14 +604,24 @@ echo "./scripts/quick-deploy.sh"
 
 When seeking help for issues, providing comprehensive information is key.
 
-1.  **Check the logs first**: Always start by checking the logs of the affected container (`docker logs <container_name>`) or system service (`sudo journalctl -u <service_name>`).
-2.  **Verify network connectivity**: Ensure your Raspberry Pi has internet access (`ping 8.8.8.8`) and that clients can reach your Pi's static IP.
-3.  **Test DNS resolution**: Directly query Pi-hole for known domains (`dig @${PI_STATIC_IP} google.com` and for an ad domain `dig @${PI_STATIC_IP} doubleclick.net`).
-4.  **Check system resources**: Use `htop`, `df -h`, and `free -h` to check for high CPU, disk, or memory usage.
-5.  **Review firewall rules**: Use `sudo nft list ruleset` to ensure necessary ports are open.
-6.  **Provide context**: When asking for help, describe what you were doing when the issue occurred, any recent changes, and the exact error messages you received.
+1.  **Check the logs first**: Always start by checking the logs of the affected
+    container (`docker logs <container_name>`) or system service
+    (`sudo journalctl -u <service_name>`).
+2.  **Verify network connectivity**: Ensure your Raspberry Pi has internet
+    access (`ping 8.8.8.8`) and that clients can reach your Pi's static IP.
+3.  **Test DNS resolution**: Directly query Pi-hole for known domains
+    (`dig @${PI_STATIC_IP} google.com` and for an ad domain
+    `dig @${PI_STATIC_IP} doubleclick.net`).
+4.  **Check system resources**: Use `htop`, `df -h`, and `free -h` to check for
+    high CPU, disk, or memory usage.
+5.  **Review firewall rules**: Use `sudo nft list ruleset` to ensure necessary
+    ports are open.
+6.  **Provide context**: When asking for help, describe what you were doing when
+    the issue occurred, any recent changes, and the exact error messages you
+    received.
 
-For additional support, consult the official documentation for the respective tools:
+For additional support, consult the official documentation for the respective
+tools:
 
 - [Pi-hole Documentation](https://docs.pi-hole.net/)
 - [Unbound Documentation](https://nlnetlabs.nl/documentation/unbound/)

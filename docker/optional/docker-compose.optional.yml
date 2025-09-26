@@ -209,8 +209,8 @@ networks:
     driver: bridge # Defines a custom bridge network for smart home services.
     ipam:
       config:
-        - subnet: 172.22.0.0/24 # Specifies the subnet for this network.
-          gateway: 172.22.0.1 # Sets the gateway IP.
+        - subnet: ${PIHOLE_NETWORK:-172.20.0.0/24} # Specifies the subnet for this network.
+          gateway: ${PIHOLE_GATEWAY:-172.20.0.1} # Sets the gateway IP.
   dev_net:
     driver: bridge # Defines a custom bridge network for development services (e.g., Gitea).
     ipam:

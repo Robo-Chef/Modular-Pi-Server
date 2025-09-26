@@ -2,7 +2,10 @@
 
 ## Quick Start
 
-This guide serves as a quick checklist and reference for deploying your Raspberry Pi home server. For **detailed, step-by-step instructions**, always refer to the [Raspberry Pi Home Server Setup Guide](RASPBERRY_PI_SERVER_SETUP.md).
+This guide serves as a quick checklist and reference for deploying your
+Raspberry Pi home server. For **detailed, step-by-step instructions**, always
+refer to the
+[Raspberry Pi Home Server Setup Guide](RASPBERRY_PI_SERVER_SETUP.md).
 
 ### Prerequisites
 
@@ -13,8 +16,8 @@ This guide serves as a quick checklist and reference for deploying your Raspberr
 
 ### Step 1: Initial Raspberry Pi OS Setup
 
-Follow the **detailed instructions for OS flashing and initial configuration** in:
-➡️ [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md)
+Follow the **detailed instructions for OS flashing and initial configuration**
+in: ➡️ [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md)
 
 Ensure you have configured:
 
@@ -34,7 +37,9 @@ ssh your_username@192.168.1.XXX # Connect to your Pi (replace with your username
 
 ### Step 2: Deploy the Home Server (on your Raspberry Pi)
 
-These steps are performed on your Raspberry Pi via SSH. Refer to [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md) for detailed explanations.
+These steps are performed on your Raspberry Pi via SSH. Refer to
+[RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md) for detailed
+explanations.
 
 1.  **Clone the repository:**
 
@@ -43,7 +48,8 @@ These steps are performed on your Raspberry Pi via SSH. Refer to [RASPBERRY_PI_S
     cd ~/pihole-server
     ```
 
-    _(Note: If you forked the repository, use your fork's URL instead of the original.)_
+    _(Note: If you forked the repository, use your fork's URL instead of the
+    original.)_
 
 2.  **Configure your `.env` file:**
 
@@ -52,7 +58,11 @@ These steps are performed on your Raspberry Pi via SSH. Refer to [RASPBERRY_PI_S
     nano .env
     ```
 
-    - **Crucial:** Open the newly created `.env` file and replace all placeholder values. The `UNIVERSAL_PASSWORD` should be your primary secure password, and it will be referenced by other services. Ensure `TZ`, `PI_STATIC_IP`, `PIHOLE_HOSTNAME` match your initial Raspberry Pi OS setup. _Refer to `env.example` for detailed inline comments and examples._
+    - **Crucial:** Open the newly created `.env` file and replace all
+      placeholder values. The `UNIVERSAL_PASSWORD` should be your primary secure
+      password, and it will be referenced by other services. Ensure `TZ`,
+      `PI_STATIC_IP`, `PIHOLE_HOSTNAME` match your initial Raspberry Pi OS
+      setup. _Refer to `env.example` for detailed inline comments and examples._
     - Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X` in `nano`).
 
 3.  **Prepare and run setup scripts:**
@@ -64,7 +74,10 @@ These steps are performed on your Raspberry Pi via SSH. Refer to [RASPBERRY_PI_S
     ./scripts/setup.sh
     ```
 
-    - **Important:** If `setup.sh` installs Docker, it will prompt you to **log out and log back in** for group changes to take effect. If this happens, log out of SSH, then reconnect. After reconnecting, `cd ~/pihole-server` again before running the next script.
+    - **Important:** If `setup.sh` installs Docker, it will prompt you to **log
+      out and log back in** for group changes to take effect. If this happens,
+      log out of SSH, then reconnect. After reconnecting, `cd ~/pihole-server`
+      again before running the next script.
 
 4.  **Deploy services:**
     ```bash
@@ -76,23 +89,41 @@ These steps are performed on your Raspberry Pi via SSH. Refer to [RASPBERRY_PI_S
 1.  Access your router's admin interface.
 2.  Locate DNS settings.
 3.  Set Primary DNS to your Raspberry Pi's static IP (e.g., `192.168.1.XXX`).
-4.  **(Optional):** Disable router's DHCP and enable Pi-hole's DHCP server for better client recognition.
+4.  **(Optional):** Disable router's DHCP and enable Pi-hole's DHCP server for
+    better client recognition.
 5.  Save and apply settings.
 
 ### Step 4: Verify Installation (Refer to [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md) for details)
 
-1.  **Test DNS Resolution:** Verify ad-blocking and normal domain resolution from your Pi and other network devices.
-2.  **Check Web Interfaces:** Access Pi-hole Admin, Grafana, and Uptime Kuma dashboards.
+1.  **Test DNS Resolution:** Verify ad-blocking and normal domain resolution
+    from your Pi and other network devices.
+
+    ```bash
+    # Test DNS resolution using Pi-hole
+    dig @192.168.1.XXX google.com # Replace with your Pi's IP
+    ```
+
+    **If DNS queries fail**: The deployment script should automatically
+    configure Pi-hole network permissions. If issues persist, run:
+    `docker exec pihole pihole -a -i all`
+
+2.  **Check Web Interfaces:** Access Pi-hole Admin, Grafana, and Uptime Kuma
+    dashboards.
 3.  **Verify Ad Blocking:** Confirm ads are blocked on websites.
 
 ## Service Management & Maintenance
 
-For detailed information on service management, monitoring, backups, troubleshooting, and performance optimization, refer to the following documentation:
+For detailed information on service management, monitoring, backups,
+troubleshooting, and performance optimization, refer to the following
+documentation:
 
-- **Detailed Setup Guide:** [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md)
+- **Detailed Setup Guide:**
+  [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md)
 - **Troubleshooting:** [docs/troubleshooting.md](docs/troubleshooting.md)
-- **Security Hardening:** [docs/security-hardening.md](docs/security-hardening.md)
-- **LAN-Only Stack Plan:** [docs/LAN_ONLY_STACK_PLAN.md](docs/LAN_ONLY_STACK_PLAN.md)
+- **Security Hardening:**
+  [docs/security-hardening.md](docs/security-hardening.md)
+- **LAN-Only Stack Plan:**
+  [docs/LAN_ONLY_STACK_PLAN.md](docs/LAN_ONLY_STACK_PLAN.md)
 
 ### Quick Commands:
 
@@ -111,6 +142,8 @@ docker logs unbound
 
 ---
 
-**Congratulations!** You have successfully deployed your Raspberry Pi home server. Your system is now running with DNS filtering, monitoring, and optional services, designed for self-healing with automated backups and health checks.
+**Congratulations!** You have successfully deployed your Raspberry Pi home
+server. Your system is now running with DNS filtering, monitoring, and optional
+services, designed for self-healing with automated backups and health checks.
 
 Enjoy your enhanced LAN experience!
