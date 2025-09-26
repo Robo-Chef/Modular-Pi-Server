@@ -34,7 +34,7 @@ deployment and personalization.
 
 ## Getting Started
 
-### 🚀 **One-Command Deployment** (Recommended)
+### 🚀 One-Command Deployment (Recommended)
 
 ```bash
 ./scripts/deploy.sh
@@ -42,12 +42,12 @@ deployment and personalization.
 
 This single command handles everything: setup, deployment, and validation.
 
-### 📋 **Quick Start Guide**
+### 📋 Quick Start Guide
 
 For a streamlined deployment experience, see:  
 ➡️ [QUICK_START.md](QUICK_START.md)
 
-### 📖 **Detailed Setup Instructions**
+### 📖 Detailed Setup Instructions
 
 For comprehensive setup instructions, including initial OS flashing,
 configuration, and deployment, please refer to:  
@@ -67,54 +67,54 @@ These steps assume you have completed the initial OS setup via Raspberry Pi
 Imager (hostname, username, password, timezone, static IP, SSH enabled) and are
 currently connected to your Pi via SSH.
 
-1.  **Handle SSH Host Key Changes (if re-imaging Pi):**
+1. **Handle SSH Host Key Changes (if re-imaging Pi):**
 
-    ```bash
-    ssh-keygen -R 192.168.1.XXX # Replace with your Pi's IP
-    ```
+   ```bash
+   ssh-keygen -R 192.168.1.XXX # Replace with your Pi's IP
+   ```
 
-2.  **Clone the repository (on your Pi):**
+2. **Clone the repository (on your Pi):**
 
-    ```bash
-    git clone https://github.com/Robo-Chef/Modular-Pi-Server.git ~/pihole-server
-    cd ~/pihole-server
-    ```
+   ```bash
+   git clone https://github.com/Robo-Chef/Modular-Pi-Server.git ~/pihole-server
+   cd ~/pihole-server
+   ```
 
-3.  **Configure your `.env` file (on your Pi):**
+3. **Configure your `.env` file (on your Pi):**
 
-    ```bash
-    cp env.example .env
-    nano .env
-    ```
+   ```bash
+   cp env.example .env
+   nano .env
+   ```
 
-    - Replace placeholders with real values. `UNIVERSAL_PASSWORD` will be used
-      by multiple services. Ensure `TZ`, `PI_STATIC_IP`, `PIHOLE_HOSTNAME` match
-      your Pi OS setup.
+   - Replace placeholders with real values. `UNIVERSAL_PASSWORD` will be used by
+     multiple services. Ensure `TZ`, `PI_STATIC_IP`, `PIHOLE_HOSTNAME` match
+     your Pi OS setup.
 
-4.  **Install dependencies and run setup script:**
+4. **Install dependencies and run setup script:**
 
-    ```bash
-    sudo apt update
-    sudo apt install -y dos2unix dnsutils
-    dos2unix .env scripts/*.sh
-    chmod +x scripts/*.sh
-    ./scripts/setup.sh
-    ```
+   ```bash
+   sudo apt update
+   sudo apt install -y dos2unix dnsutils
+   dos2unix .env scripts/*.sh
+   chmod +x scripts/*.sh
+   ./scripts/setup.sh
+   ```
 
-    - ⚠️ **Docker Group Change Requires Re-login!** After `setup.sh`, log out
-      and back in to apply Docker group membership.
+   - ⚠️ **Docker Group Change Requires Re-login!** After `setup.sh`, log out and
+     back in to apply Docker group membership.
 
-5.  **Deploy services:**
+5. **Deploy services:**
 
-    ```bash
-    ./scripts/deploy.sh
-    ```
+   ```bash
+   ./scripts/deploy.sh
+   ```
 
-    **Note**: Use `./scripts/deploy.sh` for the complete one-command deployment
-    that includes monitoring if enabled.
+   **Note**: Use `./scripts/deploy.sh` for the complete one-command deployment
+   that includes monitoring if enabled.
 
-6.  **Configure your Router:** Set the Pi static IP (e.g., `192.168.1.XXX`) as
-    **Primary DNS Server** in router settings.
+6. **Configure your Router:** Set the Pi static IP (e.g., `192.168.1.XXX`) as
+   **Primary DNS Server** in router settings.
 
 ---
 
@@ -154,9 +154,9 @@ docker-compose logs pihole
 
 ```bash
 ./scripts/test-deployment.sh
-ping 192.168.1.100
-curl http://192.168.1.100/admin/
-dig @192.168.1.100 google.com
+ping 192.168.1.XXX
+curl http://192.168.1.XXX/admin/
+dig @192.168.1.XXX google.com
 ```
 
 **Test Monitoring Stack:**
@@ -179,18 +179,18 @@ curl http://localhost:9100/metrics    # Node Exporter
 
 - **Core**
 
-  - Pi-hole: `http://192.168.1.100/admin`
+  - Pi-hole: `http://192.168.1.XXX/admin`
     ![Screenshot: Pi-hole Admin Dashboard example]
-  - Portainer: `http://192.168.1.100:9000`
+  - Portainer: `http://192.168.1.XXX:9000`
     ![Screenshot: Portainer dashboard view]
-  - Dozzle: `http://192.168.1.100:9999`
+  - Dozzle: `http://192.168.1.XXX:9999`
     ![Screenshot: Dozzle live logs interface]
 
 - **Monitoring**
-  - Grafana: `http://192.168.1.100:3000`
-  - Prometheus: `http://192.168.1.100:9090`
-  - Alertmanager: `http://192.168.1.100:9093`
-  - Uptime Kuma: `http://192.168.1.100:3001`
+  - Grafana: `http://192.168.1.XXX:3000`
+  - Prometheus: `http://192.168.1.XXX:9090`
+  - Alertmanager: `http://192.168.1.XXX:9093`
+  - Uptime Kuma: `http://192.168.1.XXX:3001`
     ![Screenshot: Uptime Kuma status page]
 
 ---
@@ -240,7 +240,7 @@ sudo ufw allow ssh http https
 
 ### 📊 Monitoring Setup
 
-- Grafana: `http://192.168.1.100:3000` (default login: `admin/admin` → change
+- Grafana: `http://192.168.1.XXX:3000` (default login: `admin/admin` → change
   password)
 - Add Prometheus datasource: `http://prometheus:9090`
 - Import dashboards for system metrics, Pi-hole queries, Docker stats.

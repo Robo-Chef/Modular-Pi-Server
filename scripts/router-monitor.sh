@@ -20,7 +20,7 @@ if [[ -f "${SCRIPT_DIR}/../.env" ]]; then
     set +a
 else
     # Set defaults if no .env file
-    PI_STATIC_IP="${PI_STATIC_IP:-192.168.1.100}"
+    PI_STATIC_IP="${PI_STATIC_IP:-192.168.1.XXX}"
     PI_GATEWAY="${PI_GATEWAY:-192.168.1.1}"
 fi
 

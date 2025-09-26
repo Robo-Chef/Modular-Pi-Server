@@ -1,7 +1,11 @@
 # Raspberry Pi Home Server Setup Guide
 
-This document outlines the detailed steps and configurations required to set up your Raspberry Pi 3 B+ as a high-performance, self-contained home server. It includes network-wide ad/tracker blocking (Pi-hole + Unbound), local DNS resolution with DNSSEC validation, and real-time monitoring (Prometheus/Grafana, Uptime Kuma).
-For the foundational design principles and rationale behind this LAN-only setup, refer to the [LAN-Only Stack Plan](docs/LAN_ONLY_STACK_PLAN.md).
+This document outlines the detailed steps and configurations required to set up
+your Raspberry Pi 3 B+ as a high-performance, self-contained home server. It
+includes network-wide ad/tracker blocking (Pi-hole + Unbound), local DNS
+resolution with DNSSEC validation, and real-time monitoring (Prometheus/Grafana,
+Uptime Kuma). For the foundational design principles and rationale behind this
+LAN-only setup, refer to the [LAN-Only Stack Plan](docs/LAN_ONLY_STACK_PLAN.md).
 
 ---
 
@@ -9,45 +13,65 @@ For the foundational design principles and rationale behind this LAN-only setup,
 
 - **Hardware:** Raspberry Pi 3 B+
 - **Hostname:** `my-pihole.local` (Configured via `PIHOLE_HOSTNAME` in `.env`)
-- **Static IP:** `192.168.1.XXX/24` (Configured during OS flashing, then matched with `PI_STATIC_IP` in `.env`)
+- **Static IP:** `192.168.1.XXX/24` (Configured during OS flashing, then matched
+  with `PI_STATIC_IP` in `.env`)
 - **Gateway:** `192.168.1.1` (Configured via `PI_GATEWAY` in `.env`)
-- **Primary DNS (for Pi itself, before Pi-hole is up):** `8.8.8.8, 8.8.4.4` (Configured via `PI_DNS_SERVERS` in `.env`)
-- **Universal Password:** `CHANGE_ME` (Configured via `UNIVERSAL_PASSWORD` in `.env`)
+- **Primary DNS (for Pi itself, before Pi-hole is up):** `8.8.8.8, 8.8.4.4`
+  (Configured via `PI_DNS_SERVERS` in `.env`)
+- **Universal Password:** `CHANGE_ME` (Configured via `UNIVERSAL_PASSWORD` in
+  `.env`)
 - **Time Zone:** `America/New_York` (Configured via `TZ` in `.env`)
 
 ---
 
 ## 📝 **Initial Pi OS Setup (via Raspberry Pi Imager)**
 
-When flashing Raspberry Pi OS (64-bit Full recommended) onto your SD card using the Raspberry Pi Imager, use the **OS Customisation (Ctrl+Shift+X)** settings as follows:
+When flashing Raspberry Pi OS (64-bit Full recommended) onto your SD card using
+the Raspberry Pi Imager, use the **OS Customisation (Ctrl+Shift+X)** settings as
+follows:
 
-- **Set hostname:** `my-pihole.local`
-  _Explanation: Choose a descriptive hostname like `my-pihole.local` to easily identify your Raspberry Pi on your local network. You will set this same value for `PIHOLE_HOSTNAME` in your `.env` file later._
+- **Set hostname:** `my-pihole.local` _Explanation: Choose a descriptive
+  hostname like `my-pihole.local` to easily identify your Raspberry Pi on your
+  local network. You will set this same value for `PIHOLE_HOSTNAME` in your
+  `.env` file later._
 - **Set username and password:**
   - Username: `your_username`
-  - Password: `CHANGE_ME`
-    _Explanation: Choose a strong, unique username and password. This will be your primary login for the Raspberry Pi via SSH. You will set this same password for `UNIVERSAL_PASSWORD` in your `.env` file later._
+  - Password: `CHANGE_ME` _Explanation: Choose a strong, unique username and
+    password. This will be your primary login for the Raspberry Pi via SSH. You
+    will set this same password for `UNIVERSAL_PASSWORD` in your `.env` file
+    later._
 - **Configure wireless LAN:** Leave blank (as wired Ethernet is primary)
-  _Explanation: For a server, a wired Ethernet connection is generally more stable and reliable than Wi-Fi. We prioritize a wired connection._
+  _Explanation: For a server, a wired Ethernet connection is generally more
+  stable and reliable than Wi-Fi. We prioritize a wired connection._
 - **Set locale settings:**
-  - Time Zone: `your_timezone` (e.g., `Australia/Sydney`, `America/New_York`, `Europe/London`)
+  - Time Zone: `your_timezone` (e.g., `Australia/Sydney`, `America/New_York`,
+    `Europe/London`)
   - Keyboard Layout: (Default, confirm later if needed)
-- **Enable SSH:** `✓` **Use password authentication**
-  _Explanation: SSH (Secure Shell) allows you to remotely access and control your Raspberry Pi from another computer. Enabling password authentication is for initial setup, which will later be hardened with key-based authentication for enhanced security._
-- **Set static IP:** `192.168.1.XXX/24`
-  _Explanation: It is crucial to set a static IP address for your Raspberry Pi during initial OS setup. This ensures your Pi is always reachable at the same local network address. You will later match this IP with the `PI_STATIC_IP` variable in your project's `.env` file._
+- **Enable SSH:** `✓` **Use password authentication** _Explanation: SSH (Secure
+  Shell) allows you to remotely access and control your Raspberry Pi from
+  another computer. Enabling password authentication is for initial setup, which
+  will later be hardened with key-based authentication for enhanced security._
+- **Set static IP:** `192.168.1.XXX/24` _Explanation: It is crucial to set a
+  static IP address for your Raspberry Pi during initial OS setup. This ensures
+  your Pi is always reachable at the same local network address. You will later
+  match this IP with the `PI_STATIC_IP` variable in your project's `.env` file._
 - **Options:**
   - Eject media when finished: `✓`
-  - Enable telemetry: `✓` (Optional: provides anonymous usage data to Raspberry Pi Foundation)
+  - Enable telemetry: `✓` (Optional: provides anonymous usage data to Raspberry
+    Pi Foundation)
   - Play sound when finished: `✗`
 
 ---
 
 ## 💻 **Post-OS-Flash Setup (via SSH)**
 
-Once the Pi has booted with the new OS, you should be able to SSH into it. These steps are performed **on your Raspberry Pi** via your SSH connection.
+Once the Pi has booted with the new OS, you should be able to SSH into it. These
+steps are performed **on your Raspberry Pi** via your SSH connection.
 
-\*\*First, if you re-flashed your Raspberry Pi and receive a `REMOTE HOST IDENTIFICATION HAS CHANGED` warning when trying to SSH, remove the old host key from your computer's `~/.ssh/known_hosts` file (on your computer, NOT the Pi):
+\*\*First, if you re-flashed your Raspberry Pi and receive a
+`REMOTE HOST IDENTIFICATION HAS CHANGED` warning when trying to SSH, remove the
+old host key from your computer's `~/.ssh/known_hosts` file (on your computer,
+NOT the Pi):
 
 ```bash
 ssh-keygen -R 192.168.1.XXX # Replace with your Pi's IP
@@ -59,7 +83,8 @@ Afterwards, connect to your Pi:
 ssh your_username@192.168.1.XXX # Replace with your username and Pi's static IP
 ```
 
-(Password: `CHANGE_ME` - This should match the password you set in Raspberry Pi Imager and `UNIVERSAL_PASSWORD` in `.env`)
+(Password: `CHANGE_ME` - This should match the password you set in Raspberry Pi
+Imager and `UNIVERSAL_PASSWORD` in `.env`)
 
 1.  **Wait 3-5 minutes** for the Pi to fully boot.
 2.  **Clone the project:**
@@ -69,7 +94,8 @@ ssh your_username@192.168.1.XXX # Replace with your username and Pi's static IP
     cd ~/pihole-server
     ```
 
-    _(Note: If you forked the repository, use your fork's URL instead of the original.)_
+    _(Note: If you forked the repository, use your fork's URL instead of the
+    original.)_
 
 3.  **Configure your `.env` file:**
 
@@ -78,7 +104,11 @@ ssh your_username@192.168.1.XXX # Replace with your username and Pi's static IP
     nano .env
     ```
 
-    - **Crucial:** Open `.env` and replace all placeholder values. The `UNIVERSAL_PASSWORD` should be your primary secure password, and it will be referenced by other services. Ensure `TZ`, `PI_STATIC_IP`, `PIHOLE_HOSTNAME` match your initial Raspberry Pi OS setup. _Refer to `env.example` for detailed inline comments and examples._
+    - **Crucial:** Open `.env` and replace all placeholder values. The
+      `UNIVERSAL_PASSWORD` should be your primary secure password, and it will
+      be referenced by other services. Ensure `TZ`, `PI_STATIC_IP`,
+      `PIHOLE_HOSTNAME` match your initial Raspberry Pi OS setup. _Refer to
+      `env.example` for detailed inline comments and examples._
 
     - Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X` in `nano`).
 
@@ -92,32 +122,41 @@ ssh your_username@192.168.1.XXX # Replace with your username and Pi's static IP
     ./scripts/setup.sh              # Run the initial system setup
     ```
 
-    - **⚠️ IMPORTANT: Docker Group Change Requires Re-login! ⚠️**
-      If `setup.sh` installs Docker, it adds your user to the `docker` group. **This change only takes effect after a new SSH login session.** If prompted by the script to log out and back in:
+    - **⚠️ IMPORTANT: Docker Group Change Requires Re-login! ⚠️** If `setup.sh`
+      installs Docker, it adds your user to the `docker` group. **This change
+      only takes effect after a new SSH login session.** If prompted by the
+      script to log out and back in:
       1.  Type `exit` to close your current SSH session.
       2.  Reconnect: `ssh your_username@192.168.1.XXX`
-      3.  After logging back in, navigate back to your project: `cd ~/pihole-server`
-          Then proceed to the next step.
+      3.  After logging back in, navigate back to your project:
+          `cd ~/pihole-server` Then proceed to the next step.
 
 5.  **Deploy services:**
 
     ```bash
-    ./scripts/quick-deploy.sh
+    ./scripts/deploy.sh
     ```
+
+    **Note**: Use `./scripts/deploy.sh` for the complete one-command deployment
+    that includes monitoring if enabled.
 
 ---
 
 ## ⚙️ **Router-Resilient Service Startup Configuration**
 
-This is crucial for handling daily router reboots. We will configure the `systemd` service for your Docker Compose setup to wait for the network to be fully online before starting services.
+This is crucial for handling daily router reboots. We will configure the
+`systemd` service for your Docker Compose setup to wait for the network to be
+fully online before starting services.
 
-1.  **Edit the `systemd` service file:** (Assuming the service created by `setup.sh` is `pihole-server.service`)
+1.  **Edit the `systemd` service file:** (Assuming the service created by
+    `setup.sh` is `pihole-server.service`)
 
     ```bash
     sudo nano /etc/systemd/system/pihole-server.service
     ```
 
-    _Ensure the `[Unit]` section contains these lines (add if missing or modify if different):_
+    _Ensure the `[Unit]` section contains these lines (add if missing or modify
+    if different):_
 
     ```ini
     [Unit]
@@ -149,37 +188,51 @@ This is crucial for handling daily router reboots. We will configure the `system
 
 ## 🌐 **Router Configuration for Pi-hole DNS**
 
-For network-wide ad blocking and DNS resolution, your router needs to be configured to use your Raspberry Pi (running Pi-hole) as its primary DNS server. The exact steps vary by router model and internet service provider (ISP).
+For network-wide ad blocking and DNS resolution, your router needs to be
+configured to use your Raspberry Pi (running Pi-hole) as its primary DNS server.
+The exact steps vary by router model and internet service provider (ISP).
 
 1.  **Access Your Router's Administration Interface:**
 
-    - Typically, you can access your router by entering its gateway IP address (e.g., `192.168.1.1` from your `.env` file) into a web browser.
+    - Typically, you can access your router by entering its gateway IP address
+      (e.g., `192.168.1.1` from your `.env` file) into a web browser.
     - Log in with your router's administrative credentials.
 
 2.  **Locate DNS Settings:**
 
-    - Navigate to the network, WAN, or DHCP settings section of your router's interface.
-    - Find the fields for Primary DNS Server and (optionally) Secondary DNS Server.
+    - Navigate to the network, WAN, or DHCP settings section of your router's
+      interface.
+    - Find the fields for Primary DNS Server and (optionally) Secondary DNS
+      Server.
 
 3.  **Set Primary DNS to Raspberry Pi's Static IP:**
 
-    - Enter your Raspberry Pi's static IP address (configured as `PI_STATIC_IP` in your `.env` file, e.g., `192.168.1.XXX`) as the **Primary DNS Server**.
-    - For the Secondary DNS, you can either leave it blank (if your router allows) or set it to a public DNS server like `8.8.8.8` (Google DNS) as a fallback.
+    - Enter your Raspberry Pi's static IP address (configured as `PI_STATIC_IP`
+      in your `.env` file, e.g., `192.168.1.XXX`) as the **Primary DNS Server**.
+    - For the Secondary DNS, you can either leave it blank (if your router
+      allows) or set it to a public DNS server like `8.8.8.8` (Google DNS) as a
+      fallback.
 
 4.  **Consider DHCP Configuration (Optional but Recommended):**
 
-    - For optimal Pi-hole functionality (e.g., seeing individual client names instead of just the router's IP), it is often recommended to **disable your router's DHCP server** and enable Pi-hole's built-in DHCP server.
-    - If you choose to do this, ensure Pi-hole's DHCP server is configured **before** disabling it on your router to avoid network interruption.
-    - Refer to the Pi-hole documentation for detailed instructions on configuring its DHCP server.
+    - For optimal Pi-hole functionality (e.g., seeing individual client names
+      instead of just the router's IP), it is often recommended to **disable
+      your router's DHCP server** and enable Pi-hole's built-in DHCP server.
+    - If you choose to do this, ensure Pi-hole's DHCP server is configured
+      **before** disabling it on your router to avoid network interruption.
+    - Refer to the Pi-hole documentation for detailed instructions on
+      configuring its DHCP server.
 
 5.  **Save and Apply Settings:**
-    - Save the changes on your router. Your router may reboot to apply the new settings.
+    - Save the changes on your router. Your router may reboot to apply the new
+      settings.
 
 ---
 
 ## 🛡️ **Pi-hole Adlist & Regex Configuration**
 
-Log into the Pi-hole Admin Panel (`http://${PI_STATIC_IP}/admin`, password `${UNIVERSAL_PASSWORD}` from `.env`)
+Log into the Pi-hole Admin Panel (`http://${PI_STATIC_IP}/admin`, password
+`${UNIVERSAL_PASSWORD}` from `.env`)
 
 1.  **Update Adlists (Adlists → Add lists):**
 
@@ -190,7 +243,8 @@ Log into the Pi-hole Admin Panel (`http://${PI_STATIC_IP}/admin`, password `${UN
     - `https://raw.githubusercontent.com/StevenBlack/hosts/master/data/feodo.txt`
     - `https://raw.githubusercontent.com/StevenBlack/hosts/master/data/zeus.txt`
     - `https://raw.githubusercontent.com/StevenBlack/hosts/master/data/malware.txt`
-    - Click "Save and Update" or force a Gravity update via SSH (`docker exec pihole pihole -g`).
+    - Click "Save and Update" or force a Gravity update via SSH
+      (`docker exec pihole pihole -g`).
 
 2.  **Add Aggressive Regex Filters (Regex filtering → Add regex filter):**
 
@@ -211,15 +265,20 @@ Log into the Pi-hole Admin Panel (`http://${PI_STATIC_IP}/admin`, password `${UN
 
 ### Uptime Kuma Notification Configuration
 
-To receive alerts for service outages, configure notification channels in Uptime Kuma:
+To receive alerts for service outages, configure notification channels in Uptime
+Kuma:
 
 1.  Access the Uptime Kuma web interface: `http://${PI_STATIC_IP}:3001`.
 2.  Log in with your credentials.
 3.  Navigate to **Settings** (gear icon) -> **Notifications**.
-4.  Click **Setup Notification** and choose your preferred notification type (e.g., Email, Telegram, Discord, Webhook).
-5.  Follow the on-screen instructions to configure the chosen notification channel.
-6.  Once configured, you can test the notification to ensure it's working correctly.
-7.  Edit your existing monitors (or create new ones) and associate them with the newly configured notification channel.
+4.  Click **Setup Notification** and choose your preferred notification type
+    (e.g., Email, Telegram, Discord, Webhook).
+5.  Follow the on-screen instructions to configure the chosen notification
+    channel.
+6.  Once configured, you can test the notification to ensure it's working
+    correctly.
+7.  Edit your existing monitors (or create new ones) and associate them with the
+    newly configured notification channel.
 
 - **Test Pi-hole functionality:**
   - `dig @${PI_STATIC_IP} doubleclick.net` (Should return `0.0.0.0`)
@@ -228,13 +287,18 @@ To receive alerts for service outages, configure notification channels in Uptime
 - **Test ad blocking from Windows PC:**
   - `nslookup doubleclick.net ${PI_STATIC_IP}` (Should return `0.0.0.0`)
   - `nslookup google.com ${PI_STATIC_IP}` (Should return real IP)
-- **Test extreme ad blocking site:** Visit `https://canyoublockit.com/extreme-test/`
+- **Test extreme ad blocking site:** Visit
+  `https://canyoublockit.com/extreme-test/`
 
 ---
 
 ## 🔄 **Router Reboot Resilience Test**
 
-This test is crucial to ensure that your Pi-hole server and all its services recover gracefully and maintain consistent network performance after routine network interruptions, such as daily router reboots or ISP-initiated network refreshes.
+This test is crucial to ensure that your Pi-hole server and all its services
+recover gracefully and maintain consistent network performance after routine
+network interruptions, such as daily router reboots or ISP-initiated network
+refreshes.
 
 1.  Re-enable your router's daily 4 AM reboot schedule.
-2.  After 4 AM, verify that Pi-hole and all services are still running and accessible.
+2.  After 4 AM, verify that Pi-hole and all services are still running and
+    accessible.

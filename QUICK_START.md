@@ -1,6 +1,6 @@
 # 🚀 Quick Start Guide - Raspberry Pi Home Server
 
-## **Pre-Deployment Checklist**
+## Pre-Deployment Checklist
 
 Before you start, ensure you have:
 
@@ -9,7 +9,7 @@ Before you start, ensure you have:
 - [ ] Raspberry Pi OS flashed with static IP configured
 - [ ] SSH access to your Pi
 
-## **One-Command Deployment**
+## One-Command Deployment
 
 Once your Pi is ready, run this single command:
 
@@ -25,7 +25,7 @@ This script will:
 4. 🔍 Run health checks
 5. 📋 Provide next steps
 
-## **Manual Deployment (Alternative)**
+## Manual Deployment (Alternative)
 
 If you prefer step-by-step control:
 
@@ -41,19 +41,19 @@ nano .env  # Update with your values
 ./scripts/setup.sh
 
 # 4. Deploy services
-./scripts/quick-deploy.sh
+./scripts/deploy.sh
 
 # 5. Test deployment
 ./scripts/test-deployment.sh
 ```
 
-## **Essential Configuration**
+## Essential Configuration
 
 Update these values in your `.env` file:
 
 ```bash
 # Your Pi's static IP (set during OS flashing)
-PI_STATIC_IP=192.168.1.100
+PI_STATIC_IP=192.168.1.XXX
 
 # Strong password for all services (for ease of use)
 UNIVERSAL_PASSWORD=YourSecurePassword123!
@@ -65,41 +65,44 @@ TZ=America/New_York
 PIHOLE_HOSTNAME=my-pihole.local
 
 # Network Configuration (use defaults unless you have conflicts)
-PIHOLE_NETWORK=172.20.0.0/24      # Pi-hole/Unbound network
-PIHOLE_NET_IP_PIHOLE=172.20.0.3    # Pi-hole container IP
-PIHOLE_NET_IP_UNBOUND=172.20.0.2   # Unbound container IP
+PIHOLE_NETWORK=172.25.0.0/24      # Pi-hole/Unbound network
+PIHOLE_NET_IP_PIHOLE=172.25.0.3    # Pi-hole container IP
+PIHOLE_NET_IP_UNBOUND=172.25.0.2   # Unbound container IP
 ```
+
+**Important**: Replace `XXX` with your actual Pi's IP address (e.g., `100`,
+`150`, `200`). This IP must match what you configured during OS flashing.
 
 **Important**: The deployment script automatically configures Pi-hole to accept
 queries from your LAN network. No manual network configuration is needed.
 
-## **Post-Deployment Steps**
+## Post-Deployment Steps
 
 1. **Configure Router DNS**:
 
-   - Set Primary DNS to your Pi's IP (`192.168.1.100`)
+   - Set Primary DNS to your Pi's IP (`192.168.1.XXX`)
    - Optional: Disable router DHCP, enable Pi-hole DHCP
 
 2. **Test Core Functionality**:
 
    ```bash
    # Test DNS resolution
-   dig @192.168.1.100 google.com
+   dig @192.168.1.XXX google.com
 
    # Test ad blocking
-   dig @192.168.1.100 doubleclick.net  # Should return 0.0.0.0
+   dig @192.168.1.XXX doubleclick.net  # Should return 0.0.0.0
    ```
 
 3. **Access Web Interfaces**:
-   - **Pi-hole Admin**: `http://192.168.1.100/admin` (password from .env)
-   - **Grafana**: `http://192.168.1.100:3000` (admin/raspberry -
+   - **Pi-hole Admin**: `http://192.168.1.XXX/admin` (password from .env)
+   - **Grafana**: `http://192.168.1.XXX:3000` (admin/raspberry -
      auto-configured!)
-   - **Uptime Kuma**: `http://192.168.1.100:3001` (admin/raspberry -
+   - **Uptime Kuma**: `http://192.168.1.XXX:3001` (admin/raspberry -
      auto-configured!)
-   - **Prometheus**: `http://192.168.1.100:9090` (advanced users)
-   - **Portainer**: `http://192.168.1.100:9000` (Docker management)
+   - **Prometheus**: `http://192.168.1.XXX:9090` (advanced users)
+   - **Portainer**: `http://192.168.1.XXX:9000` (Docker management)
 
-## **Troubleshooting**
+## Troubleshooting
 
 If something goes wrong:
 
@@ -123,7 +126,7 @@ docker logs prometheus     # If monitoring enabled
 ./scripts/validate-config.sh
 ```
 
-## **Service Management**
+## Service Management
 
 ```bash
 # Check status
@@ -139,7 +142,7 @@ docker logs prometheus     # If monitoring enabled
 ./scripts/maintenance.sh backup
 ```
 
-## **Optional Services**
+## Optional Services
 
 Enable additional services by setting these in `.env`:
 
@@ -151,14 +154,14 @@ ENABLE_DOZZLE=true          # Live log viewer
 ENABLE_SPEEDTEST_TRACKER=true # Internet speed monitoring
 ```
 
-## **Performance Tips**
+## Performance Tips
 
 - **Pi 3 B+**: Enable only 2-3 optional services max
 - **Memory**: Monitor with `htop` or Grafana
 - **Storage**: Use high-endurance SD cards
 - **Network**: Use wired Ethernet for stability
 
-## **Security Notes**
+## Security Notes
 
 - Change default passwords immediately
 - Enable SSH key authentication

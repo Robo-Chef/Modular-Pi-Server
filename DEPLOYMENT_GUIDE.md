@@ -43,7 +43,7 @@ These steps are performed on your Raspberry Pi via SSH. Refer to
 [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md) for detailed
 explanations.
 
-#### **Option A: One-Command Deployment (Recommended)**
+#### Option A: One-Command Deployment (Recommended)
 
 1.  **Clone the repository:**
 
@@ -145,7 +145,7 @@ explanations.
     ./scripts/deploy.sh  # Run again - will deploy services successfully
     ```
 
-#### **Option B: Step-by-Step Deployment**
+#### Option B: Step-by-Step Deployment
 
 1.  **Clone and configure** (same as Option A, steps 1-2)
 
@@ -212,6 +212,45 @@ explanations.
       - Create admin password on first visit
 
 3.  **Verify Ad Blocking:** Confirm ads are blocked on websites.
+
+## 🔧 IP Address Configuration
+
+### Critical IP Settings
+
+You must configure these IP addresses correctly for the system to work:
+
+#### 1. Pi Static IP (`PI_STATIC_IP`)
+
+- **Set during**: OS flashing with Raspberry Pi Imager
+- **Used for**: All service URLs, router DNS configuration, SSH access
+- **Example**: `192.168.1.100` (replace `100` with your chosen IP)
+- **Must match**: The IP you set in Raspberry Pi Imager
+
+#### 2. Gateway IP (`PI_GATEWAY`)
+
+- **Set during**: OS flashing with Raspberry Pi Imager
+- **Used for**: Router monitoring and network recovery
+- **Default**: `192.168.1.1` (most home routers)
+- **Must match**: Your router's actual IP address
+
+#### 3. Docker Network IPs (Automatic)
+
+- **Pi-hole Container**: `172.25.0.3` (internal Docker network)
+- **Unbound Container**: `172.25.0.2` (internal Docker network)
+- **Monitoring Network**: `172.26.0.0/24` (internal Docker network)
+- **No action needed**: These are automatically configured
+
+### IP Address Usage Throughout System
+
+| Service       | URL Format                   | Example                      |
+| ------------- | ---------------------------- | ---------------------------- |
+| Pi-hole Admin | `http://192.168.1.XXX/admin` | `http://192.168.1.100/admin` |
+| Grafana       | `http://192.168.1.XXX:3000`  | `http://192.168.1.100:3000`  |
+| Uptime Kuma   | `http://192.168.1.XXX:3001`  | `http://192.168.1.100:3001`  |
+| Prometheus    | `http://192.168.1.XXX:9090`  | `http://192.168.1.100:9090`  |
+| Portainer     | `http://192.168.1.XXX:9000`  | `http://192.168.1.100:9000`  |
+
+**Remember**: Replace `XXX` with your actual Pi's IP address everywhere!
 
 ## 🔒 Security Best Practices
 

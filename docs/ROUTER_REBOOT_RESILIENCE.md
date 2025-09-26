@@ -134,7 +134,7 @@ The system uses these variables from your `.env` file:
 
 ```bash
 PI_GATEWAY=192.168.1.1        # Your router's IP address
-PI_STATIC_IP=192.168.1.100    # Your Pi's static IP
+PI_STATIC_IP=192.168.1.XXX    # Your Pi's static IP (replace XXX)
 ENABLE_MONITORING=true        # Enable monitoring service restarts
 ```
 

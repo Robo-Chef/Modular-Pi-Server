@@ -10,7 +10,7 @@
   - [ ] MicroSD card reader
 
 - [ ] **Network Planning**
-  - [ ] Choose static IP for Pi (e.g., 192.168.1.100)
+  - [ ] Choose static IP for Pi (e.g., 192.168.1.XXX)
   - [ ] Note your router's gateway IP (e.g., 192.168.1.1)
   - [ ] Choose hostname (e.g., my-pihole.local)
   - [ ] Choose strong password
@@ -25,7 +25,7 @@
   - [ ] **Password**: `YourSecurePassword123!`
   - [ ] **Timezone**: `America/New_York` (or your timezone)
   - [ ] **Enable SSH**: ✓ Use password authentication
-  - [ ] **Static IP**: `192.168.1.100/24`
+  - [ ] **Static IP**: `192.168.1.XXX/24`
   - [ ] **Gateway**: `192.168.1.1`
   - [ ] **DNS**: `8.8.8.8,8.8.4.4`
 
@@ -35,7 +35,7 @@
 - [ ] **Wait 3-5 minutes for first boot**
 - [ ] **SSH into Pi**:
   ```bash
-  ssh your_username@192.168.1.100
+  ssh your_username@192.168.1.XXX
   ```
 
 ## **Project Deployment**
@@ -71,17 +71,17 @@
 
   ```bash
   # DNS resolution
-  dig @192.168.1.100 google.com
+  dig @192.168.1.XXX google.com
 
   # Ad blocking
-  dig @192.168.1.100 doubleclick.net  # Should return 0.0.0.0
+  dig @192.168.1.XXX doubleclick.net  # Should return 0.0.0.0
   ```
 
 - [ ] **Access Web Interfaces**:
 
-  - [ ] Pi-hole Admin: `http://192.168.1.100/admin`
-  - [ ] Grafana: `http://192.168.1.100:3000`
-  - [ ] Uptime Kuma: `http://192.168.1.100:3001`
+  - [ ] Pi-hole Admin: `http://192.168.1.XXX/admin`
+  - [ ] Grafana: `http://192.168.1.XXX:3000`
+  - [ ] Uptime Kuma: `http://192.168.1.XXX:3001`
 
 - [ ] **Run Comprehensive Tests**:
   ```bash
@@ -91,7 +91,7 @@
 ## **Router Configuration**
 
 - [ ] **Access Router Admin Interface**
-- [ ] **Set Primary DNS** to Pi's IP (`192.168.1.100`)
+- [ ] **Set Primary DNS** to Pi's IP (`192.168.1.XXX`)
 - [ ] **Optional**: Disable router DHCP
 - [ ] **Optional**: Enable Pi-hole DHCP in admin panel
 - [ ] **Save and Apply Settings**
@@ -102,8 +102,8 @@
 
   ```bash
   # From Windows PC
-  nslookup google.com 192.168.1.100
-  nslookup doubleclick.net 192.168.1.100  # Should return 0.0.0.0
+  nslookup google.com 192.168.1.XXX
+  nslookup doubleclick.net 192.168.1.XXX  # Should return 0.0.0.0
   ```
 
 - [ ] **Check Pi-hole Logs**:
