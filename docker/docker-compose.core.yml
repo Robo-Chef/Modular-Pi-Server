@@ -5,7 +5,7 @@ services:
     hostname: pihole-server # Sets the hostname within the container.
     networks:
       pihole_net: # Connects Pi-hole to the custom bridge network.
-        ipv4_address: 172.20.0.3 # Assigns a static IP address to Pi-hole within the `pihole_net`.
+        ipv4_address: ${PIHOLE_NET_IP_PIHOLE:-172.22.0.3} # Assigns a static IP address to Pi-hole within the `pihole_net`.
       isolated_net:# Connects Pi-hole to an internal-only network to block outbound internet access.
         # This ensures Pi-hole only forwards to Unbound, not external DNS servers.
     volumes:
@@ -15,14 +15,14 @@ services:
     environment:
       TZ: ${TZ:-America/New_York} # Sets the timezone, defaulting to America/New_York.
       WEBPASSWORD: ${PIHOLE_PASSWORD} # Sets the web interface password from the .env file.
-      DNS1: 172.20.0.2#5053 # Configures Pi-hole to use Unbound as its primary (and only) upstream DNS server.
+      DNS1: ${PIHOLE_NET_IP_UNBOUND:-172.22.0.2}#5053 # Configures Pi-hole to use Unbound as its primary (and only) upstream DNS server.
       # DNS2: 127.0.0.1#5053                   # This is redundant with DNS1 pointing to Unbound, so it's commented out.
       VIRTUAL_HOST: pihole.local # Virtual host setting, useful for reverse proxies, but often not strictly needed in LAN-only.
       VIRTUAL_PORT: 80 # Virtual port setting, similar to VIRTUAL_HOST.
       # ServerIP: ${PI_STATIC_IP:-192.168.1.XXX} # Removed as it's not strictly needed in a Docker bridge network setup for Pi-hole's internal config.
-      PIHOLE_DNS_: 172.20.0.2#5053 # Explicitly sets the internal DNS server for FTL. Redundant with DNS1.
+      PIHOLE_DNS_: ${PIHOLE_NET_IP_UNBOUND:-172.22.0.2}#5053 # Explicitly sets the internal DNS server for FTL. Redundant with DNS1.
       # PIHOLE_INTERFACE: eth0                  # Removed as Docker containers usually handle network interfaces abstractly.
-      FTLCONF_LOCAL_IPV4: 172.20.0.3 # Ensures FTL binds to the correct IP within the Docker network.
+      FTLCONF_LOCAL_IPV4: ${PIHOLE_NET_IP_PIHOLE:-172.22.0.3} # Ensures FTL binds to the correct IP within the Docker network.
     ports:
       - '53:53/tcp' # Exposes DNS TCP port to the host.
       - '53:53/udp' # Exposes DNS UDP port to the host.
@@ -51,7 +51,7 @@ services:
     hostname: unbound-server # Sets the hostname within the container.
     networks:
       pihole_net: # Connects Unbound to the same custom bridge network as Pi-hole.
-        ipv4_address: 172.20.0.2 # Assigns a static IP address to Unbound within the `pihole_net`.
+        ipv4_address: ${PIHOLE_NET_IP_UNBOUND:-172.22.0.2} # Assigns a static IP address to Unbound within the `pihole_net`.
     volumes:
       - ./unbound/config:/etc/unbound/custom # Mounts custom Unbound configuration files.
       - ./unbound/logs:/var/log/unbound # Mounts logs for persistent storage.
@@ -81,8 +81,8 @@ networks:
     driver: bridge # Defines a custom bridge network for Pi-hole and Unbound.
     ipam:
       config:
-        - subnet: 172.20.0.0/24 # Specifies the subnet for this Docker network.
-          gateway: 172.20.0.1 # Sets the gateway IP for this network.
+        - subnet: ${PIHOLE_NETWORK:-172.22.0.0/24} # Specifies the subnet for this Docker network.
+          gateway: ${PIHOLE_GATEWAY:-172.22.0.1} # Sets the gateway IP for this network.
     internal: false # Allows containers in this network to communicate with other Docker networks or the host.
   isolated_net:
     driver: bridge # Defines a separate internal bridge network.

@@ -68,7 +68,39 @@ docker network create --subnet=172.20.0.0/24 pihole_net 2>/dev/null || true
 docker network create --subnet=172.21.0.0/24 monitoring_net 2>/dev/null || true
 docker network create --internal isolated_net 2>/dev/null || true # `isolated_net` blocks outbound internet access for containers linked to it.
 
+# Function to check and fix Docker network conflicts
+check_docker_networks() {
+  log "Checking for Docker network conflicts..."
+  
+  # Get configured network subnets from .env
+  PIHOLE_NET_SUBNET="${PIHOLE_NETWORK:-172.22.0.0/24}"
+  MONITORING_NET_SUBNET="${MONITORING_NETWORK:-172.23.0.0/24}"
+  
+  # Check if networks exist with mismatched subnet
+  if docker network inspect pihole_net &>/dev/null; then
+    CURRENT_SUBNET=$(docker network inspect pihole_net --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}')
+    if [ "$CURRENT_SUBNET" != "$PIHOLE_NET_SUBNET" ]; then
+      log "Network 'pihole_net' exists with subnet $CURRENT_SUBNET but config requires $PIHOLE_NET_SUBNET"
+      log "Removing conflicting network and recreating..."
+      docker network rm pihole_net || warn "Failed to remove network pihole_net"
+    fi
+  fi
+  
+  # Do the same check for monitoring network
+  if docker network inspect monitoring_net &>/dev/null; then
+    CURRENT_SUBNET=$(docker network inspect monitoring_net --format '{{range .IPAM.Config}}{{.Subnet}}{{end}}')
+    if [ "$CURRENT_SUBNET" != "$MONITORING_NET_SUBNET" ]; then
+      log "Network 'monitoring_net' exists with subnet $CURRENT_SUBNET but config requires $MONITORING_NET_SUBNET"
+      log "Removing conflicting network and recreating..."
+      docker network rm monitoring_net || warn "Failed to remove network monitoring_net"
+    fi
+  fi
+}
+
 # --- Service Deployment ---
+
+# Check for network conflicts before creating networks
+check_docker_networks
 
 # Start core services (Pi-hole and Unbound) as defined in docker-compose.core.yml.
 log "Starting core services (Pi-hole + Unbound) from docker/docker-compose.core.yml..."
