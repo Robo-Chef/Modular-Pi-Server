@@ -54,13 +54,13 @@ services:
       pihole_net: # Connects Unbound to the same custom bridge network as Pi-hole.
         ipv4_address: ${PIHOLE_NET_IP_UNBOUND} # Assigns a static IP address to Unbound within the `pihole_net`.
     volumes:
-      - ./unbound/config:/etc/unbound/custom # Mounts custom Unbound configuration files.
+      - ./unbound/config/unbound.conf:/etc/unbound/unbound.conf:ro # Mounts the main Unbound configuration file.
       - ./unbound/logs:/var/log/unbound # Mounts logs for persistent storage.
     environment:
       TZ: ${TZ:-America/New_York} # Sets the timezone, defaulting to America/New_York.
     # ports:                            # These ports are commented out as Unbound only needs to be accessible by Pi-hole internally.
-    #   - "127.0.0.1:5053:5053/tcp" # Only accessible from host for debugging/direct query
-    #   - "127.0.0.1:5053:5053/udp" # Only accessible from host for debugging/direct query
+    #   - "127.0.0.1:5353:53/tcp" # Only accessible from host for debugging/direct query
+    #   - "127.0.0.1:5353:53/udp" # Only accessible from host for debugging/direct query
     restart: unless-stopped # Ensures the container restarts automatically unless explicitly stopped.
     deploy:
       resources:
@@ -70,7 +70,7 @@ services:
         reservations:
           memory: 128M
     healthcheck:
-      test: ['CMD', 'unbound-control', 'status'] # Checks Unbound's status via unbound-control utility.
+      test: ["CMD", "sh", "-c", "timeout 5 sh -c 'echo > /dev/tcp/127.0.0.1/53' || exit 1"] # Tests DNS port connectivity.
       interval: 30s
       timeout: 10s
       retries: 3

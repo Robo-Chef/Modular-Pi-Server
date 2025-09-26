@@ -20,6 +20,7 @@ browsing or complete failure to load web pages.
 - Incorrect DNS settings on the router or client devices.
 - Firewall blocking DNS traffic (port 53).
 - Misconfigured Docker networks.
+- Unbound health check failing (container may still work for DNS).
 
 **Solutions** (run these commands on your Raspberry Pi via SSH):
 
@@ -40,6 +41,14 @@ docker exec pihole cat /etc/pihole/setupVars.conf | grep DNSMASQ_LISTENING
 
 # If DNSMASQ_LISTENING is set to 'single', change it to 'all'
 docker exec pihole pihole -a -i all
+
+# 2c. Check if Unbound health check is failing but DNS still works
+log "Testing if Unbound DNS resolution works despite health check status..."
+dig @192.168.0.100 google.com +short
+
+# If DNS works but Unbound shows unhealthy, this is a monitoring issue, not functional
+# The health check tests network connectivity, not unbound-control (which needs SSL certs)
+docker logs unbound --tail 5
 
 # 3. Test DNS resolution from the Raspberry Pi host, using Pi-hole as the DNS server.
 # Replace ${PI_STATIC_IP} with your Pi's actual static IP address.
