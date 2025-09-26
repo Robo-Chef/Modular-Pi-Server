@@ -41,15 +41,14 @@ These steps are performed on your Raspberry Pi via SSH. Refer to
 [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md) for detailed
 explanations.
 
+#### **Option A: One-Command Deployment (Recommended)**
+
 1.  **Clone the repository:**
 
     ```bash
     git clone https://github.com/Robo-Chef/Modular-Pi-Server.git ~/pihole-server
     cd ~/pihole-server
     ```
-
-    _(Note: If you forked the repository, use your fork's URL instead of the
-    original.)_
 
 2.  **Configure your `.env` file:**
 
@@ -58,14 +57,20 @@ explanations.
     nano .env
     ```
 
-    - **Crucial:** Open the newly created `.env` file and replace all
-      placeholder values. The `UNIVERSAL_PASSWORD` should be your primary secure
-      password, and it will be referenced by other services. Ensure `TZ`,
-      `PI_STATIC_IP`, `PIHOLE_HOSTNAME` match your initial Raspberry Pi OS
-      setup. _Refer to `env.example` for detailed inline comments and examples._
-    - Save and exit (`Ctrl+O`, `Enter`, `Ctrl+X` in `nano`).
+    - **Crucial:** Update `UNIVERSAL_PASSWORD`, `TZ`, `PI_STATIC_IP`,
+      `PIHOLE_HOSTNAME` to match your setup.
 
-3.  **Prepare and run setup scripts:**
+3.  **Deploy everything:**
+    ```bash
+    ./scripts/deploy.sh
+    ```
+    This handles setup, dependencies, and deployment automatically.
+
+#### **Option B: Step-by-Step Deployment**
+
+1.  **Clone and configure** (same as Option A, steps 1-2)
+
+2.  **Prepare and run setup scripts:**
 
     ```bash
     sudo apt update && sudo apt install -y dos2unix dnsutils
@@ -74,12 +79,12 @@ explanations.
     ./scripts/setup.sh
     ```
 
-    - **Important:** If `setup.sh` installs Docker, it will prompt you to **log
-      out and log back in** for group changes to take effect. If this happens,
-      log out of SSH, then reconnect. After reconnecting, `cd ~/pihole-server`
-      again before running the next script.
+    - **Important:** If `setup.sh` installs Docker, you'll need to **log out and
+      log back in** for group changes to take effect.
+    - **SSH Port Warning:** If you encounter SSH connection issues after setup,
+      check that `/etc/ssh/sshd_config` has `Port 22` (not `Port 222222`).
 
-4.  **Deploy services:**
+3.  **Deploy services:**
     ```bash
     ./scripts/quick-deploy.sh
     ```
@@ -128,16 +133,22 @@ documentation:
 ### Quick Commands:
 
 ```bash
-# Start/Stop/Restart all services via systemd service
+# Start/Stop/Restart all services via systemd service (if setup.sh was used)
 sudo systemctl start pihole-server.service
 sudo systemctl stop pihole-server.service
 sudo systemctl restart pihole-server.service
 sudo systemctl status pihole-server.service
 
+# Alternative: Direct Docker Compose commands
+cd ~/pihole-server
+docker compose -f docker/docker-compose.core.yml up -d    # Start core services
+docker compose -f docker/docker-compose.core.yml down    # Stop core services
+
 # View individual container logs
 docker logs pihole
 docker logs unbound
-# ... (other container logs)
+docker logs grafana    # If monitoring enabled
+docker logs prometheus # If monitoring enabled
 ```
 
 ---
