@@ -57,11 +57,14 @@ wait_for_container_health prometheus || warn "Prometheus container failed health
 wait_for_container_health node-exporter || warn "Node Exporter container failed health check."
 wait_for_container_health uptime-kuma || warn "Uptime Kuma container failed health check."
 
+log "Configuring Uptime Kuma with default admin account..."
+"${SCRIPT_DIR}/configure-uptime-kuma.sh" || warn "Failed to auto-configure Uptime Kuma"
+
 log "🎉 Monitoring stack deployment complete!"
 log ""
 log "📊 Access your monitoring services:"
-log "   • Grafana: http://${PI_STATIC_IP}:${GRAFANA_PORT:-3000} (admin/admin)"
-log "   • Uptime Kuma: http://${PI_STATIC_IP}:${UPTIME_KUMA_PORT:-3001}"
+log "   • Grafana: http://${PI_STATIC_IP}:${GRAFANA_PORT:-3000} (admin/${GRAFANA_ADMIN_PASSWORD:-raspberry})"
+log "   • Uptime Kuma: http://${PI_STATIC_IP}:${UPTIME_KUMA_PORT:-3001} (admin/${UNIVERSAL_PASSWORD:-raspberry})"
 log "   • Prometheus: http://${PI_STATIC_IP}:${PROMETHEUS_PORT:-9090} (localhost only)"
 log ""
 log "📋 Next steps:"

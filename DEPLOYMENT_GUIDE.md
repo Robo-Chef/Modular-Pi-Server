@@ -203,6 +203,8 @@ explanations.
       - Default login: `admin/admin` (change on first login)
     - **Uptime Kuma**: `http://192.168.1.XXX:3001`
       - Create admin account on first visit
+    - **Prometheus**: `http://192.168.1.XXX:9090`
+      - Direct metrics interface (advanced users)
 
 3.  **Verify Ad Blocking:** Confirm ads are blocked on websites.
 
@@ -388,15 +390,18 @@ sudo systemctl status pihole-server.service
 
 # Alternative: Direct Docker Compose commands
 cd ~/pihole-server
-docker compose -f docker/docker-compose.core.yml up -d    # Start core services
-docker compose -f docker/docker-compose.core.yml down    # Stop core services
+docker compose -f docker/docker-compose.core.yml up -d              # Start core services
+docker compose -f docker/docker-compose.core.yml down              # Stop core services
+./scripts/deploy-monitoring.sh                                     # Deploy monitoring stack
+docker compose -f docker/monitoring/docker-compose.monitoring.yml down  # Stop monitoring
 
 # View individual container logs
 docker logs pihole              # Always available
 docker logs unbound            # Always available
-docker logs grafana           # If ENABLE_MONITORING=true
-docker logs prometheus        # If ENABLE_MONITORING=true
-docker logs uptime-kuma       # If ENABLE_MONITORING=true
+docker logs grafana           # If monitoring deployed
+docker logs prometheus        # If monitoring deployed
+docker logs uptime-kuma       # If monitoring deployed
+docker logs node-exporter     # If monitoring deployed
 
 # Check container status
 docker ps                     # Show all running containers

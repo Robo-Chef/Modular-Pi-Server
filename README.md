@@ -94,8 +94,11 @@ currently connected to your Pi via SSH.
 5.  **Deploy services:**
 
     ```bash
-    ./scripts/quick-deploy.sh
+    ./scripts/deploy.sh
     ```
+
+    **Note**: Use `./scripts/deploy.sh` for the complete one-command deployment
+    that includes monitoring if enabled.
 
 6.  **Configure your Router:** Set the Pi static IP (e.g., `192.168.1.XXX`) as
     **Primary DNS Server** in router settings.
@@ -117,9 +120,9 @@ This section provides a full operational reference once your Pi is configured.
 **Option 2: Staged Deployment**
 
 ```bash
-docker-compose -f docker/docker-compose.core.yml up -d
-docker-compose -f docker/monitoring/docker-compose.monitoring.yml up -d
-docker-compose -f docker/optional/docker-compose.optional.yml up -d
+docker compose -f docker/docker-compose.core.yml up -d
+./scripts/deploy-monitoring.sh  # If ENABLE_MONITORING=true
+docker compose -f docker/optional/docker-compose.optional.yml up -d
 ```
 
 ---
@@ -146,7 +149,13 @@ dig @192.168.1.100 google.com
 **Test Monitoring Stack:**
 
 ```bash
-curl http://localhost:9090/-/healthy   # Prometheus
+# Check monitoring services are running
+docker ps | grep -E "grafana|prometheus|uptime|node"
+
+# Test web interfaces
+curl http://localhost:3000 | head -3    # Grafana
+curl http://localhost:3001 | head -3    # Uptime Kuma
+curl http://localhost:9090/-/healthy    # Prometheus
 curl http://localhost:3000/api/health # Grafana
 curl http://localhost:9100/metrics    # Node Exporter
 ```

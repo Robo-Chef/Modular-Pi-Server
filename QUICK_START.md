@@ -92,8 +92,9 @@ queries from your LAN network. No manual network configuration is needed.
 
 3. **Access Web Interfaces**:
    - **Pi-hole Admin**: `http://192.168.1.100/admin`
-   - **Grafana**: `http://192.168.1.100:3000`
-   - **Uptime Kuma**: `http://192.168.1.100:3001`
+   - **Grafana**: `http://192.168.1.100:3000` (if monitoring enabled)
+   - **Uptime Kuma**: `http://192.168.1.100:3001` (if monitoring enabled)
+   - **Prometheus**: `http://192.168.1.100:9090` (advanced users)
 
 ## **Troubleshooting**
 
@@ -106,6 +107,8 @@ If something goes wrong:
 # View logs
 docker logs pihole
 docker logs unbound
+docker logs grafana        # If monitoring enabled
+docker logs prometheus     # If monitoring enabled
 
 # Restart services
 ./scripts/maintenance.sh update
