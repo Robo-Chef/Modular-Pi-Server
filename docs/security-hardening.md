@@ -2,7 +2,9 @@
 
 ## Overview
 
-This guide covers security hardening measures for the Raspberry Pi home server, including system-level security, Docker container security, and network security.
+This guide covers security hardening measures for the Raspberry Pi home server,
+including system-level security, Docker container security, and network
+security.
 
 ## System Security
 
@@ -185,7 +187,7 @@ docker network create --driver bridge --opt com.docker.network.bridge.enable_icc
 deploy:
   resources:
     limits:
-      cpus: "0.5"
+      cpus: '0.5'
       memory: 512M
     reservations:
       memory: 256M
@@ -499,4 +501,6 @@ chmod +x ~/pihole-server/scripts/weekly-security.sh
 (crontab -l 2>/dev/null; echo "0 2 * * 0 /home/your_username/pihole-server/scripts/weekly-security.sh") | crontab -
 ```
 
-This security hardening guide provides comprehensive protection for your Raspberry Pi home server. Regular maintenance and monitoring are essential to maintain security over time.
+This security hardening guide provides comprehensive protection for your
+Raspberry Pi home server. Regular maintenance and monitoring are essential to
+maintain security over time.

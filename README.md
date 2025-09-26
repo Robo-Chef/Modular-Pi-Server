@@ -4,6 +4,21 @@ A comprehensive, modular **LAN-only** home server setup using Raspberry Pi 3 B+
 with Pi-hole, Unbound, monitoring, and optional services. Designed for easy
 deployment and personalization.
 
+## ✨ Key Features
+
+- **🔧 Zero-Configuration Deployment**: Grafana auto-provisioned with Prometheus
+  data source and Pi-hole dashboard
+- **🎯 Auto-Setup**: Uptime Kuma automatically configured with admin account
+- **🛡️ Network Resilience**: Automated recovery from router reboots and network
+  issues
+- **🚀 ARM64 Optimized**: All Docker images tested and working on Raspberry Pi
+- **⚡ One-Command Deploy**: Single script handles everything from setup to
+  validation
+- **📊 Comprehensive Monitoring**: Prometheus, Grafana, Uptime Kuma, Node
+  Exporter
+- **🔒 Security Hardened**: nftables firewall, SSH hardening, container
+  isolation
+
 ## Architecture
 
 - **Decision Records**: Explore key architectural decisions in
@@ -11,13 +26,10 @@ deployment and personalization.
 - **Base OS**: Raspberry Pi OS (64-bit)
 - **Static IP**: Configured via `.env` (e.g., `192.168.1.XXX`)
 - **Core Services**: Pi-hole + Unbound for DNS and ad blocking
-  ![Screenshot: Pi-hole Admin Dashboard example]
-- **Monitoring**: Prometheus, Grafana, Uptime Kuma
-  ![Screenshot: Uptime Kuma status page]
-- **Optional**: Home Assistant, Gitea
+- **Monitoring**: Prometheus, Grafana, Uptime Kuma (all auto-configured)
+- **Optional**: Home Assistant, Gitea, Portainer, Speedtest Tracker
 - **Security**: `nftables` firewall, SSH hardening, container isolation
-- **Resilience**: Configured for graceful recovery after network interruptions
-  (e.g., router reboots)
+- **Resilience**: Automated recovery after network interruptions
 
 ## Getting Started
 

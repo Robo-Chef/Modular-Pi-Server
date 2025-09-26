@@ -71,18 +71,15 @@ sudo chown -R 999:999 docker/pihole/ 2>/dev/null || warn "Could not set Pi-hole 
 
 # Create Docker custom bridge networks for service isolation.
 log "Creating Docker networks (pihole_net, monitoring_net, isolated_net) if they don't exist..."
-# '|| true' allows the script to continue if the network already exists.
-docker network create --subnet=172.20.0.0/24 pihole_net 2>/dev/null || true
-docker network create --subnet=172.21.0.0/24 monitoring_net 2>/dev/null || true
-docker network create --internal isolated_net 2>/dev/null || true # `isolated_net` blocks outbound internet access for containers linked to it.
+# Networks are created by Docker Compose automatically using the environment variables
 
 # Function to check and fix Docker network conflicts
 check_docker_networks() {
   log "Checking for Docker network conflicts..."
   
   # Get configured network subnets from .env
-  PIHOLE_NET_SUBNET="${PIHOLE_NETWORK:-172.22.0.0/24}"
-  MONITORING_NET_SUBNET="${MONITORING_NETWORK:-172.23.0.0/24}"
+  PIHOLE_NET_SUBNET="${PIHOLE_NETWORK:-172.25.0.0/24}"
+  MONITORING_NET_SUBNET="${MONITORING_NETWORK:-172.26.0.0/24}"
   
   # Check if networks exist with mismatched subnet
   if docker network inspect pihole_net &>/dev/null; then
@@ -122,19 +119,10 @@ wait_for_container_health unbound || error "Unbound container failed health chec
 log "Configuring Pi-hole network permissions..."
 docker exec pihole pihole -a -i all >/dev/null 2>&1 || warn "Could not configure Pi-hole network permissions automatically. You may need to run: docker exec pihole pihole -a -i all"
 
-# Start monitoring services if ENABLE_MONITORING is set to 'true' in .env.
-if [[ "${ENABLE_MONITORING:-true}" == "true" ]]; then
-    log "Starting monitoring services from docker/monitoring/docker-compose.monitoring.yml..."
-    docker compose -f docker/monitoring/docker-compose.monitoring.yml up -d || error "Failed to start monitoring Docker Compose services."
-    
-    log "Waiting for monitoring services to become healthy..."
-    # Perform health checks for each monitoring service.
-    wait_for_container_health prometheus || error "Prometheus container failed health check."
-    wait_for_container_health grafana || error "Grafana container failed health check."
-    wait_for_container_health node-exporter || error "Node Exporter container failed health check."
-    wait_for_container_health uptime-kuma || error "Uptime Kuma container failed health check."
-    # Placeholder for caddy-exporter health check if Caddy is integrated in the future.
-    # wait_for_container_health caddy-exporter
+# Deploy monitoring stack if enabled (using dedicated script)
+if [[ "${ENABLE_MONITORING:-false}" == "true" ]]; then
+    log "📊 Deploying monitoring stack..."
+    "${SCRIPT_DIR}/deploy-monitoring.sh" || warn "Monitoring deployment failed, but core services are running"
 fi
 
 # Start optional services if their respective ENABLE flags are set to 'true' in .env.
@@ -186,9 +174,10 @@ log "• DNS Server: ${PI_STATIC_IP} (your Raspberry Pi's static IP)"
 echo ""
 
 # Provide access details for monitoring services if enabled.
-if [[ "${ENABLE_MONITORING:-true}" == "true" ]]; then
-    log "• Grafana: http://${PI_STATIC_IP}:3000 (admin/${GRAFANA_ADMIN_PASSWORD})"
-    log "• Uptime Kuma: http://${PI_STATIC_IP}:3001"
+if [[ "${ENABLE_MONITORING:-false}" == "true" ]]; then
+    log "• Grafana: http://${PI_STATIC_IP}:${GRAFANA_PORT:-3000} (admin/${GRAFANA_ADMIN_PASSWORD:-raspberry})"
+    log "• Uptime Kuma: http://${PI_STATIC_IP}:${UPTIME_KUMA_PORT:-3001} (admin/${UNIVERSAL_PASSWORD:-raspberry})"
+    log "• Prometheus: http://${PI_STATIC_IP}:${PROMETHEUS_PORT:-9090} (advanced users)"
     echo ""
 fi
 

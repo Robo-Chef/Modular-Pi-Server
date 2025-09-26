@@ -91,10 +91,13 @@ queries from your LAN network. No manual network configuration is needed.
    ```
 
 3. **Access Web Interfaces**:
-   - **Pi-hole Admin**: `http://192.168.1.100/admin`
-   - **Grafana**: `http://192.168.1.100:3000` (if monitoring enabled)
-   - **Uptime Kuma**: `http://192.168.1.100:3001` (if monitoring enabled)
+   - **Pi-hole Admin**: `http://192.168.1.100/admin` (password from .env)
+   - **Grafana**: `http://192.168.1.100:3000` (admin/raspberry -
+     auto-configured!)
+   - **Uptime Kuma**: `http://192.168.1.100:3001` (admin/raspberry -
+     auto-configured!)
    - **Prometheus**: `http://192.168.1.100:9090` (advanced users)
+   - **Portainer**: `http://192.168.1.100:9000` (Docker management)
 
 ## **Troubleshooting**
 

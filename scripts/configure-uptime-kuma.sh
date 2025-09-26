@@ -18,38 +18,38 @@ if [[ -f "${SCRIPT_DIR}/../.env" ]]; then
     # shellcheck source=/dev/null
     source "${SCRIPT_DIR}/../.env"
     set +a
+else
+    warn "No .env file found, using default passwords for Uptime Kuma."
+    UNIVERSAL_PASSWORD="${UNIVERSAL_PASSWORD:-raspberry}"
 fi
 
-log "Configuring Uptime Kuma with default admin account..."
+UPTIME_KUMA_URL="http://localhost:${UPTIME_KUMA_PORT:-3001}"
+ADMIN_USERNAME="admin"
+ADMIN_PASSWORD="${UNIVERSAL_PASSWORD}"
+
+log "Attempting to configure Uptime Kuma admin account..."
 
 # Wait for Uptime Kuma to be ready
-log "Waiting for Uptime Kuma to start..."
-timeout=60
-while ! curl -s http://localhost:3001 >/dev/null 2>&1; do
-    sleep 2
-    timeout=$((timeout - 2))
-    if [ $timeout -le 0 ]; then
-        error "Timeout waiting for Uptime Kuma to start"
-    fi
-done
+wait_for_url "${UPTIME_KUMA_URL}" 60 || error "Uptime Kuma not ready after 60 seconds."
 
-# Check if setup is already done
-if curl -s http://localhost:3001/api/status-page/config | grep -q "title"; then
-    log "Uptime Kuma is already configured"
-    exit 0
+# Check if admin account already exists (by trying to log in)
+if curl -s -X POST "${UPTIME_KUMA_URL}/api/user/login" \
+    -H "Content-Type: application/json" \
+    -d "{\"username\":\"${ADMIN_USERNAME}\",\"password\":\"${ADMIN_PASSWORD}\"}" | grep -q "token"; then
+    log "Uptime Kuma admin account already exists."
+else
+    log "Creating Uptime Kuma admin account..."
+    # Create admin account
+    if curl -s -X POST "${UPTIME_KUMA_URL}/api/user/add" \
+        -H "Content-Type: application/json" \
+        -d "{\"username\":\"${ADMIN_USERNAME}\",\"password\":\"${ADMIN_PASSWORD}\"}" | grep -q "ok\":true"; then
+        log "Uptime Kuma admin account created successfully."
+    else
+        warn "Failed to create Uptime Kuma admin account. You may need to set it up manually."
+    fi
 fi
 
-# Set up initial admin account using API
-log "Creating admin account..."
-curl -X POST http://localhost:3001/setup \
-    -H "Content-Type: application/json" \
-    -d '{
-        "username": "admin",
-        "password": "'"${UNIVERSAL_PASSWORD:-raspberry}"'",
-        "confirmPassword": "'"${UNIVERSAL_PASSWORD:-raspberry}"'",
-        "autoLogin": true
-    }' >/dev/null 2>&1 || warn "Failed to create admin account automatically"
-
-log "✅ Uptime Kuma configuration complete!"
-log "   Username: admin"
-log "   Password: ${UNIVERSAL_PASSWORD:-raspberry}"
+log "Uptime Kuma configuration complete."
+log "Login at: ${UPTIME_KUMA_URL}"
+log "Username: ${ADMIN_USERNAME}"
+log "Password: ${ADMIN_PASSWORD}"

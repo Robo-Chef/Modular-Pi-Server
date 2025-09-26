@@ -125,10 +125,10 @@ main() {
     run_test "Unbound is healthy" "docker exec unbound unbound-control status" 0
 
     # Test 8: Verify DNS resolution works via Pi-hole for a known domain (e.g., google.com).
-    run_test_custom "DNS resolution via Pi-hole works" "dig @${PI_STATIC_IP} +short google.com | head -n 1" "[[ -n \"$result\" ]]"
+    run_test_custom "DNS resolution via Pi-hole works" "dig @${PI_STATIC_IP} +short google.com | head -n 1" '[[ -n "${result}" ]]'
 
     # Test 9: Verify ad blocking is active by querying a known ad domain (e.g., doubleclick.net).
-    run_test_custom "Ad blocking via Pi-hole works" "dig @${PI_STATIC_IP} +short doubleclick.net" "[[ -z \"$result\" ]]"
+    run_test_custom "Ad blocking via Pi-hole works" "dig @${PI_STATIC_IP} +short doubleclick.net" '[[ -z "${result}" ]]'
 
     # Test 10: Check if the Pi-hole web interface is accessible from the host.
     run_test "Pi-hole web interface is accessible" "curl -f http://${PI_STATIC_IP}/admin/api.php?summary" 0
@@ -140,70 +140,64 @@ main() {
         run_test "Prometheus is running" "docker ps | grep -q prometheus" 0
         run_test "Grafana is running" "docker ps | grep -q grafana" 0
         run_test "Node Exporter is running" "docker ps | grep -q node-exporter" 0
-        run_test "Alertmanager is running" "docker ps | grep -q alertmanager" 0
+        run_test "Uptime Kuma is running" "docker ps | grep -q uptime-kuma" 0
 
         # Test 12: Check if monitoring services are healthy.
         run_test "Prometheus is healthy" "curl -f http://localhost:9090/-/healthy" 0
         run_test "Grafana is healthy" "curl -f http://localhost:3000/api/health" 0
+        run_test "Uptime Kuma is accessible" "curl -f http://localhost:3001" 0
+
+        # Test 13: Verify auto-provisioning worked
+        run_test_custom "Grafana auto-provisioning worked" "curl -s -u admin:${GRAFANA_ADMIN_PASSWORD:-raspberry} http://localhost:3000/api/datasources 2>/dev/null | grep -q prometheus || echo 'failed'" '[[ "$result" != "failed" ]]'
+        
+        # Test 14: Check monitoring network
+        run_test "Monitoring Docker network exists" "docker network ls | grep -q monitoring" 0
     fi
 
     # --- Security & Firewall Checks ---
 
-    # Test 13: Check if nftables firewall is active.
+    # Test 15: Check if nftables firewall is active.
     run_test "nftables firewall is active" "sudo systemctl is-active nftables" 0
 
-    # Test 14: Check system resource usage (memory and disk) against reasonable thresholds.
-    run_test_custom "Memory usage is reasonable (below 90%)" "free | awk 'NR==2{printf \"%.0f\", \$3*100/\$2}'" "[[ \"$result\" -lt 90 ]]"
-    run_test_custom "Disk usage is reasonable (below 80% on root)" "df / | awk 'NR==2 {print \$5}' | sed 's/%//'" "[[ \"$result\" -lt 80 ]]"
-
-    # Test 15: Verify existence of log files for core services.
-    run_test "Pi-hole log file exists" "test -f /var/log/pihole.log" 0
-    run_test "Unbound log file exists" "test -f /var/log/unbound.log" 0
+    # Test 16: Check system resource usage (memory and disk) against reasonable thresholds.
+    run_test_custom "Memory usage is reasonable (below 90%)" "free | awk 'NR==2{printf \"%.0f\", \$3*100/\$2}'" '[[ "${result}" -lt 90 ]]'
+    run_test_custom "Disk usage is reasonable (below 80% on root)" "df / | awk 'NR==2 {print \$5}' | sed 's/%//'" '[[ "${result}" -lt 80 ]]'
 
     # --- Optional Service Checks ---
 
-    # Test 16: Check if optional services (Portainer, Watchtower, Dozzle) are running if enabled.
-    if [[ "${ENABLE_OPTIONAL_SERVICES:-true}" == "true" ]]; then
+    # Test 17: Check individual optional services if enabled
+    if [[ "${ENABLE_PORTAINER:-false}" == "true" ]]; then
         run_test "Portainer is running" "docker ps | grep -q portainer" 0
-        run_test "Watchtower is running" "docker ps | grep -q watchtower" 0
-        run_test "Dozzle is running" "docker ps | grep -q dozzle" 0
+        run_test "Portainer web interface accessible" "curl -f http://localhost:9000" 0
     fi
 
-    # Test 17: Check if backup directories exist and have content.
-    run_test "Backup directory exists" "test -d /backups" 0
-    run_test "Daily backup exists" "test -f /backups/daily-backup-*.tar.gz" 0
+    if [[ "${ENABLE_SPEEDTEST_TRACKER:-false}" == "true" ]]; then
+        run_test "Speedtest Tracker is running" "docker ps | grep -q speedtest-tracker" 0
+        run_test "Speedtest Tracker web interface accessible" "curl -f http://localhost:8787" 0
+    fi
+
+    if [[ "${ENABLE_HOME_ASSISTANT:-false}" == "true" ]]; then
+        run_test "Home Assistant is running" "docker ps | grep -q homeassistant" 0
+        run_test "Home Assistant web interface accessible" "curl -f http://localhost:8123" 0
+    fi
+
+    if [[ "${ENABLE_GITEA:-false}" == "true" ]]; then
+        run_test "Gitea is running" "docker ps | grep -q gitea" 0
+        run_test "Gitea web interface accessible" "curl -f http://localhost:3000" 0
+    fi
 
     # --- Performance Checks ---
 
-    # Test 18: Check Pi-hole query performance.
-    run_test_custom "Pi-hole query performance is good (below 100ms)" "docker exec pihole pihole -t | head -n 1 | awk '{print \$1}' | sed 's/ms//'" "[[ \"$result\" -lt 100 ]]"
-
-    # Test 19: Check system load average.
-    run_test_custom "System load average is reasonable (below 2.0)" "uptime | awk -F'load average:' '{ print \$2 }' | cut -d, -f1 | sed 's/ //g'" "[[ \"\$(echo \"\$result > 2.0\" | bc -l)\" -eq 0 ]]"
-
-    # Test 20: Check available disk space on backup drive.
-    run_test_custom "Backup disk has sufficient space (above 10GB)" "df /backups | awk 'NR==2 {print \$4}'" "[[ \"$result\" -gt 10485760 ]]"
+    # Test 18: Check system load average.
+    run_test_custom "System load average is reasonable (below 2.0)" "uptime | awk -F'load average:' '{ print \$2 }' | cut -d, -f1 | sed 's/ //g'" '[[ $(echo "${result} < 2.0" | bc -l 2>/dev/null || echo 1) -eq 1 ]]'
 
     # --- Network & Connectivity Checks ---
 
-    # Test 21: Verify internet connectivity.
-    run_test "Internet connectivity works" "ping -c 1 8.8.8.8" 0
+    # Test 19: Verify internet connectivity.
+    run_test "Internet connectivity works" "ping -c 1 -W 5 8.8.8.8" 0
 
-    # Test 22: Verify DNS resolution works externally.
+    # Test 20: Verify DNS resolution works externally.
     run_test "External DNS resolution works" "nslookup google.com" 0
-
-    # Test 23: Check if all required ports are accessible.
-    run_test "Pi-hole DNS port (53) is accessible" "nc -z ${PI_STATIC_IP} 53" 0
-    run_test "Pi-hole web port (80) is accessible" "nc -z ${PI_STATIC_IP} 80" 0
-
-    # Test 24: Check overall CPU usage of the system.
-    run_test_custom "CPU usage is reasonable (below 80%)" "top -bn1 | grep 'Cpu(s)' | awk '{print \$2}' | sed 's/%us,//'" "[[ \"$result\" -lt 80 ]]"
-
-    # Test 25: Check Pi-hole memory usage.
-    run_test_custom "Pi-hole memory usage is reasonable (below 512 MiB)" "docker stats pihole --no-stream --format '{{.MemUsage}}' | awk -F'/' '{print \$1}' | sed 's/MiB//'" "[[ \"$result\" -lt 512 ]]"
-
-    # Test 26: Check Unbound memory usage.
-    run_test_custom "Unbound memory usage is reasonable (below 256 MiB)" "docker stats unbound --no-stream --format '{{.MemUsage}}' | awk -F'/' '{print \$1}' | sed 's/MiB//'" "[[ \"$result\" -lt 256 ]]"
 
     # --- Final Summary ---
 

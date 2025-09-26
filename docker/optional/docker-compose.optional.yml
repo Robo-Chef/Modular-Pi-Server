@@ -71,7 +71,7 @@ services:
           memory: 256M
     healthcheck:
       test: # Checks Gitea's web interface for health.
-        ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:3000']
+        ['CMD', 'curl', '-f', 'http://localhost:3000']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -98,13 +98,8 @@ services:
           memory: 256M
         reservations:
           memory: 128M
-    healthcheck:
-      test: # Checks Portainer's web interface for health.
-        ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:9000']
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+    # healthcheck disabled - Portainer image lacks curl
+    # Functionality can be tested by accessing http://pi_ip:9000
 
   dozzle:
     image: amir20/dozzle:latest # Specifies the Dozzle Docker image (live log viewer).
@@ -128,7 +123,7 @@ services:
           memory: 64M
     healthcheck:
       test: # Checks Dozzle's web interface for health.
-        ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost:8080']
+        ['CMD', 'curl', '-f', 'http://localhost:8080']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -158,7 +153,7 @@ services:
         reservations:
           memory: 128M
     healthcheck:
-      test: ['CMD', 'wget', '--quiet', '--tries=1', '--spider', 'http://localhost'] # Checks the Speedtest Tracker web interface.
+      test: ['CMD', 'curl', '-f', 'http://localhost'] # Checks the Speedtest Tracker web interface.
       interval: 30s
       timeout: 10s
       retries: 3
@@ -209,8 +204,8 @@ networks:
     driver: bridge # Defines a custom bridge network for smart home services.
     ipam:
       config:
-        - subnet: ${PIHOLE_NETWORK:-172.20.0.0/24} # Specifies the subnet for this network.
-          gateway: ${PIHOLE_GATEWAY:-172.20.0.1} # Sets the gateway IP.
+        - subnet: ${PIHOLE_NETWORK:-172.25.0.0/24} # Specifies the subnet for this network.
+          gateway: ${PIHOLE_GATEWAY:-172.25.0.1} # Sets the gateway IP.
   dev_net:
     driver: bridge # Defines a custom bridge network for development services (e.g., Gitea).
     ipam:
@@ -221,5 +216,5 @@ networks:
     driver: bridge # Defines a custom bridge network for management tools.
     ipam:
       config:
-        - subnet: 172.24.0.0/24 # Specifies the subnet for this network.
-          gateway: 172.24.0.1 # Sets the gateway IP.
+        - subnet: 172.27.0.0/24 # Specifies the subnet for this network.
+          gateway: 172.27.0.1 # Sets the gateway IP.

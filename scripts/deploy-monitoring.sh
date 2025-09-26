@@ -1,27 +1,26 @@
 #!/bin/bash
 
-# Deploy Monitoring Stack Script
-# This script deploys the optional monitoring services (Prometheus, Grafana, Uptime Kuma, Node Exporter)
+# Deploy Monitoring Stack for Raspberry Pi Home Server
+# This script deploys Prometheus, Grafana, Uptime Kuma, and Node Exporter
 
 set -euo pipefail
 
 # Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Source utility functions from utils.sh
+# Source utility functions
 # shellcheck source=./utils.sh
 source "${SCRIPT_DIR}/utils.sh"
 
 # Load environment variables from .env file if it exists
 if [[ -f "${SCRIPT_DIR}/../.env" ]]; then
-    # Export all environment variables from .env file
-    set -a  # automatically export all variables
+    set -a
     # shellcheck source=/dev/null
     source "${SCRIPT_DIR}/../.env"
-    set +a  # stop automatically exporting
+    set +a
     log "Environment variables loaded from .env file"
 else
-    error "No .env file found. Please create one from env.example"
+    warn "No .env file found, using defaults"
 fi
 
 log "🚀 Starting monitoring stack deployment..."
@@ -65,9 +64,14 @@ log ""
 log "📊 Access your monitoring services:"
 log "   • Grafana: http://${PI_STATIC_IP}:${GRAFANA_PORT:-3000} (admin/${GRAFANA_ADMIN_PASSWORD:-raspberry})"
 log "   • Uptime Kuma: http://${PI_STATIC_IP}:${UPTIME_KUMA_PORT:-3001} (admin/${UNIVERSAL_PASSWORD:-raspberry})"
-log "   • Prometheus: http://${PI_STATIC_IP}:${PROMETHEUS_PORT:-9090} (localhost only)"
+log "   • Prometheus: http://${PI_STATIC_IP}:${PROMETHEUS_PORT:-9090} (advanced users)"
 log ""
 log "📋 Next steps:"
 log "   1. Configure Grafana dashboards"
 log "   2. Set up Uptime Kuma monitoring targets"
-log "   3. Review Prometheus metrics collection"
+log "   3. Review Prometheus metrics at /targets"
+log ""
+log "🔧 Troubleshooting:"
+log "   • Check logs: docker logs grafana"
+log "   • Check logs: docker logs prometheus"
+log "   • Check logs: docker logs uptime-kuma"

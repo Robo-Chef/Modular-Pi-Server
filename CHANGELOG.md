@@ -1,6 +1,7 @@
 # Changelog
 
-All notable changes to the Raspberry Pi Home Server project will be documented in this file.
+All notable changes to the Raspberry Pi Home Server project will be documented
+in this file.
 
 ## [2.0.0] - 2024-01-XX
 
@@ -185,4 +186,5 @@ All notable changes to the Raspberry Pi Home Server project will be documented i
 
 ---
 
-For more information about this project, see the [README.md](README.md) and [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md).
+For more information about this project, see the [README.md](README.md) and
+[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md).

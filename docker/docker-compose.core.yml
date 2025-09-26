@@ -9,9 +9,9 @@ services:
       isolated_net:# Connects Pi-hole to an internal-only network to block outbound internet access.
         # This ensures Pi-hole only forwards to Unbound, not external DNS servers.
     volumes:
-      - ./pihole/etc-pihole:/etc/pihole # Mounts persistent configuration for Pi-hole.
-      - ./pihole/etc-dnsmasq.d:/etc/dnsmasq.d # Mounts custom dnsmasq configurations.
-      - ./pihole/logs:/var/log/pihole # Mounts logs for persistent storage and easier access.
+      - ./docker/pihole/etc-pihole:/etc/pihole # Mounts persistent configuration for Pi-hole.
+      - ./docker/pihole/etc-dnsmasq.d:/etc/dnsmasq.d # Mounts custom dnsmasq configurations.
+      - ./docker/pihole/logs:/var/log/pihole # Mounts logs for persistent storage and easier access.
     environment:
       TZ: ${TZ:-America/New_York} # Sets the timezone, defaulting to America/New_York.
       WEBPASSWORD: ${PIHOLE_PASSWORD} # Sets the web interface password from the .env file.
@@ -69,12 +69,8 @@ services:
           memory: ${UNBOUND_MEMORY_LIMIT:-256M}
         reservations:
           memory: ${UNBOUND_MEMORY_RESERVATION:-128M}
-    healthcheck:
-      test: ['CMD', 'sh', '-c', "timeout 5 sh -c 'echo > /dev/tcp/127.0.0.1/53' || exit 1"] # Tests DNS port connectivity.
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+    # healthcheck disabled due to minimal container image lacking shell utilities
+    # Unbound functionality can be tested via: dig @container_ip google.com
     command: -d -v # Starts Unbound in debug and verbose mode for detailed logging.
 
 networks:
