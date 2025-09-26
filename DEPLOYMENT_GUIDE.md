@@ -187,6 +187,38 @@ explanations.
 
 ## Common Issues & Quick Fixes
 
+### SSH Host Key Changed Warning (After Reflashing Pi)
+
+If you see this scary warning when trying to SSH:
+
+```
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+```
+
+**This is NORMAL after reflashing your Pi!** The new OS has different SSH keys.
+
+**Quick Fix (Windows):**
+
+```powershell
+# Remove the old key from known_hosts
+ssh-keygen -R 192.168.1.XXX
+```
+
+**Quick Fix (Linux/Mac):**
+
+```bash
+# Remove the old key from known_hosts
+ssh-keygen -R 192.168.1.XXX
+```
+
+**Alternative:** Edit `~/.ssh/known_hosts` and delete the line for your Pi's IP
+address.
+
+After removing the old key, SSH will work normally and ask you to accept the new
+key.
+
 ### Deploy Script Exits After Setup (Normal Behavior)
 
 If `./scripts/deploy.sh` exits with Docker group errors, this is **completely
