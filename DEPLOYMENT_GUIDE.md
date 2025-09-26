@@ -62,10 +62,31 @@ explanations.
     nano .env
     ```
 
-    - **Required:** Update `UNIVERSAL_PASSWORD`, `TZ`, `PI_STATIC_IP`,
-      `PIHOLE_HOSTNAME`
-    - **Optional:** Set `ENABLE_MONITORING=true` for Grafana/Uptime Kuma
-    - **Network:** Use default `172.20.0.x` network unless you have conflicts
+    **Required Settings:**
+
+    - `UNIVERSAL_PASSWORD` - Change from default
+    - `TZ` - Your timezone (e.g., `America/New_York`, `Europe/London`)
+    - `PI_STATIC_IP` - Your Pi's IP address (e.g., `192.168.0.100`)
+    - `PI_GATEWAY` - **Your router's IP** (find with
+      `ipconfig | findstr "Default Gateway"` on Windows)
+    - `PIHOLE_HOSTNAME` - Friendly name for your Pi-hole
+
+    **Optional Settings:**
+
+    - `ENABLE_MONITORING=true` - Enable Grafana/Uptime Kuma dashboards
+    - Network settings - Use defaults unless you have conflicts
+
+    **How to find your router's IP (PI_GATEWAY):**
+
+    ```powershell
+    # On Windows:
+    ipconfig | findstr "Default Gateway"
+
+    # On Linux/Mac:
+    ip route | grep default
+    ```
+
+    Common values: `192.168.0.1`, `192.168.1.1`, or `10.0.0.1`
 
 3.  **Deploy everything:**
 
