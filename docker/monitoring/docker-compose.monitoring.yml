@@ -1,21 +1,16 @@
 services:
   prometheus:
-    image: prom/prometheus:2.51.0 # Specifies the Prometheus Docker image and a specific version tag.
+    image: prom/prometheus:latest # Specifies the Prometheus Docker image and a specific version tag.
     container_name: prometheus # Assigns a static name to the container.
     hostname: prometheus-server # Sets the hostname within the container.
     networks:
       - monitoring_net # Connects Prometheus to the custom monitoring bridge network.
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml # Mounts the Prometheus configuration file.
-      - ./prometheus/rules:/etc/prometheus/rules # Mounts custom alerting rules for Prometheus.
       - prometheus_data:/prometheus # Mounts a named volume for persistent Prometheus data.
     environment:
       TZ: ${TZ:-America/New_York} # Sets the timezone for the container, defaulting to America/New_York.
     command: # Command to start Prometheus with specific configuration.
-      - '--config.file=/etc/prometheus/prometheus.yml' # Specifies the configuration file path.
       - '--storage.tsdb.path=/prometheus' # Specifies the path for time-series database storage.
-      - '--web.console.libraries=/etc/prometheus/console_libraries' # Path to console libraries.
-      - '--web.console.templates=/etc/prometheus/consoles' # Path to console templates.
       - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}' # Data retention period, configurable via .env.
       - '--web.enable-lifecycle' # Enables API endpoints for managing the server lifecycle.
       - '--web.enable-admin-api' # Enables admin API for operations like snapshotting.
@@ -45,9 +40,6 @@ services:
       - monitoring_net # Connects Grafana to the custom monitoring network.
     volumes:
       - grafana_data:/var/lib/grafana # Mounts a named volume for persistent Grafana data.
-      - ./grafana/provisioning:/etc/grafana/provisioning # Mounts provisioning files for datasources, dashboards, and alerts.
-      - ./grafana/dashboards:/var/lib/grafana/dashboards # Mounts custom dashboards.
-      - ./grafana/provisioning/alerting:/etc/grafana/provisioning/alerting # Mounts alert rule provisioning files.
     environment:
       TZ: ${TZ:-America/New_York} # Sets the timezone.
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD} # Sets the admin password from .env.
@@ -83,7 +75,7 @@ services:
       - prometheus
 
   node-exporter:
-    image: prom/node-exporter:1.7.0 # Specifies the Node Exporter Docker image.
+    image: prom/node-exporter:latest # Specifies the Node Exporter Docker image.
     container_name: node-exporter # Assigns a static name.
     hostname: node-exporter # Sets the hostname within the container.
     networks:
@@ -109,7 +101,7 @@ services:
           memory: 64M
 
   uptime-kuma:
-    image: louislam/uptime-kuma:1.23.0 # Specifies the Uptime Kuma Docker image.
+    image: louislam/uptime-kuma:latest # Specifies the Uptime Kuma Docker image.
     container_name: uptime-kuma # Assigns a static name.
     hostname: uptime-kuma-server # Sets the hostname within the container.
     networks:
@@ -149,5 +141,5 @@ networks:
     driver: bridge # Defines a custom bridge network for monitoring services.
     ipam:
       config:
-        - subnet: 172.21.0.0/24 # Specifies the subnet for this network.
-          gateway: 172.21.0.1 # Sets the gateway IP for this network.
+        - subnet: ${MONITORING_NETWORK}
+          gateway: ${MONITORING_GATEWAY}
