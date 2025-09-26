@@ -61,6 +61,12 @@ update_status() {
     local pi_status="$2"
     local message="$3"
     
+    # Read current recovery count before writing new file
+    local current_recovery_count=0
+    if [[ -f "$STATUS_FILE" ]]; then
+        current_recovery_count=$(jq -r '.recovery_count // 0' "$STATUS_FILE" 2>/dev/null || echo "0")
+    fi
+    
     cat > "$STATUS_FILE" <<EOF
 {
   "last_check": "$(date -Iseconds)",
@@ -68,7 +74,7 @@ update_status() {
   "pi_status": "$pi_status",
   "services_status": "$(docker ps --format 'table {{.Names}}\t{{.Status}}' | grep -c "Up" || echo "0") containers running",
   "last_recovery": "$(date -Iseconds)",
-  "recovery_count": $(( $(jq -r '.recovery_count // 0' "$STATUS_FILE" 2>/dev/null || echo "0") + 1 )),
+  "recovery_count": $(( current_recovery_count + 1 )),
   "uptime_seconds": $(awk '{print int($1)}' /proc/uptime),
   "message": "$message"
 }

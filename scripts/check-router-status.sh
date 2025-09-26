@@ -31,7 +31,7 @@ show_status() {
     # Show current status
     echo -e "${GREEN}📊 Current Status:${NC}"
     if command -v jq >/dev/null 2>&1; then
-        cat "$STATUS_FILE" | jq -r '
+        jq -r '
         "  Last Check: " + .last_check +
         "\n  Router: " + .router_status + 
         "\n  Pi Status: " + .pi_status +

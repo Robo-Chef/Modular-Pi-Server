@@ -85,6 +85,7 @@ if ! ping -c 3 -W 5 8.8.8.8 >/dev/null 2>&1; then
     # Test again
     if ! ping -c 3 -W 5 8.8.8.8 >/dev/null 2>&1; then
         error "Network still down after restart attempts. Rebooting system."
+        # shellcheck disable=SC2317
         sudo reboot
     else
         log "Network connectivity restored after service restart."
