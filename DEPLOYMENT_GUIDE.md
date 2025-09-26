@@ -200,11 +200,16 @@ explanations.
     **Available if `ENABLE_MONITORING=true`:**
 
     - **Grafana**: `http://192.168.1.XXX:3000`
-      - Default login: `admin/admin` (change on first login)
+      - ✅ **Auto-configured**: Login `admin/raspberry` (from GRAFANA_ADMIN_PASSWORD)
+      - ✅ **Zero-setup**: Prometheus data source and Pi-hole dashboard ready!
     - **Uptime Kuma**: `http://192.168.1.XXX:3001`
-      - Create admin account on first visit
+      - ✅ **Auto-configured**: Login `admin/raspberry` (from UNIVERSAL_PASSWORD)
+      - ✅ **Zero-setup**: Admin account already created!
     - **Prometheus**: `http://192.168.1.XXX:9090`
       - Direct metrics interface (advanced users)
+    - **Portainer**: `http://192.168.1.XXX:9000`
+      - Visual Docker container management
+      - Create admin password on first visit
 
 3.  **Verify Ad Blocking:** Confirm ads are blocked on websites.
 
@@ -421,15 +426,18 @@ server. Your system is now running with:
 
 ✅ **Optional Services (If Enabled):**
 
-- Grafana monitoring dashboards
-- Prometheus metrics collection
-- Uptime Kuma status monitoring
+- **Grafana monitoring dashboards** (auto-configured with Prometheus data source)
+- **Prometheus metrics collection** (ARM64 compatible)
+- **Uptime Kuma status monitoring** (auto-configured admin account)
+- **Portainer Docker management** (visual container management)
 
 ✅ **System Features:**
 
-- Automated backups and health checks
-- Systemd service management
-- Self-healing container restart policies
+- **Zero-configuration deployment** (Grafana + Uptime Kuma auto-setup)
+- **Network resilience** (automated recovery from router reboots)
+- **Automated backups and health checks**
+- **Systemd service management**
+- **Self-healing container restart policies**
 
 **Next Steps:**
 
