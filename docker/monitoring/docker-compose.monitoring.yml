@@ -20,7 +20,7 @@ services:
       - '--web.enable-lifecycle' # Enables API endpoints for managing the server lifecycle.
       - '--web.enable-admin-api' # Enables admin API for operations like snapshotting.
     ports:
-      - '127.0.0.1:9090:9090' # Exposes Prometheus web UI on localhost:9090 (accessible only from the host Pi).
+      - '127.0.0.1:${PROMETHEUS_PORT:-9090}:9090' # Exposes Prometheus web UI (configurable port, localhost only).
     restart: unless-stopped # Ensures the container restarts automatically unless explicitly stopped.
     deploy:
       resources:
@@ -63,7 +63,7 @@ services:
       GF_SESSION_PROVIDER: file # Configures file-based session storage.
       GF_SESSION_PROVIDER_CONFIG: sessions # Specifies the directory for session files.
     ports:
-      - '3000:3000' # Exposes Grafana web UI on port 3000.
+      - '${GRAFANA_PORT:-3000}:3000' # Exposes Grafana web UI (configurable port).
     restart: unless-stopped # Ensures the container restarts automatically.
     deploy:
       resources:
@@ -98,7 +98,7 @@ services:
       - '--path.sysfs=/host/sys' # Tells Node Exporter where to find /sys.
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)' # Excludes certain mount points.
     ports:
-      - '127.0.0.1:9100:9100' # Exposes Node Exporter metrics on localhost:9100.
+      - '127.0.0.1:${NODE_EXPORTER_PORT:-9100}:9100' # Exposes Node Exporter metrics (configurable port, localhost only).
     restart: unless-stopped
     deploy:
       resources:
@@ -119,7 +119,7 @@ services:
     environment:
       TZ: ${TZ:-America/New_York} # Sets the timezone.
     ports:
-      - '3001:3001' # Exposes Uptime Kuma web UI on port 3001.
+      - '${UPTIME_KUMA_PORT:-3001}:3001' # Exposes Uptime Kuma web UI (configurable port).
     restart: unless-stopped
     deploy:
       resources:

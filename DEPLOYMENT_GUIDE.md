@@ -219,6 +219,69 @@ address.
 After removing the old key, SSH will work normally and ask you to accept the new
 key.
 
+### Comprehensive Port and System Configuration
+
+The system uses a comprehensive set of environment variables for complete
+customization. All configurations are defined in your `.env` file:
+
+#### **Port Configuration**
+
+```bash
+# Core Service Ports
+SSH_PORT=22              # SSH access port
+DNS_PORT=53              # Pi-hole DNS service
+HTTP_PORT=80             # Pi-hole web interface
+HTTPS_PORT=443           # HTTPS (for future SSL)
+
+# Monitoring Ports
+GRAFANA_PORT=3000        # Grafana dashboard
+UPTIME_KUMA_PORT=3001    # Uptime monitoring
+PROMETHEUS_PORT=9090     # Metrics (localhost only)
+NODE_EXPORTER_PORT=9100  # System metrics (localhost only)
+```
+
+#### **System Performance Tuning**
+
+```bash
+# Network Performance
+NETWORK_BUFFER_SIZE=26214400  # Network buffer size (bytes)
+
+# Memory Management
+VM_SWAPPINESS=1               # Swap usage (0-100, lower = less swap)
+VM_DIRTY_RATIO=15             # Memory page management
+VM_DIRTY_BACKGROUND_RATIO=5   # Background memory management
+FS_FILE_MAX=65536             # Max open file descriptors
+```
+
+#### **Docker Resource Limits**
+
+```bash
+# Pi-hole Resources
+PIHOLE_CPU_LIMIT=1.0          # CPU cores for Pi-hole
+PIHOLE_MEMORY_LIMIT=512M      # Memory limit for Pi-hole
+PIHOLE_MEMORY_RESERVATION=256M # Guaranteed memory
+
+# Unbound Resources
+UNBOUND_CPU_LIMIT=0.5         # CPU cores for Unbound
+UNBOUND_MEMORY_LIMIT=256M     # Memory limit for Unbound
+UNBOUND_MEMORY_RESERVATION=128M # Guaranteed memory
+```
+
+**Key Benefits:**
+
+- ✅ **Single source of truth** - Change ports in one place
+- ✅ **Automatic consistency** - Firewall, Docker, and monitoring all sync
+- ✅ **Performance tuning** - Optimize for your specific hardware
+- ✅ **Resource management** - Control CPU and memory allocation
+- ✅ **Future-proof** - Easy to customize without editing multiple files
+
+**Important Notes:**
+
+- All variables have sensible defaults if not specified
+- Changing ports automatically updates firewall rules
+- Resource limits prevent any single service from overwhelming the Pi
+- System tuning optimizes performance for Raspberry Pi hardware
+
 ### Deploy Script Exits After Setup (Normal Behavior)
 
 If `./scripts/deploy.sh` exits with Docker group errors, this is **completely

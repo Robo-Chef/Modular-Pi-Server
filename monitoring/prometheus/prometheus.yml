@@ -19,21 +19,21 @@ scrape_configs:
   # Prometheus itself
   - job_name: 'prometheus'
     static_configs:
-      - targets: ['localhost:9090']
+      - targets: ['localhost:9090'] # Note: Internal port is always 9090, external port is configurable
     scrape_interval: 30s
     metrics_path: /metrics
 
   # Node Exporter (system metrics)
   - job_name: 'node-exporter'
     static_configs:
-      - targets: ['node-exporter:9100']
+      - targets: ['node-exporter:9100'] # Note: Internal port is always 9100, external port is configurable
     scrape_interval: 30s
     metrics_path: /metrics
 
   # Pi-hole metrics
   - job_name: 'pihole'
     static_configs:
-      - targets: ['pihole:80']
+      - targets: ['pihole:80'] # Note: Internal port is always 80, external port is configurable
     scrape_interval: 30s
     metrics_path: /admin/api.php?summaryRaw
     params:

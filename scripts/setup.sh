@@ -12,6 +12,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=./utils.sh
 source "${SCRIPT_DIR}/utils.sh"
 
+# Load environment variables from .env file if it exists
+if [[ -f "${SCRIPT_DIR}/../.env" ]]; then
+    # Export all environment variables from .env file
+    set -a  # automatically export all variables
+    # shellcheck source=/dev/null
+    source "${SCRIPT_DIR}/../.env"
+    set +a  # stop automatically exporting
+    log "Environment variables loaded from .env file"
+else
+    log "No .env file found, using defaults"
+fi
+
 # Ensure the script is not run as root to prevent permission issues with user's home directory and Docker.
 if [[ $EUID -eq 0 ]]; then
    error "This script should not be run as root. Please run as a regular user with sudo privileges."
@@ -61,8 +73,16 @@ if ! command -v docker-compose &> /dev/null; then
     fi
 fi
 
-# Configure SSH daemon for password authentication (keep default port 22 for simplicity)
+# Configure SSH daemon for password authentication (port configured via SSH_PORT in .env)
 log "Configuring SSH daemon to allow password authentication for initial setup..."
+log "SSH will use port ${SSH_PORT:-22} (configured in .env file)"
+# Configure SSH port if different from default
+if [[ "${SSH_PORT:-22}" != "22" ]]; then
+    log "Configuring SSH to use port ${SSH_PORT}"
+    sudo sed -i "s/^#Port 22/Port ${SSH_PORT}/" /etc/ssh/sshd_config || warn "Could not set SSH port to ${SSH_PORT}"
+    sudo sed -i "s/^Port 22/Port ${SSH_PORT}/" /etc/ssh/sshd_config || warn "Could not change existing SSH port to ${SSH_PORT}"
+fi
+
 # Ensure password authentication is enabled (crucial for initial setup before key-based auth).
 sudo sed -i 's/^#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config || warn "Could not uncomment PasswordAuthentication yes."
 sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config || warn "Could not set PasswordAuthentication to yes. Check sshd_config."
@@ -91,18 +111,18 @@ log "Configuring kernel parameters for network and memory management..."
 # Use tee to write the sysctl configuration to a file.
 sudo tee /etc/sysctl.d/99-rpi.conf > /dev/null <<EOF
 # Network optimizations: Increase receive and send buffer sizes.
-net.core.rmem_max=26214400
-net.core.wmem_max=26214400
-net.ipv4.tcp_rmem=4096 65536 26214400
-net.ipv4.tcp_wmem=4096 65536 26214400
+net.core.rmem_max=${NETWORK_BUFFER_SIZE:-26214400}
+net.core.wmem_max=${NETWORK_BUFFER_SIZE:-26214400}
+net.ipv4.tcp_rmem=4096 65536 ${NETWORK_BUFFER_SIZE:-26214400}
+net.ipv4.tcp_wmem=4096 65536 ${NETWORK_BUFFER_SIZE:-26214400}
 
 # Memory management: Reduce swappiness to minimize SD card wear, tune dirty page ratios.
-vm.swappiness=1
-vm.dirty_ratio=15
-vm.dirty_background_ratio=5
+vm.swappiness=${VM_SWAPPINESS:-1}
+vm.dirty_ratio=${VM_DIRTY_RATIO:-15}
+vm.dirty_background_ratio=${VM_DIRTY_BACKGROUND_RATIO:-5}
 
 # File system optimizations: Increase maximum number of open file descriptors.
-fs.file-max=65536
+fs.file-max=${FS_FILE_MAX:-65536}
 EOF
 
 # Apply the new kernel parameters.
@@ -126,15 +146,18 @@ table inet filter {
         # Allow all traffic on the loopback interface.
         iifname "lo" accept
         
-        # Allow SSH connections on the custom port (2222) from any source on the LAN.
-        tcp dport 2222 accept
+        # Allow SSH connections on the configured port from any source on the LAN.
+        tcp dport ${SSH_PORT:-22} accept
         
-        # Allow DNS queries (TCP and UDP on port 53) for Pi-hole.
-        tcp dport 53 accept
-        udp dport 53 accept
+        # Allow DNS queries (TCP and UDP) for Pi-hole.
+        tcp dport ${DNS_PORT:-53} accept
+        udp dport ${DNS_PORT:-53} accept
         
-        # Allow HTTP (80), HTTPS (443), Grafana (3000), Uptime Kuma (3001) for web interfaces.
-        tcp dport {80, 443, 3000, 3001} accept
+        # Allow web interfaces (Pi-hole, Grafana, Uptime Kuma, HTTPS).
+        tcp dport ${HTTP_PORT:-80} accept
+        tcp dport ${HTTPS_PORT:-443} accept
+        tcp dport ${GRAFANA_PORT:-3000} accept
+        tcp dport ${UPTIME_KUMA_PORT:-3001} accept
         
         # Allow ICMP echo-requests (ping) for basic network diagnostics.
         icmp type echo-request accept
@@ -157,12 +180,8 @@ EOF
 sudo systemctl enable nftables || error "Failed to enable nftables service."
 sudo systemctl start nftables || error "Failed to start nftables service."
 
-# Create Docker custom bridge networks for service isolation and internal communication.
-log "Creating Docker custom bridge networks (pihole_net, monitoring_net, isolated_net)..."
-# '|| true' allows script to continue if network already exists.
-docker network create --subnet=172.20.0.0/24 pihole_net 2>/dev/null || true
-docker network create --subnet=172.21.0.0/24 monitoring_net 2>/dev/null || true
-docker network create --internal isolated_net 2>/dev/null || true # Internal network blocks outbound internet access for containers.
+# Note: Docker network creation moved to deployment scripts where Docker daemon is guaranteed to be running
+# and user has proper group permissions. Networks will be created during actual deployment.
 
 # Note: The commented-out cp commands are for manual copying of files, 
 # but with git clone, these files are already in place. 
@@ -252,11 +271,11 @@ Wants=network-online.target
 [Service]
 Type=oneshot          # Service runs once and stays active.
 RemainAfterExit=yes   # Systemd considers the service active even after ExecStart finishes.
-WorkingDirectory=/home/${USER}/pihole-server/docker # Set working directory to access docker-compose files.
+WorkingDirectory=/home/${USER}/pihole-server # Set working directory to project root.
 # Start all Docker Compose services as a combined stack.
-ExecStart=/usr/bin/docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml up -d || error "Failed to start Docker Compose services."
+ExecStart=/usr/bin/docker compose -f docker/docker-compose.core.yml up -d
 # Stop all Docker Compose services.
-ExecStop=/usr/bin/docker compose -f docker/docker-compose.core.yml -f docker/monitoring/docker-compose.monitoring.yml -f docker/optional/docker-compose.optional.yml down || warn "Failed to stop Docker Compose services gracefully."
+ExecStop=/usr/bin/docker compose -f docker/docker-compose.core.yml down
 TimeoutStartSec=0     # Disable startup timeout.
 
 [Install]
