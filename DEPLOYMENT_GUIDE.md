@@ -200,10 +200,12 @@ explanations.
     **Available if `ENABLE_MONITORING=true`:**
 
     - **Grafana**: `http://192.168.1.XXX:3000`
-      - ✅ **Auto-configured**: Login `admin/raspberry` (from GRAFANA_ADMIN_PASSWORD)
+      - ✅ **Auto-configured**: Login `admin/raspberry` (from
+        GRAFANA_ADMIN_PASSWORD)
       - ✅ **Zero-setup**: Prometheus data source and Pi-hole dashboard ready!
     - **Uptime Kuma**: `http://192.168.1.XXX:3001`
-      - ✅ **Auto-configured**: Login `admin/raspberry` (from UNIVERSAL_PASSWORD)
+      - ✅ **Auto-configured**: Login `admin/raspberry` (from
+        UNIVERSAL_PASSWORD)
       - ✅ **Zero-setup**: Admin account already created!
     - **Prometheus**: `http://192.168.1.XXX:9090`
       - Direct metrics interface (advanced users)
@@ -426,7 +428,8 @@ server. Your system is now running with:
 
 ✅ **Optional Services (If Enabled):**
 
-- **Grafana monitoring dashboards** (auto-configured with Prometheus data source)
+- **Grafana monitoring dashboards** (auto-configured with Prometheus data
+  source)
 - **Prometheus metrics collection** (ARM64 compatible)
 - **Uptime Kuma status monitoring** (auto-configured admin account)
 - **Portainer Docker management** (visual container management)
@@ -434,7 +437,8 @@ server. Your system is now running with:
 ✅ **System Features:**
 
 - **Zero-configuration deployment** (Grafana + Uptime Kuma auto-setup)
-- **Network resilience** (automated recovery from router reboots)
+- **Router reboot resilience** (automatic detection and recovery with monitoring
+  flags)
 - **Automated backups and health checks**
 - **Systemd service management**
 - **Self-healing container restart policies**
@@ -444,5 +448,25 @@ server. Your system is now running with:
 1. Configure your router to use `192.168.1.XXX` as primary DNS
 2. Test ad-blocking on your devices
 3. Monitor your system via the web interfaces
+4. **Check router resilience status**: `./scripts/check-router-status.sh`
+
+**🛡️ Router Reboot Protection:**
+
+Your system now automatically detects and recovers from router reboots! Monitor
+the resilience system:
+
+```bash
+# Check current status
+./scripts/check-router-status.sh
+
+# Watch in real-time
+./scripts/check-router-status.sh --watch
+
+# View recovery logs
+./scripts/check-router-status.sh --logs
+```
+
+For detailed information, see:
+[Router Reboot Resilience Guide](docs/ROUTER_REBOOT_RESILIENCE.md)
 
 Enjoy your enhanced LAN experience! 🏠🔒

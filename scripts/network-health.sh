@@ -26,6 +26,49 @@ fi
 
 log "Starting network health check..."
 
+# Network recovery function for router reboot scenarios
+perform_network_recovery() {
+    log "Performing comprehensive network recovery after router reboot..."
+    
+    # Step 1: Renew DHCP lease
+    log "Renewing DHCP lease..."
+    sudo dhclient -r 2>/dev/null || true  # Release current lease
+    sleep 2
+    sudo dhclient 2>/dev/null || true     # Request new lease
+    sleep 5
+    
+    # Step 2: Restart networking services
+    log "Restarting networking services..."
+    sudo systemctl restart networking.service 2>/dev/null || true
+    sudo systemctl restart dhcpcd.service 2>/dev/null || true
+    sleep 5
+    
+    # Step 3: Restart Docker daemon to refresh networks
+    log "Restarting Docker daemon to refresh networks..."
+    sudo systemctl restart docker
+    sleep 10
+    
+    # Step 4: Restart Pi-hole services
+    log "Restarting Pi-hole core services..."
+    if cd "${SCRIPT_DIR}/../" 2>/dev/null; then
+        docker compose -f docker/docker-compose.core.yml restart 2>/dev/null || true
+        sleep 10
+        
+        # Restart monitoring if enabled
+        if [[ "${ENABLE_MONITORING:-false}" == "true" ]]; then
+            log "Restarting monitoring services..."
+            docker compose -f docker/monitoring/docker-compose.monitoring.yml restart 2>/dev/null || true
+            sleep 5
+        fi
+    fi
+    
+    # Step 5: Configure Pi-hole network permissions again
+    log "Reconfiguring Pi-hole network permissions..."
+    docker exec pihole pihole -a -i all >/dev/null 2>&1 || warn "Could not reconfigure Pi-hole network permissions"
+    
+    log "Network recovery completed!"
+}
+
 # Check 1: External network connectivity
 log "Checking external network connectivity..."
 if ! ping -c 3 -W 5 8.8.8.8 >/dev/null 2>&1; then
@@ -50,11 +93,34 @@ else
     log "External network connectivity: OK"
 fi
 
-# Check 2: Gateway connectivity
+# Check 2: Gateway connectivity with router reboot detection
 log "Checking gateway connectivity..."
-if ! ping -c 2 -W 3 "${PI_GATEWAY}" >/dev/null 2>&1; then
-    warn "Gateway connectivity to ${PI_GATEWAY} failed."
-    # Gateway issues often resolve themselves, so we'll log but not reboot immediately
+if ! ping -c 3 -W 5 "${PI_GATEWAY}" >/dev/null 2>&1; then
+    warn "Gateway connectivity to ${PI_GATEWAY} failed - possible router reboot detected!"
+    
+    # Create reboot detection flag
+    touch "/tmp/router_reboot_detected"
+    
+    log "Waiting for router to come back online..."
+    WAIT_COUNT=0
+    MAX_WAIT=60  # Wait up to 5 minutes (60 * 5 seconds)
+    
+    while ! ping -c 1 -W 5 "${PI_GATEWAY}" >/dev/null 2>&1; do
+        WAIT_COUNT=$((WAIT_COUNT + 1))
+        if [ $WAIT_COUNT -gt $MAX_WAIT ]; then
+            error "Router still unreachable after 5 minutes. Rebooting Pi."
+            # shellcheck disable=SC2317
+            sudo reboot
+        fi
+        log "Router still down, waiting... (${WAIT_COUNT}/${MAX_WAIT})"
+        sleep 5
+    done
+    
+    log "Router back online! Performing network recovery..."
+    perform_network_recovery
+    
+    # Remove reboot detection flag
+    rm -f "/tmp/router_reboot_detected"
 else
     log "Gateway connectivity: OK"
 fi
@@ -79,6 +145,7 @@ if ! dig +short +time=5 google.com @127.0.0.1 >/dev/null 2>&1; then
             # Final test
             if ! dig +short +time=5 google.com @127.0.0.1 >/dev/null 2>&1; then
                 error "Pi-hole DNS still failing. Rebooting system."
+                # shellcheck disable=SC2317
                 sudo reboot
             fi
         else

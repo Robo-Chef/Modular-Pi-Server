@@ -1,162 +1,222 @@
-# Router Reboot Resilience for Raspberry Pi Home Server
+# Router Reboot Resilience System
 
-This guide outlines steps to make your Raspberry Pi Home Server resilient to router reboots and temporary network outages. Router reboots can disrupt DHCP leases, DNS resolution, and Docker networking, leading to services becoming unresponsive.
+This document describes the comprehensive router reboot detection and automatic
+recovery system implemented in the Raspberry Pi Home Server.
 
-## 1. Systemd Service Resilience (Auto-Restart)
+## Overview
 
-Ensure your `pihole-server.service` (and other critical services) are configured to automatically restart on failure.
+The system automatically detects when your router reboots and performs
+comprehensive network recovery without requiring manual intervention or Pi
+reboot.
 
-**Action:** Edit `/etc/systemd/system/pihole-server.service` on your Pi.
+## How It Works
+
+### 1. Monitoring Schedule
+
+- **`router-monitor.sh`**: Runs every 2 minutes via cron (lightweight gateway
+  ping)
+- **`network-health.sh`**: Triggered only when router issues are detected
+  (comprehensive recovery)
+
+### 2. Detection Process
+
+1. **Gateway Monitoring**: Pings your router every 2 minutes
+2. **Failure Detection**: If 3 consecutive pings fail, router reboot is assumed
+3. **Flag Creation**: Creates monitoring flags for external systems to track
+4. **Recovery Trigger**: Launches comprehensive network recovery process
+
+### 3. Recovery Process
+
+When router reboot is detected, the system automatically:
+
+1. **DHCP Lease Renewal**: Releases and requests new IP lease
+2. **Network Service Restart**: Restarts networking and dhcpcd services
+3. **Docker Daemon Restart**: Refreshes Docker networks
+4. **Container Restart**: Restarts Pi-hole and monitoring services
+5. **Permission Reset**: Reconfigures Pi-hole network permissions
+6. **Status Updates**: Updates monitoring flags and status files
+
+## Monitoring & Status
+
+### Status Files
+
+- **Status JSON**: `/var/lib/pihole-server/monitoring/network-status.json`
+- **Flags Directory**: `/var/lib/pihole-server/monitoring/flags/`
+- **Logs**: `/var/log/router-monitor.log`
+
+### Monitoring Flags
+
+During router reboot recovery, these flags are created:
+
+- 🚩 **`router_down`**: Router unreachable - recovery in progress
+- 🚩 **`recovery_active`**: Network recovery process started
+- 🚩 **`network_health_running`**: Comprehensive recovery in progress
+
+Flags are automatically removed when recovery completes successfully.
+
+### Status Checking
+
+**View Current Status:**
 
 ```bash
-sudo nano /etc/systemd/system/pihole-server.service
+./scripts/check-router-status.sh
 ```
 
-**Add/Modify these lines in the `[Service]` section:**
+**Watch Real-Time:**
+
+```bash
+./scripts/check-router-status.sh --watch
+```
+
+**View Logs:**
+
+```bash
+./scripts/check-router-status.sh --logs
+```
+
+### Example Status Output
+
+```json
+{
+  "last_check": "2025-09-27T02:15:30+10:00",
+  "router_status": "up",
+  "pi_status": "healthy",
+  "services_status": "7 containers running",
+  "last_recovery": "2025-09-27T02:10:15+10:00",
+  "recovery_count": 3,
+  "uptime_seconds": 86400,
+  "message": "All systems normal"
+}
+```
+
+## Integration Options
+
+### Uptime Kuma Integration
+
+Monitor the status file or flag files:
+
+```bash
+# Monitor status file exists and is recent
+test -f /var/lib/pihole-server/monitoring/network-status.json
+
+# Check for active recovery flags
+test ! -f /var/lib/pihole-server/monitoring/flags/router_down
+```
+
+### Grafana Dashboard
+
+Create alerts based on:
+
+- Recovery count increases
+- Router down flags exist
+- Status changes to "recovering"
+
+### External Monitoring
+
+Parse the JSON status file:
+
+```bash
+# Get router status
+jq -r '.router_status' /var/lib/pihole-server/monitoring/network-status.json
+
+# Get recovery count
+jq -r '.recovery_count' /var/lib/pihole-server/monitoring/network-status.json
+
+# Check if recovery is active
+ls /var/lib/pihole-server/monitoring/flags/ 2>/dev/null | wc -l
+```
+
+## Configuration
+
+### Environment Variables
+
+The system uses these variables from your `.env` file:
+
+```bash
+PI_GATEWAY=192.168.1.1        # Your router's IP address
+PI_STATIC_IP=192.168.1.100    # Your Pi's static IP
+ENABLE_MONITORING=true        # Enable monitoring service restarts
+```
+
+### Cron Schedule
+
+Router monitoring is automatically configured during setup:
+
+```bash
+# Check every 2 minutes
+*/2 * * * * /home/pi/pihole-server/scripts/router-monitor.sh >/dev/null 2>&1
+```
+
+### Systemd Service Resilience
+
+The `pihole-server.service` is configured for automatic restart:
 
 ```ini
 [Service]
-Type=oneshot
-RemainAfterExit=yes
-WorkingDirectory=/home/${USER}/pihole-server
-ExecStart=/usr/bin/docker compose -f docker/docker-compose.core.yml up -d
-ExecStop=/usr/bin/docker compose -f docker/docker-compose.core.yml down
-TimeoutStartSec=0
-Restart=always      # <--- ADD THIS LINE
-RestartSec=30       # <--- ADD THIS LINE (wait 30 seconds before restarting)
+Restart=always
+RestartSec=30
+StartLimitBurst=5
+StartLimitIntervalSec=300
 ```
 
-**Reload systemd to apply changes:**
+## Troubleshooting
+
+### Manual Recovery
+
+If automatic recovery fails, you can manually trigger it:
 
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable pihole-server.service
-sudo systemctl restart pihole-server.service
-```
-
-**Explanation:**
-- `Restart=always`: Ensures the service is always restarted if it stops for any reason.
-- `RestartSec=30`: Waits 30 seconds before attempting a restart, giving the network time to stabilize after a reboot.
-
-## 2. Network Health Monitoring Script (Automated Recovery)
-
-A script to periodically check network health and restart services if issues are detected.
-
-**Action:** The project includes `scripts/network-health.sh` for this purpose.
-
-**To enable automatic health monitoring:**
-
-```bash
-# Make the script executable
-chmod +x scripts/network-health.sh
-
-# Test the script manually
+# Run comprehensive network health check
 ./scripts/network-health.sh
-```
 
-**Content of `scripts/network-health.sh`:**
+# Check router connectivity
+ping -c 3 192.168.1.1
 
-The script performs these checks:
-1. **External Connectivity**: Pings 8.8.8.8 to verify internet access
-2. **DNS Resolution**: Tests Pi-hole DNS functionality
-3. **Automatic Recovery**: Restarts networking services or reboots if issues persist
-
-## 3. Automated Recovery Cron Job
-
-Schedule the `network-health.sh` script to run periodically.
-
-**Action:** Add a cron job.
-
-```bash
-crontab -e
-```
-
-**Add this line to run every 5 minutes:**
-
-```cron
-*/5 * * * * /home/pi/pihole-server/scripts/network-health.sh >> /home/pi/pihole-server/logs/health-check.log 2>&1
-```
-
-**Create the logs directory first:**
-
-```bash
-mkdir -p ~/pihole-server/logs
-```
-
-**Explanation:**
-- This runs the script every 5 minutes.
-- Output is logged to `~/pihole-server/logs/health-check.log`.
-
-## 4. DHCP Client Hardening
-
-Make the DHCP client more resilient to router reboots.
-
-**Action:** Edit `/etc/dhcpcd.conf`.
-
-```bash
-sudo nano /etc/dhcpcd.conf
-```
-
-**Add these lines at the end:**
-
-```ini
-# Custom settings for network resilience
-timeout 60  # Wait up to 60 seconds for a DHCP lease
-retry 3     # Retry 3 times before giving up
-```
-
-**Restart `dhcpcd` service:**
-
-```bash
-sudo systemctl restart dhcpcd.service
-```
-
-## 5. Emergency Recovery Commands
-
-If all else fails, these commands can help.
-
-**Check Docker services:**
-
-```bash
-docker ps -a
-docker logs pihole
-docker logs unbound
-```
-
-**Restart Docker daemon:**
-
-```bash
-sudo systemctl restart docker
-```
-
-**Restart Pi-hole server stack:**
-
-```bash
+# Restart all services
 sudo systemctl restart pihole-server.service
 ```
 
-**Full system reboot (last resort):**
+### Log Analysis
+
+Check what happened during recovery:
 
 ```bash
-sudo reboot
+# View router monitor logs
+tail -50 /var/log/router-monitor.log
+
+# Check systemd service logs
+sudo journalctl -u pihole-server.service --since "1 hour ago"
+
+# View Docker container logs
+docker logs pihole --since 1h
 ```
 
-## 6. Monitoring Integration
+### Common Issues
 
-If you have the monitoring stack deployed, you can set up alerts for network issues:
+**Recovery Takes Too Long:**
 
-1. **Grafana Alerts**: Configure alerts for DNS query failures or network connectivity issues
-2. **Uptime Kuma**: Monitor Pi-hole web interface and external connectivity
-3. **Prometheus Metrics**: Track network and DNS resolution metrics
+- Router may take longer than 5 minutes to fully restart
+- Increase `MAX_WAIT` in `network-health.sh` if needed
 
-## Implementation Summary
+**False Positives:**
 
-By implementing these steps, your Raspberry Pi Home Server will be significantly more robust against router reboots and temporary network disruptions:
+- Temporary network glitches may trigger recovery
+- Check router stability and network cables
 
-✅ **Auto-restart services** on failure  
-✅ **Automated health monitoring** every 5 minutes  
-✅ **DHCP resilience** with longer timeouts  
-✅ **Emergency recovery** commands ready  
-✅ **Monitoring integration** for proactive alerts  
+**Services Don't Restart:**
 
-Your Pi will now automatically recover from most network-related issues without manual intervention!
+- Check Docker daemon status: `sudo systemctl status docker`
+- Verify disk space: `df -h`
+- Check container health: `docker ps`
+
+## Benefits
+
+✅ **Zero Manual Intervention**: Pi automatically recovers from router reboots  
+✅ **Full Visibility**: Monitor recovery process via flags and status files  
+✅ **External Integration**: Status available for Grafana, Uptime Kuma, etc.  
+✅ **Comprehensive Recovery**: DHCP, networking, Docker, and services all
+restarted  
+✅ **Failure Protection**: Automatic Pi reboot if router down for >5 minutes
+
+This system ensures your Pi-hole server remains highly available even with
+unreliable router hardware or frequent power outages.

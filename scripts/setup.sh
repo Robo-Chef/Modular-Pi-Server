@@ -258,13 +258,17 @@ chmod +x ~/pihole-server/scripts/backup.sh || error "Failed to set execute permi
 log "Setting up automated daily backups via cron..."
 (crontab -l 2>/dev/null; echo "0 2 * * * /home/${USER}/pihole-server/scripts/backup.sh") | crontab - || error "Failed to set up cron job for backups."
 
+# Set up router monitoring for automatic reboot detection and recovery
+log "Setting up router reboot monitoring via cron..."
+(crontab -l 2>/dev/null; echo "*/2 * * * * /home/${USER}/pihole-server/scripts/router-monitor.sh >/dev/null 2>&1") | crontab - || error "Failed to set up cron job for router monitoring."
+
 # Create and configure the systemd service for Docker Compose.
 log "Creating and enabling systemd service for Docker Compose..."
 sudo tee /etc/systemd/system/pihole-server.service > /dev/null <<EOF
 [Unit]
-Description=Pi-hole Home Server
+Description=Pi-hole Home Server with Router Reboot Resilience
 # Ensure Docker service and network are online before starting.
-Requires=docker.service
+Requires=docker.service network.target
 After=docker.service network-online.target
 Wants=network-online.target
 
@@ -277,6 +281,11 @@ ExecStart=/usr/bin/docker compose -f docker/docker-compose.core.yml up -d
 # Stop all Docker Compose services.
 ExecStop=/usr/bin/docker compose -f docker/docker-compose.core.yml down
 TimeoutStartSec=0     # Disable startup timeout.
+# Auto-restart configuration for network resilience
+Restart=always        # Always restart if the service stops
+RestartSec=30         # Wait 30 seconds before restarting
+StartLimitBurst=5     # Allow 5 restart attempts
+StartLimitIntervalSec=300  # Within 5 minutes
 
 [Install]
 WantedBy=multi-user.target # Start service when the system reaches multi-user runlevel.

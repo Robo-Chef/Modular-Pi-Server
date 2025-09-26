@@ -9,8 +9,8 @@ deployment and personalization.
 - **🔧 Zero-Configuration Deployment**: Grafana auto-provisioned with Prometheus
   data source and Pi-hole dashboard
 - **🎯 Auto-Setup**: Uptime Kuma automatically configured with admin account
-- **🛡️ Network Resilience**: Automated recovery from router reboots and network
-  issues
+- **🛡️ Router Reboot Resilience**: Automatic detection and recovery from router
+  reboots with monitoring flags and status tracking
 - **🚀 ARM64 Optimized**: All Docker images tested and working on Raspberry Pi
 - **⚡ One-Command Deploy**: Single script handles everything from setup to
   validation
@@ -29,7 +29,8 @@ deployment and personalization.
 - **Monitoring**: Prometheus, Grafana, Uptime Kuma (all auto-configured)
 - **Optional**: Home Assistant, Gitea, Portainer, Speedtest Tracker
 - **Security**: `nftables` firewall, SSH hardening, container isolation
-- **Resilience**: Automated recovery after network interruptions
+- **Resilience**: Automated router reboot detection and recovery with monitoring
+  flags
 
 ## Getting Started
 

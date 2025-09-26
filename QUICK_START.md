@@ -113,6 +113,9 @@ docker logs unbound
 docker logs grafana        # If monitoring enabled
 docker logs prometheus     # If monitoring enabled
 
+# Check router resilience status
+./scripts/check-router-status.sh
+
 # Restart services
 ./scripts/maintenance.sh update
 

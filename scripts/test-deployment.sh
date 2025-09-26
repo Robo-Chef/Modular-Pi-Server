@@ -125,10 +125,10 @@ main() {
     run_test "Unbound is healthy" "docker exec unbound unbound-control status" 0
 
     # Test 8: Verify DNS resolution works via Pi-hole for a known domain (e.g., google.com).
-    run_test_custom "DNS resolution via Pi-hole works" "dig @${PI_STATIC_IP} +short google.com | head -n 1" '[[ -n "${result}" ]]'
+    run_test_custom "DNS resolution via Pi-hole works" "dig @${PI_STATIC_IP} +short google.com | head -n 1" "[[ -n \"\${result}\" ]]"
 
     # Test 9: Verify ad blocking is active by querying a known ad domain (e.g., doubleclick.net).
-    run_test_custom "Ad blocking via Pi-hole works" "dig @${PI_STATIC_IP} +short doubleclick.net" '[[ -z "${result}" ]]'
+    run_test_custom "Ad blocking via Pi-hole works" "dig @${PI_STATIC_IP} +short doubleclick.net" "[[ -z \"\${result}\" ]]"
 
     # Test 10: Check if the Pi-hole web interface is accessible from the host.
     run_test "Pi-hole web interface is accessible" "curl -f http://${PI_STATIC_IP}/admin/api.php?summary" 0
@@ -148,7 +148,7 @@ main() {
         run_test "Uptime Kuma is accessible" "curl -f http://localhost:3001" 0
 
         # Test 13: Verify auto-provisioning worked
-        run_test_custom "Grafana auto-provisioning worked" "curl -s -u admin:${GRAFANA_ADMIN_PASSWORD:-raspberry} http://localhost:3000/api/datasources 2>/dev/null | grep -q prometheus || echo 'failed'" '[[ "$result" != "failed" ]]'
+        run_test_custom "Grafana auto-provisioning worked" "curl -s -u admin:${GRAFANA_ADMIN_PASSWORD:-raspberry} http://localhost:3000/api/datasources 2>/dev/null | grep -q prometheus || echo 'failed'" "[[ \"\$result\" != \"failed\" ]]"
         
         # Test 14: Check monitoring network
         run_test "Monitoring Docker network exists" "docker network ls | grep -q monitoring" 0
@@ -160,8 +160,8 @@ main() {
     run_test "nftables firewall is active" "sudo systemctl is-active nftables" 0
 
     # Test 16: Check system resource usage (memory and disk) against reasonable thresholds.
-    run_test_custom "Memory usage is reasonable (below 90%)" "free | awk 'NR==2{printf \"%.0f\", \$3*100/\$2}'" '[[ "${result}" -lt 90 ]]'
-    run_test_custom "Disk usage is reasonable (below 80% on root)" "df / | awk 'NR==2 {print \$5}' | sed 's/%//'" '[[ "${result}" -lt 80 ]]'
+    run_test_custom "Memory usage is reasonable (below 90%)" "free | awk 'NR==2{printf \"%.0f\", \$3*100/\$2}'" "[[ \"\${result}\" -lt 90 ]]"
+    run_test_custom "Disk usage is reasonable (below 80% on root)" "df / | awk 'NR==2 {print \$5}' | sed 's/%//'" "[[ \"\${result}\" -lt 80 ]]"
 
     # --- Optional Service Checks ---
 
@@ -189,7 +189,7 @@ main() {
     # --- Performance Checks ---
 
     # Test 18: Check system load average.
-    run_test_custom "System load average is reasonable (below 2.0)" "uptime | awk -F'load average:' '{ print \$2 }' | cut -d, -f1 | sed 's/ //g'" '[[ $(echo "${result} < 2.0" | bc -l 2>/dev/null || echo 1) -eq 1 ]]'
+    run_test_custom "System load average is reasonable (below 2.0)" "uptime | awk -F'load average:' '{ print \$2 }' | cut -d, -f1 | sed 's/ //g'" "[[ \$(echo \"\${result} < 2.0\" | bc -l 2>/dev/null || echo 1) -eq 1 ]]"
 
     # --- Network & Connectivity Checks ---
 
