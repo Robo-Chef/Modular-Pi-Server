@@ -10,7 +10,9 @@ refer to the
 ### Prerequisites
 
 - Raspberry Pi 3 B+ with 32GB+ SD card
+- Raspberry Pi OS (64-bit) freshly installed
 - Ethernet connection to your router
+- Internet connection for downloading packages
 - SSH access to the Pi (after initial OS setup)
 - Basic Linux command line knowledge
 
@@ -46,7 +48,10 @@ explanations.
 1.  **Clone the repository:**
 
     ```bash
+    # HTTPS (recommended for most users)
     git clone https://github.com/Robo-Chef/Modular-Pi-Server.git ~/pihole-server
+    # OR SSH (if you have SSH keys configured)
+    # git clone git@github.com:Robo-Chef/Modular-Pi-Server.git ~/pihole-server
     cd ~/pihole-server
     ```
 
@@ -57,14 +62,22 @@ explanations.
     nano .env
     ```
 
-    - **Crucial:** Update `UNIVERSAL_PASSWORD`, `TZ`, `PI_STATIC_IP`,
-      `PIHOLE_HOSTNAME` to match your setup.
+    - **Required:** Update `UNIVERSAL_PASSWORD`, `TZ`, `PI_STATIC_IP`,
+      `PIHOLE_HOSTNAME`
+    - **Optional:** Set `ENABLE_MONITORING=true` for Grafana/Uptime Kuma
+    - **Network:** Use default `172.20.0.x` network unless you have conflicts
 
 3.  **Deploy everything:**
+
     ```bash
     ./scripts/deploy.sh
     ```
-    This handles setup, dependencies, and deployment automatically.
+
+    **Important:** On fresh systems, this script will:
+
+    - Install Docker and dependencies (requires logout/login after)
+    - Exit and ask you to reconnect, then run the script again
+    - On the second run, it deploys all services
 
 #### **Option B: Step-by-Step Deployment**
 
@@ -112,9 +125,50 @@ explanations.
     configure Pi-hole network permissions. If issues persist, run:
     `docker exec pihole pihole -a -i all`
 
-2.  **Check Web Interfaces:** Access Pi-hole Admin, Grafana, and Uptime Kuma
-    dashboards.
+2.  **Check Web Interfaces:**
+
+    **Always Available:**
+
+    - **Pi-hole Admin**: `http://192.168.1.XXX/admin` (replace with your Pi's
+      IP)
+      - Login with `PIHOLE_PASSWORD` from your `.env` file
+
+    **Available if `ENABLE_MONITORING=true`:**
+
+    - **Grafana**: `http://192.168.1.XXX:3000`
+      - Default login: `admin/admin` (change on first login)
+    - **Uptime Kuma**: `http://192.168.1.XXX:3001`
+      - Create admin account on first visit
+
 3.  **Verify Ad Blocking:** Confirm ads are blocked on websites.
+
+## Common Issues & Quick Fixes
+
+### Deploy Script Exits After Setup
+
+If `./scripts/deploy.sh` exits with a message about logging out:
+
+1. Log out of SSH: `exit`
+2. Log back in: `ssh your_username@192.168.1.XXX`
+3. Navigate back: `cd ~/pihole-server`
+4. Run deploy script again: `./scripts/deploy.sh`
+
+### DNS Queries Fail
+
+If `dig @192.168.1.XXX google.com` times out:
+
+```bash
+docker exec pihole pihole -a -i all
+```
+
+### Container Won't Start
+
+Check logs for specific error messages:
+
+```bash
+docker logs pihole
+docker logs unbound
+```
 
 ## Service Management & Maintenance
 
@@ -145,16 +199,44 @@ docker compose -f docker/docker-compose.core.yml up -d    # Start core services
 docker compose -f docker/docker-compose.core.yml down    # Stop core services
 
 # View individual container logs
-docker logs pihole
-docker logs unbound
-docker logs grafana    # If monitoring enabled
-docker logs prometheus # If monitoring enabled
+docker logs pihole              # Always available
+docker logs unbound            # Always available
+docker logs grafana           # If ENABLE_MONITORING=true
+docker logs prometheus        # If ENABLE_MONITORING=true
+docker logs uptime-kuma       # If ENABLE_MONITORING=true
+
+# Check container status
+docker ps                     # Show all running containers
+docker compose -f docker/docker-compose.core.yml ps    # Core services only
 ```
 
 ---
 
 **Congratulations!** You have successfully deployed your Raspberry Pi home
-server. Your system is now running with DNS filtering, monitoring, and optional
-services, designed for self-healing with automated backups and health checks.
+server. Your system is now running with:
 
-Enjoy your enhanced LAN experience!
+✅ **Core Services (Always Active):**
+
+- Pi-hole DNS filtering and ad-blocking
+- Unbound recursive DNS resolver
+- Automatic network permission configuration
+
+✅ **Optional Services (If Enabled):**
+
+- Grafana monitoring dashboards
+- Prometheus metrics collection
+- Uptime Kuma status monitoring
+
+✅ **System Features:**
+
+- Automated backups and health checks
+- Systemd service management
+- Self-healing container restart policies
+
+**Next Steps:**
+
+1. Configure your router to use `192.168.1.XXX` as primary DNS
+2. Test ad-blocking on your devices
+3. Monitor your system via the web interfaces
+
+Enjoy your enhanced LAN experience! 🏠🔒
