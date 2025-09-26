@@ -73,11 +73,29 @@ explanations.
     ./scripts/deploy.sh
     ```
 
-    **Important:** On fresh systems, this script will:
+    **Important - Two-Stage Process:** On fresh systems, this script will:
 
-    - Install Docker and dependencies (requires logout/login after)
-    - Exit and ask you to reconnect, then run the script again
-    - On the second run, it deploys all services
+    **Stage 1 (First Run):**
+
+    - Install Docker and dependencies
+    - Show Docker group errors (THIS IS NORMAL - see below)
+    - Exit with instructions to logout and reconnect
+
+    **You MUST do this:** `exit` then SSH back in:
+    `ssh your_username@192.168.1.XXX`
+
+    **Stage 2 (Second Run):**
+
+    - Run `./scripts/deploy.sh` again
+    - Deploy all services successfully
+
+    **Expected Normal Warnings (Don't Panic!):**
+
+    - ❌ `Cannot connect to the Docker daemon` - Normal during fresh install
+    - ❌ `usermod: group 'docker' does not exist` - Normal, fixed by
+      logout/login
+    - ❌ `Failed to add user to docker group` - Normal, requires reconnection
+    - ✅ These errors are expected and will be resolved after reconnecting
 
 #### **Option B: Step-by-Step Deployment**
 
@@ -144,14 +162,27 @@ explanations.
 
 ## Common Issues & Quick Fixes
 
-### Deploy Script Exits After Setup
+### Deploy Script Exits After Setup (Normal Behavior)
 
-If `./scripts/deploy.sh` exits with a message about logging out:
+If `./scripts/deploy.sh` exits with Docker group errors, this is **completely
+normal** for fresh installations:
 
-1. Log out of SSH: `exit`
-2. Log back in: `ssh your_username@192.168.1.XXX`
-3. Navigate back: `cd ~/pihole-server`
-4. Run deploy script again: `./scripts/deploy.sh`
+**What You'll See (Normal):**
+
+```
+Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?
+usermod: group 'docker' does not exist
+[DATE TIME] ERROR: Failed to add user to docker group.
+```
+
+**What To Do:**
+
+1. **Don't panic** - these errors are expected
+2. Log out of SSH: `exit`
+3. Log back in: `ssh your_username@192.168.1.XXX`
+4. Navigate back: `cd ~/pihole-server`
+5. Run deploy script again: `./scripts/deploy.sh`
+6. **Second run will work perfectly**
 
 ### DNS Queries Fail
 
