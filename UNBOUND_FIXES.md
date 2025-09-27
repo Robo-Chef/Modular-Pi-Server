@@ -21,7 +21,13 @@ and ensure reliable deployment.
   `timeout 5 sh -c 'echo > /dev/tcp/127.0.0.1/53'`
 - **Impact**: Health check works without requiring SSL certificate setup
 
-### 3. **Volume Mount Configuration**
+### 3. **Docker Network Configuration**
+
+- **Problem**: Unbound container IP was inconsistent across documentation
+- **Fix**: Standardized on `172.25.0.2` for Unbound container IP
+- **Impact**: Consistent with `env.example` and all documentation
+
+### 4. **Volume Mount Configuration**
 
 - **Problem**: Original mount was `./unbound/config:/etc/unbound/custom` but
   container didn't auto-include custom configs
@@ -30,13 +36,22 @@ and ensure reliable deployment.
   mount)
 - **Impact**: Container uses our configuration instead of built-in defaults
 
-### 4. **Complex Configuration**
+### 5. **Complex Configuration**
 
 - **Problem**: Original config had many advanced options that could cause
   startup issues
 - **Fix**: Simplified to minimal working configuration with essential security
   settings
 - **Impact**: More reliable startup, easier troubleshooting
+
+## Current Configuration
+
+The Unbound service now uses:
+
+- **Port**: `53` (standard DNS port)
+- **Container IP**: `172.25.0.2` (internal Docker network)
+- **Health Check**: Network connectivity test (no SSL required)
+- **Config Mount**: Direct file mount for reliable configuration loading
 
 ## Files Modified
 

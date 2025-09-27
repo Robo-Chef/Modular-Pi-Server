@@ -1,13 +1,11 @@
 # 🚀 Quick Start Guide - Raspberry Pi Home Server
 
-## Pre-Deployment Checklist
+## Prerequisites
 
-Before you start, ensure you have:
-
-- [ ] Raspberry Pi 3 B+ with 32GB+ SD card
-- [ ] Ethernet cable connected to your router
-- [ ] Raspberry Pi OS flashed with static IP configured
-- [ ] SSH access to your Pi
+- Raspberry Pi 3 B+ with 32GB+ SD card
+- Raspberry Pi OS flashed with static IP configured
+- SSH access to your Pi
+- Basic Linux command line knowledge
 
 ## One-Command Deployment
 
@@ -30,15 +28,16 @@ This script will:
 If you prefer step-by-step control:
 
 ```bash
-# 1. Configure environment
+# 1. Clone repository
+git clone https://github.com/Robo-Chef/Modular-Pi-Server.git ~/pihole-server
+cd ~/pihole-server
+
+# 2. Configure environment
 cp env.example .env
 nano .env  # Update with your values
 
-# 2. Validate configuration
+# 3. Validate configuration
 ./scripts/validate-config.sh
-
-# 3. Run setup (if fresh system)
-./scripts/setup.sh
 
 # 4. Deploy services
 ./scripts/deploy.sh
@@ -63,44 +62,47 @@ TZ=America/New_York
 
 # Your Pi's hostname
 PIHOLE_HOSTNAME=my-pihole.local
-
-# Network Configuration (use defaults unless you have conflicts)
-PIHOLE_NETWORK=172.25.0.0/24      # Pi-hole/Unbound network
-PIHOLE_NET_IP_PIHOLE=172.25.0.3    # Pi-hole container IP
-PIHOLE_NET_IP_UNBOUND=172.25.0.2   # Unbound container IP
 ```
 
-**Important**: Replace `XXX` with your actual Pi's IP address (e.g., `100`,
-`150`, `200`). This IP must match what you configured during OS flashing.
+**Important**: Replace `XXX` with your actual Pi's IP address (e.g., `100`, `150`, `200`). This IP must match what you configured during OS flashing.
 
-**Important**: The deployment script automatically configures Pi-hole to accept
-queries from your LAN network. No manual network configuration is needed.
+## Post-Deployment Verification
 
-## Post-Deployment Steps
+```bash
+# Test DNS resolution
+dig @192.168.1.XXX google.com
 
-1. **Configure Router DNS**:
+# Test ad blocking
+dig @192.168.1.XXX doubleclick.net  # Should return 0.0.0.0
 
-   - Set Primary DNS to your Pi's IP (`192.168.1.XXX`)
-   - Optional: Disable router DHCP, enable Pi-hole DHCP
+# Run comprehensive tests
+./scripts/test-deployment.sh
+```
 
-2. **Test Core Functionality**:
+## Access Web Interfaces
 
-   ```bash
-   # Test DNS resolution
-   dig @192.168.1.XXX google.com
+- **Pi-hole Admin**: `http://192.168.1.XXX/admin`
+- **Grafana**: `http://192.168.1.XXX:3000` (if monitoring enabled)
+- **Uptime Kuma**: `http://192.168.1.XXX:3001` (if monitoring enabled)
 
-   # Test ad blocking
-   dig @192.168.1.XXX doubleclick.net  # Should return 0.0.0.0
-   ```
+## Router Configuration
 
-3. **Access Web Interfaces**:
-   - **Pi-hole Admin**: `http://192.168.1.XXX/admin` (password from .env)
-   - **Grafana**: `http://192.168.1.XXX:3000` (admin/raspberry -
-     auto-configured!)
-   - **Uptime Kuma**: `http://192.168.1.XXX:3001` (admin/raspberry -
-     auto-configured!)
-   - **Prometheus**: `http://192.168.1.XXX:9090` (advanced users)
-   - **Portainer**: `http://192.168.1.XXX:9000` (Docker management)
+1. Access your router's admin interface
+2. Set Primary DNS to your Pi's IP (`192.168.1.XXX`)
+3. Save and apply settings
+
+## Service Management
+
+```bash
+# Check status
+./scripts/maintenance.sh status
+
+# Restart services
+./scripts/maintenance.sh restart
+
+# Run backups
+./scripts/maintenance.sh backup
+```
 
 ## Troubleshooting
 
@@ -113,33 +115,12 @@ If something goes wrong:
 # View logs
 docker logs pihole
 docker logs unbound
-docker logs grafana        # If monitoring enabled
-docker logs prometheus     # If monitoring enabled
-
-# Check router resilience status
-./scripts/check-router-status.sh
 
 # Restart services
-./scripts/maintenance.sh update
+./scripts/maintenance.sh restart
 
 # Run validation
 ./scripts/validate-config.sh
-```
-
-## Service Management
-
-```bash
-# Check status
-./scripts/maintenance.sh status
-
-# Update containers
-./scripts/maintenance.sh update
-
-# Full maintenance (OS + containers)
-./scripts/maintenance.sh full
-
-# Run backups
-./scripts/maintenance.sh backup
 ```
 
 ## Optional Services
@@ -148,7 +129,6 @@ Enable additional services by setting these in `.env`:
 
 ```bash
 ENABLE_HOME_ASSISTANT=true   # Smart home automation
-ENABLE_GITEA=true           # Self-hosted Git
 ENABLE_PORTAINER=true       # Docker management UI
 ENABLE_DOZZLE=true          # Live log viewer
 ENABLE_SPEEDTEST_TRACKER=true # Internet speed monitoring
@@ -170,9 +150,11 @@ ENABLE_SPEEDTEST_TRACKER=true # Internet speed monitoring
 
 ---
 
-**Need Help?** Check the full documentation:
+**📚 For detailed information, see:**
 
-- [RASPBERRY_PI_SERVER_SETUP.md](RASPBERRY_PI_SERVER_SETUP.md) - Detailed setup
-  guide
-- [docs/troubleshooting.md](docs/troubleshooting.md) - Common issues
-- [docs/security-hardening.md](docs/security-hardening.md) - Security guide
+- **[Deployment Guide](DEPLOYMENT_GUIDE.md)** - Comprehensive setup, troubleshooting, and configuration
+- **[Raspberry Pi Setup](RASPBERRY_PI_SERVER_SETUP.md)** - OS flashing and initial configuration
+- **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
+- **[Security Hardening](docs/security-hardening.md)** - Security best practices
+
+**🎉 Congratulations!** Your Raspberry Pi Home Server is now running successfully!
