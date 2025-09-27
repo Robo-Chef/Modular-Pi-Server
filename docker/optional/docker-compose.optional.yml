@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   homeassistant:
     image: ghcr.io/home-assistant/home-assistant:stable # Specifies the Home Assistant Docker image. Using `stable` for predictable updates.
@@ -204,8 +206,8 @@ networks:
     driver: bridge # Defines a custom bridge network for smart home services.
     ipam:
       config:
-        - subnet: ${PIHOLE_NETWORK:-172.25.0.0/24} # Specifies the subnet for this network.
-          gateway: ${PIHOLE_GATEWAY:-172.25.0.1} # Sets the gateway IP.
+        - subnet: 172.24.0.0/24 # Specifies the subnet for this network.
+          gateway: 172.24.0.1 # Sets the gateway IP.
   dev_net:
     driver: bridge # Defines a custom bridge network for development services (e.g., Gitea).
     ipam:

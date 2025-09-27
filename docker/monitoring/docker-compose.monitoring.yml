@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   prometheus:
     image: prom/prometheus:v2.45.0 # Specifies the Prometheus Docker image and a specific version tag.

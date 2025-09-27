@@ -30,13 +30,11 @@ if [[ $EUID -eq 0 ]]; then
 fi
 
 # Verify the .env file exists, which contains essential environment variables for the setup.
-if [[ ! -f ".env" ]]; then
+if [[ ! -f "${SCRIPT_DIR}/../.env" ]]; then
     error ".env file not found. Please copy env.example to .env and configure it."
 fi
 
-# Source the .env file to load environment variables.
-# shellcheck source=/dev/null
-source .env
+# Environment variables are already loaded from .env file above (lines 16-25)
 
 log "Starting Raspberry Pi Home Server setup..."
 
