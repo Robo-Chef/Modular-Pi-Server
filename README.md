@@ -59,6 +59,7 @@ design choices, and constraints, consult the
 ## 🌐 Access Your Services
 
 - **Core**
+
   - Pi-hole: `http://192.168.1.XXX/admin`
   - Portainer: `http://192.168.1.XXX:9000`
   - Dozzle: `http://192.168.1.XXX:9999`
@@ -107,7 +108,8 @@ consistent solution** without external access complexity.
 ## Next Steps
 
 1. Review full documentation (`RASPBERRY_PI_SERVER_SETUP.md`,
-   `DEPLOYMENT_GUIDE.md`, `docs/security-hardening.md`, `docs/troubleshooting.md`).
+   `DEPLOYMENT_GUIDE.md`, `docs/security-hardening.md`,
+   `docs/troubleshooting.md`).
 2. Configure Pi-hole block/allow lists in Admin Panel.
 3. Explore Grafana dashboards & Uptime Kuma alerts.
 4. Enable optional services (Home Assistant, Gitea, Portainer, Dozzle, Speedtest
